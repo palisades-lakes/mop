@@ -1,0 +1,11 @@
+body {
+    font-family: Atkinson Hyperlegible, Arial, sans-serif;
+    font-size: 15px;
+}
+
+pre, code {
+    font-family: Fira Code, Monaco, DejaVu Sans Mono, Consolas, monospace;
+    font-size: 10pt;
+    margin: 15px 0;
+}
+

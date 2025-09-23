@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+ <modelVersion>4.0.0</modelVersion>
+ <!-- groupId>palisades-lakes</groupId -->
+ <artifactId>mop</artifactId>
+ <description>meshes (mostly simplicial) and their optimization</description>
+ <version>0.0.1</version>
+ <parent>
+  <groupId>palisades-lakes</groupId>
+  <artifactId>palisades-lakes-parent</artifactId>
+  <version>0.0.11-SNAPSHOT</version>
+ </parent>
+ <build>
+  <plugins>
+   <plugin>
+    <groupId>com.theoryinpractise</groupId>
+    <artifactId>clojure-maven-plugin</artifactId>
+    <version>${clojure-maven-version}</version>
+    <extensions>true</extensions>
+    <executions>
+     <execution>
+      <id>clojure-compile</id>
+      <phase>compile</phase>
+      <goals>
+       <goal>compile</goal>
+      </goals>
+     </execution>
+     <execution>
+      <id>test-compile</id>
+      <phase>test-compile</phase>
+      <goals>
+       <goal>testCompile</goal>
+      </goals>
+     </execution>
+     <execution>
+      <id>clojure-test</id>
+      <phase>test</phase>
+      <goals>
+       <goal>test</goal>
+      </goals>
+     </execution>
+    </executions>
+    <configuration>
+     <!-- vmArgs>${clojure.vmargs}</vmArgs -->
+     <clojureOptions>${clojure.options}</clojureOptions>
+     <namespaces>
+      <namespace>!nzqr.test.*</namespace>
+     </namespaces>
+     <copiedNamespaces>
+      <namespace>!.*</namespace>
+     </copiedNamespaces>
+     <testNamespaces>
+      <namespace>!nzqr.test.defs.*</namespace>
+     </testNamespaces>
+    </configuration>
+   </plugin>
+      <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <groupId>org.apache.maven.plugins</groupId>
+          <configuration>
+              <source>${java-version}</source>
+              <target>${java-version}</target>
+           <compilerArgs>--enable-preview</compilerArgs>
+          </configuration>
+      </plugin>
+  </plugins>
+ </build>
+ <dependencies>
+
+  <dependency>
+   <groupId>org.clojure</groupId>
+   <artifactId>math.numeric-tower</artifactId>
+   <version>${clojure-math-numeric-tower-version}</version>
+  </dependency>
+  <dependency>
+  <groupId>org.clojure</groupId>
+  <artifactId>core.memoize</artifactId>
+  <version>${clojure-core-memoize-version}</version>
+  </dependency>
+  <dependency>
+   <groupId>org.apache.commons</groupId>
+   <artifactId>commons-math3</artifactId>
+   <version>${commons-math3-version}</version>
+  </dependency>
+  <dependency>
+   <groupId>criterium</groupId>
+   <artifactId>criterium</artifactId>
+   <version>${criterium-version}</version>
+   <exclusions>
+    <exclusion>
+     <groupId>org.clojure</groupId>
+     <artifactId>clojure</artifactId>
+    </exclusion>
+   </exclusions>
+  </dependency>
+  <dependency>
+   <groupId>org.apache.commons</groupId>
+   <artifactId>commons-rng-sampling</artifactId>
+   <version>${commons-rng-version}</version>
+  </dependency>
+  <dependency>
+   <groupId>org.apache.commons</groupId>
+   <artifactId>commons-rng-simple</artifactId>
+   <version>${commons-rng-version}</version>
+  </dependency>
+  <!-- dependency> <groupId>org.apache.commons</groupId> <artifactId>commons-rng-examples</artifactId> 
+   <version>${commons-rng-version}</version> <type>pom</type> </dependency -->
+  <!-- <dependency> <groupId>io.gatling.uncommons.maths</groupId> <artifactId>uncommons-maths</artifactId> 
+   <version>${uncommons-maths-version}</version> <exclusions> <exclusion> <groupId>org.jfree</groupId> 
+   <artifactId>jcommon</artifactId> </exclusion> <exclusion> <groupId>org.jfree</groupId> 
+   <artifactId>jfreechart</artifactId> </exclusion> <exclusion> <groupId>jfree</groupId> 
+   <artifactId>jcommon</artifactId> </exclusion> <exclusion> <groupId>jfree</groupId> 
+   <artifactId>jfreechart</artifactId> </exclusion> </exclusions> </dependency> -->
+  <dependency>
+   <groupId>com.google.guava</groupId>
+   <artifactId>guava</artifactId>
+   <version>${guava-version}</version>
+  </dependency>
+  <dependency>
+   <groupId>com.carrotsearch</groupId>
+   <artifactId>hppc</artifactId>
+   <version>${hppc-version}</version>
+  </dependency>
+  <dependency>
+   <groupId>org.junit.jupiter</groupId>
+   <artifactId>junit-jupiter-api</artifactId>
+   <version>${junit-jupiter-version}</version>
+   <scope>test</scope>
+  </dependency>
+  <dependency>
+   <groupId>org.junit.jupiter</groupId>
+   <artifactId>junit-jupiter-params</artifactId>
+   <version>${junit-jupiter-version}</version>
+   <scope>test</scope>
+  </dependency>
+  <dependency>
+   <groupId>org.junit.jupiter</groupId>
+   <artifactId>junit-jupiter-engine</artifactId>
+   <version>${junit-jupiter-version}</version>
+   <scope>test</scope>
+  </dependency>
+  <dependency>
+   <groupId>org.testng</groupId>
+   <artifactId>testng</artifactId>
+   <version>${testng-version}</version>
+   <scope>test</scope>
+  </dependency>
+
+  <dependency>
+   <groupId>com.github.peteroupc</groupId>
+   <artifactId>numbers</artifactId>
+   <version>${numbers-java-version}</version>
+   <scope>test</scope>
+  </dependency>
+
+     <dependency>
+         <groupId>org.locationtech.jts</groupId>
+         <artifactId>jts-core</artifactId>
+         <version>${jts-version}</version>
+     </dependency>
+     <!-- https://mvnrepository.com/artifact/org.locationtech.jts.io/jts-io-common -->
+     <dependency>
+         <groupId>org.locationtech.jts.io</groupId>
+         <artifactId>jts-io-common</artifactId>
+         <version>${jts-version}</version>
+     </dependency> </dependencies>
+</project>
