@@ -1,134 +1,34 @@
 (set! *warn-on-reflection* true)
-(set! *unchecked-math* :warn-on-boxed)
+;;(set! *unchecked-math* :warn-on-boxed)
+;;----------------------------------------------------------------
+;; clj src\scripts\clojure\mop\moon.clj
 ;;----------------------------------------------------------------
 (ns mop.moon
 
   {:doc "Mesh Viewer demo using lwjgl and glfw."
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-10-06"}
+   :version "2025-10-07"}
 
   (:require [clojure.java.io :as io]
-            [clojure.math :refer (PI to-radians)]
-            [fastmath.vector :refer (vec3 sub add mult normalize)]
-            [clojure.java.io :as io])
-  (:import (java.awt.image BufferedImage WritableRaster)
-           [java.nio ByteBuffer FloatBuffer IntBuffer]
+            [clojure.math :refer [PI to-radians]]
+            [fastmath.vector :refer [add mult normalize sub vec3]]
+            [mop.lwjgl.glfw.util :as glfw]
+            [mop.lwjgl.util :as lwjgl])
+  (:import [java.awt.image BufferedImage WritableRaster]
+           [java.nio ByteBuffer]
            [javax.imageio ImageIO]
-           [org.lwjgl BufferUtils]
-           [org.lwjgl.glfw GLFW GLFWCursorPosCallbackI GLFWMouseButtonCallbackI GLFWVidMode]
-           [org.lwjgl.opengl GL GL11 GL13 GL15 GL20 GL30]) )
+           [org.lwjgl.glfw GLFW]
+           [org.lwjgl.opengl GL11 GL13 GL20 GL30]) )
 
 (def ^Double radius (double 1737.4))
 
 (def mouse-pos (atom [0.0 0.0]))
 (def mouse-button (atom false))
 
-(defn tmpdir
-  []
-  (System/getProperty "java.io.tmpdir"))
+(glfw/init)
 
-(defn tmpname
-  []
-  (str (tmpdir) "/civitas-" (java.util.UUID/randomUUID) ".tmp"))
-
-(GLFW/glfwInit)
-
-(def monitor (GLFW/glfwGetPrimaryMonitor))
-(def ^GLFWVidMode mode (GLFW/glfwGetVideoMode monitor))
-(def window-width (.width mode))
-(def window-height (.height mode))
-
-(GLFW/glfwDefaultWindowHints)
-(GLFW/glfwWindowHint GLFW/GLFW_DECORATED GLFW/GLFW_TRUE)
-(def window (^[int int CharSequence long long] GLFW/glfwCreateWindow window-width window-height "cube" 0 0))
-
-(GLFW/glfwShowWindow window)
-
-(GLFW/glfwMakeContextCurrent window)
-(GL/createCapabilities)
-
-(GLFW/glfwSetCursorPosCallback
-  window
-  (reify GLFWCursorPosCallbackI  ; do not simplify using a Clojure fn, because otherwise the uber jar build breaks
-    (invoke
-      [_this _window xpos ypos]
-      (reset! mouse-pos [xpos (- window-height ypos 1)]))))
-
-(GLFW/glfwSetMouseButtonCallback
-  window
-  (reify GLFWMouseButtonCallbackI  ; do not simplify using a Clojure fn, because otherwise the uber jar build breaks
-    (invoke
-      [_this _window _button action _mods]
-      (reset! mouse-button (= action GLFW/GLFW_PRESS)))))
-
-(defn make-shader [source shader-type]
-  (let [shader (GL20/glCreateShader shader-type)]
-    (^[int CharSequence] GL20/glShaderSource shader source)
-    (GL20/glCompileShader shader)
-    (when (zero? (GL20/glGetShaderi shader GL20/GL_COMPILE_STATUS))
-      (throw (Exception. (GL20/glGetShaderInfoLog shader 1024))))
-    shader))
-
-(defn make-program [& shaders]
-  (let [program (GL20/glCreateProgram)]
-    (doseq [shader shaders]
-           (GL20/glAttachShader program shader)
-           (GL20/glDeleteShader shader))
-    (GL20/glLinkProgram program)
-    (when (zero? (GL20/glGetProgrami program GL20/GL_LINK_STATUS))
-      (throw (Exception. (GL20/glGetProgramInfoLog program 1024))))
-    program))
-
-;TODO: macro with type tags that avoids reflection warning
-; (defmacro def-make-buffer [method create-buffer]
-;  `(defn ~method [data#]
-;     (let [buffer# (~create-buffer (count data#))]
-;       (.put buffer# data#)
-;       (.flip buffer#)
-;       buffer#)))
-;
-;(def-make-buffer make-float-buffer BufferUtils/createFloatBuffer)
-;(def-make-buffer make-int-buffer BufferUtils/createIntBuffer)
-;(def-make-buffer make-byte-buffer BufferUtils/createByteBuffer)
-
-(defn make-float-buffer [^floats data]
-  (let [^FloatBuffer buffer (BufferUtils/createFloatBuffer (count data))]
-       (.put buffer data)
-       (.flip buffer)
-       buffer))
-
-(defn make-int-buffer [^ints data]
-  (let [^IntBuffer buffer (BufferUtils/createIntBuffer (count data))]
-    (.put buffer data)
-    (.flip buffer)
-    buffer))
-
-(defn make-byte-buffer [^bytes data]
-  (let [^ByteBuffer buffer (BufferUtils/createByteBuffer (count data))]
-    (.put buffer data)
-    (.flip buffer)
-    buffer))
-
-(defn setup-vao [vertices indices]
-  (let [vao (GL30/glGenVertexArrays)
-        vbo (GL15/glGenBuffers)
-        ibo (GL15/glGenBuffers)]
-    (GL30/glBindVertexArray vao)
-    (GL15/glBindBuffer GL15/GL_ARRAY_BUFFER vbo)
-    (^[int FloatBuffer int] GL15/glBufferData
-     GL15/GL_ARRAY_BUFFER (make-float-buffer vertices) GL15/GL_STATIC_DRAW)
-    (GL15/glBindBuffer GL15/GL_ELEMENT_ARRAY_BUFFER ibo)
-    (^[int IntBuffer int] GL15/glBufferData GL15/GL_ELEMENT_ARRAY_BUFFER (make-int-buffer indices)
-                                            GL15/GL_STATIC_DRAW)
-    {:vao vao :vbo vbo :ibo ibo}))
-
-(defn teardown-vao [{:keys [vao vbo ibo]}]
-  (GL15/glBindBuffer GL15/GL_ELEMENT_ARRAY_BUFFER 0)
-  (^[int] GL15/glDeleteBuffers ibo)
-  (GL15/glBindBuffer GL15/GL_ARRAY_BUFFER 0)
-  (^[int] GL15/glDeleteBuffers vbo)
-  (GL30/glBindVertexArray 0)
-  (^[int] GL15/glDeleteBuffers vao))
+(def window
+  (glfw/start-fullscreen-window "cube" mouse-pos mouse-button))
 
 (defn download [url target]
   (with-open [in (io/input-stream url)
@@ -150,18 +50,25 @@
 (def color-height (.getHeight color-raster))
 (def color-channels (.getNumBands color-raster))
 (def color-pixels (int-array (* color-width color-height color-channels)))
-(.getPixels color-raster 0 0 ^long color-width ^long color-height ^ints color-pixels)
+(.getPixels color-raster
+            0 0 ^long color-width ^long color-height ^ints color-pixels)
 
 (def texture-color (GL11/glGenTextures))
 (GL11/glBindTexture GL11/GL_TEXTURE_2D texture-color)
 (^[int int int int int int int int ByteBuffer]
-  GL11/glTexImage2D GL11/GL_TEXTURE_2D 0 GL11/GL_RGBA color-width color-height 0
+  GL11/glTexImage2D GL11/GL_TEXTURE_2D 0 GL11/GL_RGBA
+                    color-width color-height 0
                     GL11/GL_RGB GL11/GL_UNSIGNED_BYTE
-                    (make-byte-buffer (byte-array (map unchecked-byte color-pixels))))
-(GL11/glTexParameteri GL11/GL_TEXTURE_2D GL11/GL_TEXTURE_MIN_FILTER GL11/GL_LINEAR)
-(GL11/glTexParameteri GL11/GL_TEXTURE_2D GL11/GL_TEXTURE_MAG_FILTER GL11/GL_LINEAR)
-(GL11/glTexParameteri GL11/GL_TEXTURE_2D GL11/GL_TEXTURE_WRAP_S GL11/GL_REPEAT)
-(GL11/glTexParameteri GL11/GL_TEXTURE_2D GL11/GL_TEXTURE_WRAP_T GL11/GL_REPEAT)
+                    (lwjgl/make-byte-buffer
+                     (byte-array (map unchecked-byte color-pixels))))
+(GL11/glTexParameteri GL11/GL_TEXTURE_2D
+                      GL11/GL_TEXTURE_MIN_FILTER GL11/GL_LINEAR)
+(GL11/glTexParameteri GL11/GL_TEXTURE_2D
+                      GL11/GL_TEXTURE_MAG_FILTER GL11/GL_LINEAR)
+(GL11/glTexParameteri GL11/GL_TEXTURE_2D
+                      GL11/GL_TEXTURE_WRAP_S GL11/GL_REPEAT)
+(GL11/glTexParameteri GL11/GL_TEXTURE_2D
+                      GL11/GL_TEXTURE_WRAP_T GL11/GL_REPEAT)
 (GL11/glBindTexture GL11/GL_TEXTURE_2D 0)
 
 (def vertices-cube
@@ -248,9 +155,14 @@ void main()
          [offset (inc offset) (+ offset n 2) (+ offset n 1)])))
 
 (def n2 16)
-(def vertices-sphere-high (float-array (flatten (map (partial sphere-points n2) corners u-vectors v-vectors))))
-(def indices-sphere-high (int-array (flatten (map (partial sphere-indices n2) (range 6)))))
-(def vao-sphere-high (setup-vao vertices-sphere-high indices-sphere-high))
+(def vertices-sphere-high
+  (float-array
+   (flatten (map (partial sphere-points n2)
+                 corners u-vectors v-vectors))))
+(def indices-sphere-high
+  (int-array (flatten (map (partial sphere-indices n2) (range 6)))))
+(def vao-sphere-high
+  (lwjgl/setup-vao vertices-sphere-high indices-sphere-high))
 
 (def light (normalize (vec3 -1 0 -1)))
 
@@ -352,9 +264,12 @@ void main()
   fragColor = vec4(color(uv(vpoint)) * phong, 1);
 }")
 
-(def vertex-shader (make-shader vertex-shader-code GL30/GL_VERTEX_SHADER))
-(def fragment-shader (make-shader fragment-shader-code GL30/GL_FRAGMENT_SHADER))
-(def program (make-program vertex-shader fragment-shader))
+(def vertex-shader
+  (lwjgl/make-shader vertex-shader-code GL30/GL_VERTEX_SHADER))
+(def fragment-shader
+  (lwjgl/make-shader fragment-shader-code GL30/GL_FRAGMENT_SHADER))
+(def program
+  (lwjgl/make-program vertex-shader fragment-shader))
 
 (GL20/glVertexAttribPointer
  (^[int CharSequence] GL20/glGetAttribLocation program "point")
@@ -362,8 +277,11 @@ void main()
 (GL20/glEnableVertexAttribArray 0)
 
 (GL20/glUseProgram program)
-(GL20/glUniform2f (^[int CharSequence] GL20/glGetUniformLocation program "iResolution")
-                  window-width window-height)
+(let [[w0 h0] (glfw/window-size window)]
+  (GL20/glUniform2f
+   (^[int CharSequence] GL20/glGetUniformLocation
+    program "iResolution") w0 h0))
+
 (GL20/glUniform1f (^[int CharSequence] GL20/glGetUniformLocation program "fov") (to-radians 20.0))
 (GL20/glUniform1f (^[int CharSequence] GL20/glGetUniformLocation program "distance") (* (.doubleValue radius) 12.0))
 (GL20/glUniform1f (^[int CharSequence] GL20/glGetUniformLocation program "resolution") resolution)
@@ -380,17 +298,20 @@ void main()
 
 (while (not (GLFW/glfwWindowShouldClose window))
        (when @mouse-button
-         (GL20/glUniform2f (^[int CharSequence] GL20/glGetUniformLocation program "iMouse") (@mouse-pos 0) (@mouse-pos 1)))
+         (GL20/glUniform2f
+          (^[int CharSequence] GL20/glGetUniformLocation program "iMouse")
+          (@mouse-pos 0) (@mouse-pos 1)))
        (GL11/glEnable GL11/GL_CULL_FACE)
        (GL11/glCullFace GL11/GL_BACK)
        (GL11/glClearColor 0.0 0.0 0.0 1.0)
        (GL11/glClear GL11/GL_COLOR_BUFFER_BIT)
-       (GL11/glDrawElements GL11/GL_QUADS (count indices-sphere-high) GL11/GL_UNSIGNED_INT 0)
+       (GL11/glDrawElements
+        GL11/GL_QUADS (count indices-sphere-high) GL11/GL_UNSIGNED_INT 0)
        (GLFW/glfwSwapBuffers window)
        (GLFW/glfwPollEvents))
 
 (GL20/glDeleteProgram program)
-(teardown-vao vao-sphere-high)
+(lwjgl/teardown-vao vao-sphere-high)
 (^[int] GL11/glDeleteTextures texture-color)
 (^[int] GL11/glDeleteTextures texture-ldem)
 (GLFW/glfwDestroyWindow window)

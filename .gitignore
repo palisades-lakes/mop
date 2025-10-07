@@ -1,3 +1,4 @@
+*.iml
 /classes/
 /.classpath
 /.project
