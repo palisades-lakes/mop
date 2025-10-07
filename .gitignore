@@ -1,4 +1,5 @@
 *.iml
+/images/
 /classes/
 /.classpath
 /.project

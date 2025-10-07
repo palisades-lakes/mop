@@ -5,13 +5,15 @@
 ;;----------------------------------------------------------------
 (ns mop.moon
 
-  {:doc "Mesh Viewer demo using lwjgl and glfw."
+  {:doc "Mesh Viewer demo using lwjgl and glfw.
+  See https://svs.gsfc.nasa.gov/4720/ for texture and elevation images."
    :author "palisades dot lakes at gmail dot com"
    :version "2025-10-07"}
 
   (:require [clojure.java.io :as io]
             [clojure.math :refer [PI to-radians]]
             [fastmath.vector :refer [add mult normalize sub vec3]]
+            [mop.image.util :as image]
             [mop.lwjgl.glfw.util :as glfw]
             [mop.lwjgl.util :as lwjgl])
   (:import [java.awt.image BufferedImage WritableRaster]
@@ -30,17 +32,13 @@
 (def window
   (glfw/start-fullscreen-window "cube" mouse-pos mouse-button))
 
-(defn download [url target]
-  (with-open [in (io/input-stream url)
-              out (io/output-stream target)]
-    (print "Downloading" target "... ")
-    (flush)
-    (io/copy in out)
-    (println "done")))
+;;-------------------------------------------------------------
+;; texture
+;;-------------------------------------------------------------
 
-(def moon-tif "lroc_color_poles_2k.tif")
+(def moon-tif "images/lroc_color_poles_2k.tif")
 (when (not (.exists (io/file moon-tif)))
-  (download
+  (image/download
     "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_poles_2k.tif"
     moon-tif))
 
@@ -70,6 +68,10 @@
 (GL11/glTexParameteri GL11/GL_TEXTURE_2D
                       GL11/GL_TEXTURE_WRAP_T GL11/GL_REPEAT)
 (GL11/glBindTexture GL11/GL_TEXTURE_2D 0)
+
+;;----------------------------------------------------------------------
+;; base geometry
+;;----------------------------------------------------------------------
 
 (def vertices-cube
   (float-array [-1.0 -1.0 -1.0
@@ -166,10 +168,15 @@ void main()
 
 (def light (normalize (vec3 -1 0 -1)))
 
-(def moon-ldem "ldem_4.tif")
+;;-------------------------------------------------------------------
+;; elevation image relative to ?
+;;-------------------------------------------------------------------
+
+(def moon-ldem "images/ldem_4.tif")
 (when (not (.exists (io/file moon-ldem)))
-  (download "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/ldem_4.tif"
-            moon-ldem))
+  (image/download
+  "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/ldem_4.tif"
+  moon-ldem))
 
 (def ^BufferedImage ldem (ImageIO/read (io/file moon-ldem)))
 (def ^WritableRaster ldem-raster (.getRaster ldem))
@@ -185,7 +192,8 @@ void main()
 (GL11/glTexParameteri GL11/GL_TEXTURE_2D GL11/GL_TEXTURE_MAG_FILTER GL11/GL_LINEAR)
 (GL11/glTexParameteri GL11/GL_TEXTURE_2D GL11/GL_TEXTURE_WRAP_S GL11/GL_REPEAT)
 (GL11/glTexParameteri GL11/GL_TEXTURE_2D GL11/GL_TEXTURE_WRAP_T GL11/GL_REPEAT)
-(^[int int int int int int int int float/1] GL11/glTexImage2D
+(^[int int int int int int int int float/1]
+  GL11/glTexImage2D
  GL11/GL_TEXTURE_2D 0 GL30/GL_R32F ldem-width ldem-height 0
  GL11/GL_RED GL11/GL_FLOAT ldem-pixels)
 
@@ -314,5 +322,4 @@ void main()
 (lwjgl/teardown-vao vao-sphere-high)
 (^[int] GL11/glDeleteTextures texture-color)
 (^[int] GL11/glDeleteTextures texture-ldem)
-(GLFW/glfwDestroyWindow window)
-(GLFW/glfwTerminate)
+(glfw/clean-up window)
