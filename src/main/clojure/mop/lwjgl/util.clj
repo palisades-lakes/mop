@@ -1,12 +1,14 @@
 (ns mop.lwjgl.util
 
-  {:doc "LWJGL utilities"
-   :author "palisades dot lakes at gmail dot com"
+  {:doc     "LWJGL utilities"
+   :author  "palisades dot lakes at gmail dot com"
    :version "2025-10-07"}
 
-  (:import (java.nio ByteBuffer FloatBuffer IntBuffer)
+  (:require [mop.image.util :as image])
+  (:import [java.awt.image WritableRaster]
+           (java.nio ByteBuffer FloatBuffer IntBuffer)
            (org.lwjgl BufferUtils)
-           (org.lwjgl.opengl GL15 GL20 GL30)))
+           (org.lwjgl.opengl GL11 GL15 GL20 GL30)))
 
 (defn make-shader [source shader-type]
   (let [shader (GL20/glCreateShader shader-type)]
@@ -65,3 +67,56 @@
   (^[int] GL15/glDeleteBuffers vbo)
   (GL30/glBindVertexArray 0)
   (^[int] GL15/glDeleteBuffers vao))
+
+;;------------------------------------------------------------------
+;; TODO: probably not general enough
+
+(defn int-texture-from-image-file [local-path remote-url]
+  (let [^WritableRaster raster (image/get-writeable-raster local-path remote-url)
+        [pixels pw ph] (image/pixels-as-ints raster)
+        texture (GL11/glGenTextures)]
+    (println "W" pw "H" ph "p" (aget pixels (/ (* pw ph) 2)))
+    (GL11/glBindTexture GL11/GL_TEXTURE_2D texture)
+    (^[int int int int int int int int ByteBuffer]
+      GL11/glTexImage2D
+     GL11/GL_TEXTURE_2D 0 GL11/GL_RGBA pw ph 0 GL11/GL_RGB GL11/GL_UNSIGNED_BYTE
+     (make-byte-buffer (byte-array (map unchecked-byte pixels))))
+    (GL11/glTexParameteri GL11/GL_TEXTURE_2D
+                          GL11/GL_TEXTURE_MIN_FILTER
+                          GL11/GL_LINEAR)
+    (GL11/glTexParameteri GL11/GL_TEXTURE_2D
+                          GL11/GL_TEXTURE_MAG_FILTER
+                          GL11/GL_LINEAR)
+    (GL11/glTexParameteri GL11/GL_TEXTURE_2D
+                          GL11/GL_TEXTURE_WRAP_S
+                          GL11/GL_REPEAT)
+    (GL11/glTexParameteri GL11/GL_TEXTURE_2D
+                          GL11/GL_TEXTURE_WRAP_T
+                          GL11/GL_REPEAT)
+    (GL11/glBindTexture GL11/GL_TEXTURE_2D 0)
+    [texture pw ph]))
+
+(defn float-texture-from-image-file [local-path remote-url]
+  (let [^WritableRaster raster (image/get-writeable-raster local-path remote-url)
+        [pixels pw ph] (image/pixels-as-floats raster)
+        texture (GL11/glGenTextures)]
+    (println "W" pw "H" ph "p" (aget pixels (/ (* pw ph) 2)))
+    (GL11/glBindTexture GL11/GL_TEXTURE_2D texture)
+    (GL11/glTexParameteri GL11/GL_TEXTURE_2D
+                          GL11/GL_TEXTURE_MIN_FILTER
+                          GL11/GL_LINEAR)
+    (GL11/glTexParameteri GL11/GL_TEXTURE_2D
+                          GL11/GL_TEXTURE_MAG_FILTER
+                          GL11/GL_LINEAR)
+    (GL11/glTexParameteri GL11/GL_TEXTURE_2D
+                          GL11/GL_TEXTURE_WRAP_S
+                          GL11/GL_REPEAT)
+    (GL11/glTexParameteri GL11/GL_TEXTURE_2D
+                          GL11/GL_TEXTURE_WRAP_T
+                          GL11/GL_REPEAT)
+    (^[int int int int int int int int float/1]
+      GL11/glTexImage2D
+     GL11/GL_TEXTURE_2D 0 GL30/GL_R32F pw ph 0
+     GL11/GL_RED GL11/GL_FLOAT pixels)
+    (GL11/glBindTexture GL11/GL_TEXTURE_2D 0)
+    [texture pw ph]))

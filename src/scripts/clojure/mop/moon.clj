@@ -33,41 +33,25 @@
   (glfw/start-fullscreen-window "cube" mouse-pos mouse-button))
 
 ;;-------------------------------------------------------------
-;; texture
+;; color texture
 ;;-------------------------------------------------------------
 
-(def moon-tif "images/lroc_color_poles_2k.tif")
-(when (not (.exists (io/file moon-tif)))
-  (image/download
-    "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_poles_2k.tif"
-    moon-tif))
+(let [[texture w h]
+      (lwjgl/int-texture-from-image-file
+       "images/lroc_color_poles_2k.tif"
+       "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_poles_2k.tif")]
+  (def color-texture texture))
 
-(def ^BufferedImage color (ImageIO/read (io/file moon-tif)))
-(def ^WritableRaster color-raster (.getRaster color))
-(def color-width (.getWidth color-raster))
-(def color-height (.getHeight color-raster))
-(def color-channels (.getNumBands color-raster))
-(def color-pixels (int-array (* color-width color-height color-channels)))
-(.getPixels color-raster
-            0 0 ^long color-width ^long color-height ^ints color-pixels)
+;;-------------------------------------------------------------------
+;; elevation image relative to ?
+;;-------------------------------------------------------------------
 
-(def texture-color (GL11/glGenTextures))
-(GL11/glBindTexture GL11/GL_TEXTURE_2D texture-color)
-(^[int int int int int int int int ByteBuffer]
-  GL11/glTexImage2D GL11/GL_TEXTURE_2D 0 GL11/GL_RGBA
-                    color-width color-height 0
-                    GL11/GL_RGB GL11/GL_UNSIGNED_BYTE
-                    (lwjgl/make-byte-buffer
-                     (byte-array (map unchecked-byte color-pixels))))
-(GL11/glTexParameteri GL11/GL_TEXTURE_2D
-                      GL11/GL_TEXTURE_MIN_FILTER GL11/GL_LINEAR)
-(GL11/glTexParameteri GL11/GL_TEXTURE_2D
-                      GL11/GL_TEXTURE_MAG_FILTER GL11/GL_LINEAR)
-(GL11/glTexParameteri GL11/GL_TEXTURE_2D
-                      GL11/GL_TEXTURE_WRAP_S GL11/GL_REPEAT)
-(GL11/glTexParameteri GL11/GL_TEXTURE_2D
-                      GL11/GL_TEXTURE_WRAP_T GL11/GL_REPEAT)
-(GL11/glBindTexture GL11/GL_TEXTURE_2D 0)
+(let [[texture w h]
+      (lwjgl/float-texture-from-image-file
+       "images/ldem_4.tif"
+       "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/ldem_4.tif")]
+  (def elevation-texture texture)
+  (def resolution (/ (* 2.0 PI radius) w)))
 
 ;;----------------------------------------------------------------------
 ;; base geometry
@@ -168,34 +152,7 @@ void main()
 
 (def light (normalize (vec3 -1 0 -1)))
 
-;;-------------------------------------------------------------------
-;; elevation image relative to ?
-;;-------------------------------------------------------------------
-
-(def moon-ldem "images/ldem_4.tif")
-(when (not (.exists (io/file moon-ldem)))
-  (image/download
-  "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/ldem_4.tif"
-  moon-ldem))
-
-(def ^BufferedImage ldem (ImageIO/read (io/file moon-ldem)))
-(def ^WritableRaster ldem-raster (.getRaster ldem))
-(def ldem-width (.getWidth ldem))
-(def ldem-height (.getHeight ldem))
-(def ldem-pixels (float-array (* ldem-width ldem-height)))
-(do (.getPixels ldem-raster 0 0 ^long ldem-width ^long ldem-height ^floats ldem-pixels) nil)
-(def resolution (/ (* 2.0 PI radius) ldem-width))
-
-(def texture-ldem (GL11/glGenTextures))
-(GL11/glBindTexture GL11/GL_TEXTURE_2D texture-ldem)
-(GL11/glTexParameteri GL11/GL_TEXTURE_2D GL11/GL_TEXTURE_MIN_FILTER GL11/GL_LINEAR)
-(GL11/glTexParameteri GL11/GL_TEXTURE_2D GL11/GL_TEXTURE_MAG_FILTER GL11/GL_LINEAR)
-(GL11/glTexParameteri GL11/GL_TEXTURE_2D GL11/GL_TEXTURE_WRAP_S GL11/GL_REPEAT)
-(GL11/glTexParameteri GL11/GL_TEXTURE_2D GL11/GL_TEXTURE_WRAP_T GL11/GL_REPEAT)
-(^[int int int int int int int int float/1]
-  GL11/glTexImage2D
- GL11/GL_TEXTURE_2D 0 GL30/GL_R32F ldem-width ldem-height 0
- GL11/GL_RED GL11/GL_FLOAT ldem-pixels)
+;;----------------------------------------------------
 
 (def fragment-shader-code "
 #version 130
@@ -300,9 +257,9 @@ void main()
 (GL20/glUniform1i (^[int CharSequence] GL20/glGetUniformLocation program "moon") 0)
 (GL20/glUniform1i (^[int CharSequence] GL20/glGetUniformLocation program "ldem") 1)
 (GL13/glActiveTexture GL13/GL_TEXTURE0)
-(GL11/glBindTexture GL11/GL_TEXTURE_2D texture-color)
+(GL11/glBindTexture GL11/GL_TEXTURE_2D color-texture)
 (GL13/glActiveTexture GL13/GL_TEXTURE1)
-(GL11/glBindTexture GL11/GL_TEXTURE_2D texture-ldem)
+(GL11/glBindTexture GL11/GL_TEXTURE_2D elevation-texture)
 
 (while (not (GLFW/glfwWindowShouldClose window))
        (when @mouse-button
@@ -320,6 +277,6 @@ void main()
 
 (GL20/glDeleteProgram program)
 (lwjgl/teardown-vao vao-sphere-high)
-(^[int] GL11/glDeleteTextures texture-color)
-(^[int] GL11/glDeleteTextures texture-ldem)
+(^[int] GL11/glDeleteTextures color-texture)
+(^[int] GL11/glDeleteTextures elevation-texture)
 (glfw/clean-up window)
