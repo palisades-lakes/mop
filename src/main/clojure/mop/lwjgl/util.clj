@@ -2,7 +2,7 @@
 
   {:doc     "LWJGL utilities"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-10-07"}
+   :version "2025-10-10"}
 
   (:require [mop.image.util :as image])
   (:import [java.awt.image WritableRaster]
@@ -94,7 +94,7 @@
                           GL11/GL_TEXTURE_WRAP_T
                           GL11/GL_REPEAT)
     (GL11/glBindTexture GL11/GL_TEXTURE_2D 0)
-    [texture pw ph]))
+    texture))
 
 (defn float-texture-from-image-file [local-path remote-url]
   (let [^WritableRaster raster (image/get-writeable-raster local-path remote-url)
@@ -119,4 +119,4 @@
      GL11/GL_TEXTURE_2D 0 GL30/GL_R32F pw ph 0
      GL11/GL_RED GL11/GL_FLOAT pixels)
     (GL11/glBindTexture GL11/GL_TEXTURE_2D 0)
-    [texture pw ph]))
+    [texture (min pw ph)]))
