@@ -29,11 +29,14 @@
     program))
 
 (defmacro def-make-buffer [method create-buffer return-type]
-  `(defn ~(with-meta method {:tag return-type}) [data#]
-     (let [buffer# (~create-buffer (count data#))]
-       (.put buffer# data#)
+  (let [method (with-meta method {:tag return-type})
+        ;; cursive has problems with data# internal symbols
+        data (gensym "data")]
+  `(defn ~method [~data]
+     (let [buffer# (~create-buffer (count ~data))]
+       (.put buffer# ~data)
        (.flip buffer#)
-       buffer#)))
+       buffer#))))
 
 (def-make-buffer make-float-buffer
                  BufferUtils/createFloatBuffer
@@ -119,4 +122,4 @@
      GL11/GL_TEXTURE_2D 0 GL30/GL_R32F pw ph 0
      GL11/GL_RED GL11/GL_FLOAT pixels)
     (GL11/glBindTexture GL11/GL_TEXTURE_2D 0)
-    [texture (min pw ph)]))
+    [texture (max pw ph)]))

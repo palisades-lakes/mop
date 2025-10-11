@@ -16,7 +16,7 @@
             [mop.lwjgl.glfw.util :as glfw]
             [mop.lwjgl.util :as lwjgl])
   (:import [org.lwjgl.glfw GLFW]
-           [org.lwjgl.opengl GL11 GL13 GL20 GL30 GL46]) )
+           [org.lwjgl.opengl GL11 GL13 GL20 GL30]))
 
 ;;-------------------------------------------------------------
 
@@ -26,7 +26,7 @@
 (glfw/init)
 
 (def window
-  (glfw/start-fullscreen-window "moon" mouse-pos mouse-button))
+  (glfw/start-window "moon" mouse-pos mouse-button))
 
 ;;-------------------------------------------------------------
 ;; color texture
@@ -131,9 +131,15 @@
 
 ;;----------------------------------------------------
 
-(GL46/glVertexAttribPointer
- (GL20/glGetAttribLocation ^int program "point")
- 3 GL11/GL_FLOAT false (* 3 Float/BYTES) (* 0 Float/BYTES))
+;; only way I've found to get cursive to stop complaining
+;; about no matching call
+(let [index (int (GL20/glGetAttribLocation ^int program "point"))
+      size (int 3)
+      type (int GL11/GL_FLOAT)
+      normalized (boolean false)
+      stride (int (* 3 Float/BYTES))
+      pointer (long (* 0 Float/BYTES))]
+  (GL20/glVertexAttribPointer index size type normalized stride pointer))
 
 (GL20/glEnableVertexAttribArray 0)
 
