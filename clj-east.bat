@@ -1,6 +1,8 @@
 @echo off
 :: palisades dot lakes at gmail dot com
 :: 2025-10-12
+::
+:: Leave clojure script folder off classpath for eastwood
 
 ::set GC=-XX:+AggressiveHeap -XX:+UseStringDeduplication 
 set GC=
@@ -16,8 +18,8 @@ set XMX=
 
 set OPENS=--add-opens java.base/java.lang=ALL-UNNAMED
 
-set CP=-cp ./src/scripts/clojure;lib/*
-::set CP=-cp lib/*
+::set CP=-cp ./src/scripts/clojure;lib/*
+set CP=-cp lib/*
 
 set JAVA="%JAVA_HOME%\bin\java"
 

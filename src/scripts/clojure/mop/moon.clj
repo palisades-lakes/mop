@@ -9,7 +9,7 @@
   {:doc "Mesh Viewer demo using lwjgl and glfw.
   See https://svs.gsfc.nasa.gov/4720/ for texture and elevation images."
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-10-10"}
+   :version "2025-10-11"}
 
   (:require [clojure.math :refer [PI to-radians]]
             [fastmath.vector :refer [add mult normalize sub vec3]]
@@ -32,7 +32,7 @@
 ;; color texture
 ;;-------------------------------------------------------------
 
-(def color-texture
+(def ^int color-texture
   (lwjgl/int-texture-from-image-file
    "images/lroc_color_poles_2k.tif"
    "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_poles_2k.tif"))
@@ -47,7 +47,7 @@
       (lwjgl/float-texture-from-image-file
        "images/ldem_4.tif"
        "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/ldem_4.tif")]
-  (def elevation-texture texture)
+  (def ^int elevation-texture texture)
   (def resolution (/ (* 2.0 PI radius) r)))
 
 ;;----------------------------------------------------------------------
@@ -126,7 +126,7 @@
   (lwjgl/make-shader (slurp "src/scripts/clojure/mop/fragment.glsl")
                      GL30/GL_FRAGMENT_SHADER))
 
-(def program
+(def ^Integer program
   (lwjgl/make-program vertex-shader fragment-shader))
 
 ;;----------------------------------------------------
@@ -144,33 +144,33 @@
 (GL20/glEnableVertexAttribArray 0)
 
 (GL20/glUseProgram program)
+
 (let [[w0 h0] (glfw/window-size window)]
   (GL20/glUniform2f
-   (GL20/glGetUniformLocation ^int program "iResolution") w0 h0))
-
+   (GL20/glGetUniformLocation program "iResolution") w0 h0))
 (GL20/glUniform1f
- (GL20/glGetUniformLocation ^int program "fov")
+ (GL20/glGetUniformLocation program "fov")
  (to-radians 20.0))
 (GL20/glUniform1f
- (GL20/glGetUniformLocation ^int program "distance")
+ (GL20/glGetUniformLocation program "distance")
  (* (.doubleValue radius) 12.0))
 (GL20/glUniform1f
- (GL20/glGetUniformLocation ^int program "resolution")
+ (GL20/glGetUniformLocation program "resolution")
  resolution)
 (GL20/glUniform1f
- (GL20/glGetUniformLocation ^int program "ambient")
+ (GL20/glGetUniformLocation program "ambient")
  0.1)
 (GL20/glUniform1f
- (GL20/glGetUniformLocation ^int program "diffuse")
+ (GL20/glGetUniformLocation program "diffuse")
  0.9)
 (GL20/glUniform3f
- (GL20/glGetUniformLocation ^int program "light")
+ (GL20/glGetUniformLocation program "light")
  (light 0) (light 1) (light 2))
 (GL20/glUniform1i
- (GL20/glGetUniformLocation ^int program "colorTexture")
+ (GL20/glGetUniformLocation program "colorTexture")
  0)
 (GL20/glUniform1i
- (GL20/glGetUniformLocation ^int program "elevationTexture") 1)
+ (GL20/glGetUniformLocation program "elevationTexture") 1)
 (GL13/glActiveTexture GL13/GL_TEXTURE0)
 (GL11/glBindTexture GL11/GL_TEXTURE_2D color-texture)
 (GL13/glActiveTexture GL13/GL_TEXTURE1)
@@ -179,8 +179,9 @@
 (while (not (GLFW/glfwWindowShouldClose window))
        (when @mouse-button
          (GL20/glUniform2f
-          (^[int CharSequence] GL20/glGetUniformLocation program "iMouse")
-          (@mouse-pos 0) (@mouse-pos 1)))
+          (GL20/glGetUniformLocation program "iMouse")
+          (@mouse-pos 0)
+          (@mouse-pos 1)))
        (GL11/glEnable GL11/GL_CULL_FACE)
        (GL11/glCullFace GL11/GL_BACK)
        (GL11/glClearColor 0.0 0.0 0.0 1.0)
@@ -192,6 +193,6 @@
 
 (GL20/glDeleteProgram program)
 (lwjgl/teardown-vao vao-sphere-high)
-(^[int] GL11/glDeleteTextures color-texture)
-(^[int] GL11/glDeleteTextures elevation-texture)
+(GL11/glDeleteTextures color-texture)
+(GL11/glDeleteTextures elevation-texture)
 (glfw/clean-up window)

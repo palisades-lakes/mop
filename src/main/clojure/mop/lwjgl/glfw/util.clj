@@ -2,7 +2,7 @@
 
   {:doc "LWJGL/GLFW utilities"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-10-11"}
+   :version "2025-10-12"}
 
   (:import [org.lwjgl PointerBuffer]
            [org.lwjgl.glfw GLFW]
@@ -87,16 +87,17 @@
 
 ;;--------------------------------------------------------------
 
-(defn window-size [window]
+(defn window-size [^long window]
   (let [ww (int-array 1)
         hh (int-array 1)]
-    (^[long int/1 int/1] GLFW/glfwGetWindowSize window ww hh)
+    (GLFW/glfwGetWindowSize window ww hh)
     [(aget ww 0) (aget hh 0)]))
 
 ;;--------------------------------------------------------------
 
-(defn clean-up [window]
+(defn clean-up [^long window]
   (GLFW/glfwDestroyWindow window)
   (GLFW/glfwTerminate))
+
 ;;--------------------------------------------------------------
 

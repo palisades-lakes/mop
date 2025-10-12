@@ -2,12 +2,12 @@
 
   {:doc     "Image utilities."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-10-07"}
+   :version "2025-10-11"}
 
   (:require [clojure.java.io :as io])
   (:import [java.awt.image BufferedImage WritableRaster]
            [javax.imageio ImageIO]))
-
+;;---------------------------------------------------------------
 (defn download [url target]
   (with-open [in (io/input-stream url)
               out (io/output-stream target)]
