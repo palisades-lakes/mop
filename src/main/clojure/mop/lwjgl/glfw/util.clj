@@ -2,13 +2,17 @@
 
   {:doc "LWJGL/GLFW utilities"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-10-12"}
+   :version "2025-10-14"}
 
-  (:import [org.lwjgl PointerBuffer]
+  (:require [clojure.math :as math]
+            [mop.lwjgl.util :as lwjgl])
+  (:import [java.util Map]
+           [org.lwjgl PointerBuffer]
            [org.lwjgl.glfw GLFW]
-           [org.lwjgl.opengl GL]))
+           [org.lwjgl.opengl GL GL46]))
 ;;--------------------------------------------------------------
 ;; TODO: check for prior initialization?
+
 (defn init [] (GLFW/glfwInit))
 
 ;;--------------------------------------------------------------
@@ -57,45 +61,91 @@
 ;; Window
 ;;--------------------------------------------------------------
 
-(defn ^Long start-window
-  ([monitor ^String title mouse-pos mouse-button]
-   (GLFW/glfwDefaultWindowHints)
-   (GLFW/glfwWindowHint GLFW/GLFW_DECORATED GLFW/GLFW_TRUE)
-   (let [[x y w h] (monitor-work-area monitor)
-         window (GLFW/glfwCreateWindow
-                 (int (/ (* 3 w) 4)) (int (/ (* 3 h) 4)) title 0 0)]
-     (GLFW/glfwSetWindowPos window (+ x (/ w 8)) (+ y (/ h 8)))
-     (GLFW/glfwMakeContextCurrent window)
-     (GLFW/glfwShowWindow window)
-     ;; TODO: does this belong here?
-     (GL/createCapabilities)
-     (GLFW/glfwSetCursorPosCallback
-      window
-      (fn [_window x y]
-        (reset! mouse-pos [x (- h y 1)])))
-     (GLFW/glfwSetMouseButtonCallback
-      window
-      (fn [_window _button action _mods]
-        (reset! mouse-button (= action GLFW/GLFW_PRESS))))
-     window))
-
-  ;; TODO: better way to choose default monitor
-  ([^String title mouse-pos mouse-button]
-   (let [mm (monitors)
-         m (last mm)]
-     (start-window m title mouse-pos mouse-button))))
-
-;;--------------------------------------------------------------
-
 (defn window-size [^long window]
   (let [ww (int-array 1)
         hh (int-array 1)]
     (GLFW/glfwGetWindowSize window ww hh)
     [(aget ww 0) (aget hh 0)]))
 
+(defn cursor-xy [^long window]
+  (let [xx (double-array 1)
+        yy (double-array 1)]
+    (GLFW/glfwGetCursorPos window xx yy)
+    [(int (math/floor (aget xx 0))) (int (math/floor (aget yy 0)))]))
+
 ;;--------------------------------------------------------------
 
-(defn clean-up [^long window]
+(defn ^Long start-window
+  ([monitor ^String title mouse-button mouse-origin theta-origin]
+   (GLFW/glfwDefaultWindowHints)
+   (GLFW/glfwWindowHint GLFW/GLFW_DECORATED GLFW/GLFW_TRUE)
+   (let [[x y monitor-w monitor-h] (monitor-work-area monitor)
+         window (GLFW/glfwCreateWindow
+                 (int (/ (* 3 monitor-w) 4))
+                 (int (/ (* 3 monitor-h) 4))
+                 title 0 0)
+         [_window-w _window-h] (window-size window)]
+     (GLFW/glfwSetWindowPos window (+ x (/ monitor-w 8)) (+ y (/ monitor-h 8)))
+     (GLFW/glfwMakeContextCurrent window)
+     ;; TODO: does this belong here?
+     (GL/createCapabilities)
+     (GLFW/glfwShowWindow window)
+
+     (GLFW/glfwSetMouseButtonCallback
+      window
+      (fn [window _button action _mods]
+        ;; TODO: make this atomic
+        (let [xy (cursor-xy window)]
+          (when  (= action GLFW/GLFW_PRESS)
+            (reset! mouse-button true)
+            (reset! mouse-origin xy))
+          (when (= action GLFW/GLFW_RELEASE)
+            (let [[alpha beta] (lwjgl/angles-from-mouse-pos
+                                (window-size window)
+                                @mouse-origin
+                                xy
+                                @theta-origin)]
+              (reset! mouse-button false)
+              (reset! theta-origin [alpha beta]))))))
+
+     #_(GLFW/glfwSetCursorPosCallback
+        window
+        (fn [_window x y]
+          (reset! mouse-pos [x (- window-h y 1)])))
+     #_(GLFW/glfwSetWindowSizeCallback
+        window
+        (fn [_window w h]))
+     window))
+
+  ;; TODO: better way to choose default monitor
+  ([^String title mouse-button mouse-origin theta-origin]
+   (let [mm (monitors)
+         m (last mm)]
+     (start-window m title mouse-button mouse-origin theta-origin))))
+
+;;--------------------------------------------------------------
+
+(defn draw-quads
+  ([^long window ^long max-index ^Boolean log]
+  (GL46/glClear GL46/GL_COLOR_BUFFER_BIT)
+  (GL46/glCullFace GL46/GL_BACK)
+  (GL46/glDrawElements GL46/GL_QUADS max-index GL46/GL_UNSIGNED_INT 0)
+  (GLFW/glfwSwapBuffers window)
+  (if log (println "draw-quads")))
+  ([^long window ^long max-index]
+   (draw-quads window max-index false)))
+
+;;--------------------------------------------------------------
+
+(defn clean-up [^Long window
+                ^Long program
+                ^Map vao
+                ^Integer color-texture
+                ^Integer elevation-texture]
+  (GL46/glDeleteProgram program)
+  (lwjgl/teardown-vao vao)
+  (GL46/glDeleteTextures color-texture)
+  (GL46/glDeleteTextures elevation-texture)
   (GLFW/glfwDestroyWindow window)
   (GLFW/glfwTerminate))
 

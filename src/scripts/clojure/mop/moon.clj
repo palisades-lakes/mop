@@ -9,30 +9,31 @@
   {:doc "Mesh Viewer demo using lwjgl and glfw.
   See https://svs.gsfc.nasa.gov/4720/ for texture and elevation images."
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-10-11"}
+   :version "2025-10-14"}
 
   (:require [clojure.math :refer [PI to-radians]]
             [fastmath.vector :refer [add mult normalize sub vec3]]
             [mop.lwjgl.glfw.util :as glfw]
             [mop.lwjgl.util :as lwjgl])
   (:import [org.lwjgl.glfw GLFW]
-           [org.lwjgl.opengl GL11 GL13 GL20 GL30]))
+           [org.lwjgl.opengl GL46]))
 
 ;;-------------------------------------------------------------
 
-(def mouse-pos (atom [0.0 0.0]))
 (def mouse-button (atom false))
+(def mouse-origin (atom [0.0 0.0]))
+(def theta-origin (atom [0.0 0.0]))
 
 (glfw/init)
 
 (def window
-  (glfw/start-window "moon" mouse-pos mouse-button))
+  (glfw/start-window "moon" mouse-button mouse-origin theta-origin))
 
 ;;-------------------------------------------------------------
 ;; color texture
 ;;-------------------------------------------------------------
 
-(def ^int color-texture
+(def ^Integer color-texture
   (lwjgl/int-texture-from-image-file
    "images/lroc_color_poles_2k.tif"
    "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_poles_2k.tif"))
@@ -47,7 +48,7 @@
       (lwjgl/float-texture-from-image-file
        "images/ldem_4.tif"
        "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/ldem_4.tif")]
-  (def ^int elevation-texture texture)
+  (def ^Integer elevation-texture texture)
   (def resolution (/ (* 2.0 PI radius) r)))
 
 ;;----------------------------------------------------------------------
@@ -56,13 +57,13 @@
 
 (def vertices-cube
   (float-array [-1.0 -1.0 -1.0
-                 1.0 -1.0 -1.0
+                1.0 -1.0 -1.0
                 -1.0  1.0 -1.0
-                 1.0  1.0 -1.0
+                1.0  1.0 -1.0
                 -1.0 -1.0  1.0
-                 1.0 -1.0  1.0
+                1.0 -1.0  1.0
                 -1.0  1.0  1.0
-                 1.0  1.0  1.0]))
+                1.0  1.0  1.0]))
 
 (def indices-cube
   (int-array [0 1 3 2
@@ -71,7 +72,6 @@
               5 7 3 1
               2 3 7 6
               4 5 1 0]))
-
 
 (def points
   (map #(apply vec3 %)
@@ -98,16 +98,18 @@
 
 (defn sphere-indices [n face]
   (for [j (range n) i (range n)]
-       (let [offset (+ (* face (inc n) (inc n)) (* j (inc n)) i)]
-         [offset (inc offset) (+ offset n 2) (+ offset n 1)])))
+    (let [offset (+ (* face (inc n) (inc n)) (* j (inc n)) i)]
+      [offset (inc offset) (+ offset n 2) (+ offset n 1)])))
 
 (def n2 16)
 (def vertices-sphere-high
   (float-array
    (flatten (map (partial sphere-points n2)
                  corners u-vectors v-vectors))))
+
 (def indices-sphere-high
   (int-array (flatten (map (partial sphere-indices n2) (range 6)))))
+
 (def vao-sphere-high
   (lwjgl/setup-vao vertices-sphere-high indices-sphere-high))
 
@@ -120,79 +122,80 @@
 
 (def vertex-shader
   (lwjgl/make-shader (slurp "src/scripts/clojure/mop/vertex.glsl")
-                     GL30/GL_VERTEX_SHADER))
+                     GL46/GL_VERTEX_SHADER))
 
 (def fragment-shader
   (lwjgl/make-shader (slurp "src/scripts/clojure/mop/fragment.glsl")
-                     GL30/GL_FRAGMENT_SHADER))
+                     GL46/GL_FRAGMENT_SHADER))
 
 (def ^Integer program
   (lwjgl/make-program vertex-shader fragment-shader))
 
 ;;----------------------------------------------------
-
 ;; only way I've found to get cursive to stop complaining
 ;; about no matching call
-(let [index (int (GL20/glGetAttribLocation ^int program "point"))
+(let [index (int (GL46/glGetAttribLocation ^int program "point"))
       size (int 3)
-      type (int GL11/GL_FLOAT)
+      type (int GL46/GL_FLOAT)
       normalized (boolean false)
       stride (int (* 3 Float/BYTES))
       pointer (long (* 0 Float/BYTES))]
-  (GL20/glVertexAttribPointer index size type normalized stride pointer))
+  (GL46/glVertexAttribPointer index size type normalized stride pointer))
 
-(GL20/glEnableVertexAttribArray 0)
+(GL46/glEnableVertexAttribArray 0)
 
-(GL20/glUseProgram program)
-
-(let [[w0 h0] (glfw/window-size window)]
-  (GL20/glUniform2f
-   (GL20/glGetUniformLocation program "iResolution") w0 h0))
-(GL20/glUniform1f
- (GL20/glGetUniformLocation program "fov")
+(GL46/glUseProgram program)
+(lwjgl/angles-from-mouse-pos
+ (glfw/window-size window) @mouse-origin (glfw/cursor-xy window) @theta-origin)
+(GL46/glUniform1f
+ (GL46/glGetUniformLocation program "fov")
  (to-radians 20.0))
-(GL20/glUniform1f
- (GL20/glGetUniformLocation program "distance")
+(GL46/glUniform1f
+ (GL46/glGetUniformLocation program "distance")
  (* (.doubleValue radius) 12.0))
-(GL20/glUniform1f
- (GL20/glGetUniformLocation program "resolution")
+(GL46/glUniform1f
+ (GL46/glGetUniformLocation program "resolution")
  resolution)
-(GL20/glUniform1f
- (GL20/glGetUniformLocation program "ambient")
+(GL46/glUniform1f
+ (GL46/glGetUniformLocation program "ambient")
  0.1)
-(GL20/glUniform1f
- (GL20/glGetUniformLocation program "diffuse")
+(GL46/glUniform1f
+ (GL46/glGetUniformLocation program "diffuse")
  0.9)
-(GL20/glUniform3f
- (GL20/glGetUniformLocation program "light")
+(GL46/glUniform3f
+ (GL46/glGetUniformLocation program "light")
  (light 0) (light 1) (light 2))
-(GL20/glUniform1i
- (GL20/glGetUniformLocation program "colorTexture")
+(GL46/glUniform1i
+ (GL46/glGetUniformLocation program "colorTexture")
  0)
-(GL20/glUniform1i
- (GL20/glGetUniformLocation program "elevationTexture") 1)
-(GL13/glActiveTexture GL13/GL_TEXTURE0)
-(GL11/glBindTexture GL11/GL_TEXTURE_2D color-texture)
-(GL13/glActiveTexture GL13/GL_TEXTURE1)
-(GL11/glBindTexture GL11/GL_TEXTURE_2D elevation-texture)
+(GL46/glUniform1i
+ (GL46/glGetUniformLocation program "elevationTexture") 1)
+(GL46/glActiveTexture GL46/GL_TEXTURE0)
+(GL46/glBindTexture GL46/GL_TEXTURE_2D color-texture)
+(GL46/glActiveTexture GL46/GL_TEXTURE1)
+(GL46/glBindTexture GL46/GL_TEXTURE_2D elevation-texture)
+
+(GL46/glEnable GL46/GL_CULL_FACE)
+(GL46/glClearColor 0.0 0.0 0.0 1.0)
+
+(GL46/glUniform1f (GL46/glGetUniformLocation program "alpha") 0.0)
+(GL46/glUniform1f (GL46/glGetUniformLocation program "beta") 0.0)
+;; TODO: call on window resize
+(lwjgl/aspect-ratio program (glfw/window-size window) "aspect")
 
 (while (not (GLFW/glfwWindowShouldClose window))
-       (when @mouse-button
-         (GL20/glUniform2f
-          (GL20/glGetUniformLocation program "iMouse")
-          (@mouse-pos 0)
-          (@mouse-pos 1)))
-       (GL11/glEnable GL11/GL_CULL_FACE)
-       (GL11/glCullFace GL11/GL_BACK)
-       (GL11/glClearColor 0.0 0.0 0.0 1.0)
-       (GL11/glClear GL11/GL_COLOR_BUFFER_BIT)
-       (GL11/glDrawElements
-        GL11/GL_QUADS (count indices-sphere-high) GL11/GL_UNSIGNED_INT 0)
-       (GLFW/glfwSwapBuffers window)
-       (GLFW/glfwPollEvents))
+  (glfw/draw-quads window (count indices-sphere-high))
+  (GLFW/glfwPollEvents)
+  (when @mouse-button
+    (let [[alpha beta] (lwjgl/angles-from-mouse-pos
+                        (glfw/window-size window)
+                        @mouse-origin
+                        (glfw/cursor-xy window)
+                        @theta-origin)]
+      (GL46/glUniform1f (GL46/glGetUniformLocation program "alpha") alpha)
+      (GL46/glUniform1f (GL46/glGetUniformLocation program "beta") beta))))
 
-(GL20/glDeleteProgram program)
-(lwjgl/teardown-vao vao-sphere-high)
-(GL11/glDeleteTextures color-texture)
-(GL11/glDeleteTextures elevation-texture)
-(glfw/clean-up window)
+(glfw/clean-up window program
+               vao-sphere-high
+               color-texture
+               elevation-texture)

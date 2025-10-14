@@ -4,19 +4,19 @@
 
 uniform float fov;
 uniform float distance;
-uniform vec2 iResolution;
-uniform vec2 iMouse;
+uniform float alpha;
+uniform float beta;
+uniform float aspect;
+//uniform vec2 iResolution;
+//uniform vec2 iMouse;
 
 in vec3 point;
 out vec3 vpoint;
 out mat3 rot_y;
 out mat3 rot_x;
 
-void main()
-{
-  // Rotate and translate vertex
-  float alpha = iMouse.x / iResolution.x * M_PI * 2.0 + M_PI;
-  float beta = (0.5 - iMouse.y / iResolution.y) * M_PI * 2.0;
+void main() {
+
   rot_y = mat3(
     vec3(cos(alpha), 0, sin(alpha)),
     vec3(0, 1, 0),
@@ -29,7 +29,6 @@ void main()
 
   // Project vertex creating normalized device coordinates
   float f = 1.0 / tan(fov / 2.0);
-  float aspect = iResolution.x / iResolution.y;
   float proj_x = p.x / p.z * f;
   float proj_y = p.y / p.z * f * aspect;
   float proj_z = p.z / (2.0 * distance);
