@@ -13,7 +13,11 @@
 ;;--------------------------------------------------------------
 ;; TODO: check for prior initialization?
 
-(defn init [] (GLFW/glfwInit))
+(let [initialized? (atom false)]
+  (defn init []
+    (when-not @initialized?
+      (GLFW/glfwInit)
+      (reset! initialized? true))))
 
 ;;--------------------------------------------------------------
 ;; Monitor
@@ -77,6 +81,7 @@
 
 (defn ^Long start-window
   ([monitor ^String title mouse-button mouse-origin theta-origin]
+   (init)
    (GLFW/glfwDefaultWindowHints)
    (GLFW/glfwWindowHint GLFW/GLFW_DECORATED GLFW/GLFW_TRUE)
    (let [[x y monitor-w monitor-h] (monitor-work-area monitor)
@@ -89,6 +94,8 @@
      (GLFW/glfwMakeContextCurrent window)
      ;; TODO: does this belong here?
      (GL/createCapabilities)
+     (GL46/glDebugMessageCallback lwjgl/debug-msg-callback 0)
+     (lwjgl/check-error)
      (GLFW/glfwShowWindow window)
 
      (GLFW/glfwSetMouseButtonCallback
@@ -119,6 +126,7 @@
 
   ;; TODO: better way to choose default monitor
   ([^String title mouse-button mouse-origin theta-origin]
+   (init)
    (let [mm (monitors)
          m (last mm)]
      (start-window m title mouse-button mouse-origin theta-origin))))
@@ -127,11 +135,12 @@
 
 (defn draw-quads
   ([^long window ^long max-index ^Boolean log]
-  (GL46/glClear GL46/GL_COLOR_BUFFER_BIT)
-  (GL46/glCullFace GL46/GL_BACK)
-  (GL46/glDrawElements GL46/GL_QUADS max-index GL46/GL_UNSIGNED_INT 0)
-  (GLFW/glfwSwapBuffers window)
-  (if log (println "draw-quads")))
+   (GL46/glClear GL46/GL_COLOR_BUFFER_BIT)
+   (GL46/glCullFace GL46/GL_BACK)
+   (GL46/glDrawElements GL46/GL_QUADS max-index GL46/GL_UNSIGNED_INT 0)
+   (GLFW/glfwSwapBuffers window)
+   (lwjgl/check-error)
+   (if log (println "draw-quads")))
   ([^long window ^long max-index]
    (draw-quads window max-index false)))
 
@@ -146,6 +155,7 @@
   (lwjgl/teardown-vao vao)
   (GL46/glDeleteTextures color-texture)
   (GL46/glDeleteTextures elevation-texture)
+  (lwjgl/check-error)
   (GLFW/glfwDestroyWindow window)
   (GLFW/glfwTerminate))
 

@@ -11,7 +11,7 @@
    :author "palisades dot lakes at gmail dot com"
    :version "2025-10-14"}
 
-  (:require [clojure.math :refer [PI to-radians]]
+  (:require [clojure.math :refer [to-radians]]
             [fastmath.vector :refer [add mult normalize sub vec3]]
             [mop.lwjgl.glfw.util :as glfw]
             [mop.lwjgl.util :as lwjgl])
@@ -23,8 +23,6 @@
 (def mouse-button (atom false))
 (def mouse-origin (atom [0.0 0.0]))
 (def theta-origin (atom [0.0 0.0]))
-
-(glfw/init)
 
 (def window
   (glfw/start-window "moon" mouse-button mouse-origin theta-origin))
@@ -49,7 +47,7 @@
        "images/ldem_4.tif"
        "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/ldem_4.tif")]
   (def ^Integer elevation-texture texture)
-  (def resolution (/ (* 2.0 PI radius) r)))
+  (def resolution (/ (* lwjgl/TwoPI radius) r)))
 
 ;;----------------------------------------------------------------------
 ;; base geometry
@@ -145,8 +143,7 @@
 (GL46/glEnableVertexAttribArray 0)
 
 (GL46/glUseProgram program)
-(lwjgl/angles-from-mouse-pos
- (glfw/window-size window) @mouse-origin (glfw/cursor-xy window) @theta-origin)
+
 (GL46/glUniform1f
  (GL46/glGetUniformLocation program "fov")
  (to-radians 20.0))
@@ -180,6 +177,7 @@
 
 (GL46/glUniform1f (GL46/glGetUniformLocation program "alpha") 0.0)
 (GL46/glUniform1f (GL46/glGetUniformLocation program "beta") 0.0)
+
 ;; TODO: call on window resize
 (lwjgl/aspect-ratio program (glfw/window-size window) "aspect")
 

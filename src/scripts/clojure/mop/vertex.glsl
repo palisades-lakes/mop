@@ -7,8 +7,6 @@ uniform float distance;
 uniform float alpha;
 uniform float beta;
 uniform float aspect;
-//uniform vec2 iResolution;
-//uniform vec2 iMouse;
 
 in vec3 point;
 out vec3 vpoint;
@@ -25,12 +23,12 @@ void main() {
     vec3(1, 0, 0),
     vec3(0, cos(beta), -sin(beta)),
     vec3(0, sin(beta), cos(beta)));
-  vec3 p = rot_x * rot_y * point + vec3(0, 0, distance);
+  vec3 p = rot_y * rot_x * point + vec3(0, 0, distance);
 
   // Project vertex creating normalized device coordinates
   float f = 1.0 / tan(fov / 2.0);
-  float proj_x = p.x / p.z * f;
-  float proj_y = p.y / p.z * f * aspect;
+  float proj_x = (p.x / p.z) * f;
+  float proj_y = (p.y / p.z) * f * aspect;
   float proj_z = p.z / (2.0 * distance);
 
   // Output to shader pipeline.

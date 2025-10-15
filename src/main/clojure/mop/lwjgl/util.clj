@@ -4,7 +4,8 @@
    :author  "palisades dot lakes at gmail dot com"
    :version "2025-10-14"}
 
-  (:require [clojure.math :refer [PI]]
+  (:require [clojure.math :as math]
+            [clojure.math :refer [PI]]
             [mop.image.util :as image])
 
   (:import [java.awt.image WritableRaster]
@@ -16,12 +17,43 @@
 (def ^:const TwoPI (* 2.0 PI))
 ;;-------------------------------------------------------------------
 
+(defn check-error []
+  (let [code (GL46/glGetError)]
+    (condp == code
+      GL46/GL_NO_ERROR
+      true
+      GL46/GL_INVALID_ENUM
+      (throw (RuntimeException. "GL_INVALID_ENUM"))
+      GL46/GL_INVALID_VALUE
+      (throw (RuntimeException. "GL_INVALID_VALUE"))
+      GL46/GL_INVALID_OPERATION
+      (throw (RuntimeException. "GL_INVALID_OPERATION"))
+      GL46/GL_INVALID_FRAMEBUFFER_OPERATION
+      (throw (RuntimeException. "GL_INVALID_FRAMEBUFFER_OPERATION"))
+      GL46/GL_OUT_OF_MEMORY
+      (throw (RuntimeException. "GL_OUT_OF_MEMORY"))
+      GL46/GL_STACK_UNDERFLOW
+      (throw (RuntimeException. "GL_STACK_UNDERFLOW"))
+      GL46/GL_STACK_OVERFLOW
+      (throw (RuntimeException. "GL_STACK_OVERFLOW"))
+      ;; default
+      (throw (RuntimeException. (str "Unknown error code: " code))))))
+
+(defn debug-msg-callback [source type id severity length message userParam]
+  (throw
+   (RuntimeException.
+    (str "source=" source ", type=" type ", id=" id ", severity=" severity
+         ", length=" length ", message=" message ", userParam=" userParam))))
+;;-------------------------------------------------------------------
+
 (defn make-shader [^String source shader-type]
   (let [shader (GL46/glCreateShader shader-type)]
+    (check-error)
     (GL46/glShaderSource ^int shader source)
     (GL46/glCompileShader shader)
     (when (zero? (GL46/glGetShaderi shader GL46/GL_COMPILE_STATUS))
       (throw (Exception. (GL46/glGetShaderInfoLog shader 1024))))
+    (check-error)
     shader))
 
 (defn make-program [& shaders]
@@ -31,7 +63,8 @@
       (GL46/glDeleteShader shader))
     (GL46/glLinkProgram program)
     (when (zero? (GL46/glGetProgrami program GL46/GL_LINK_STATUS))
-      (throw (Exception. (GL46/glGetProgramInfoLog program 1024))))
+      (throw (RuntimeException. (GL46/glGetProgramInfoLog program 1024))))
+    (check-error)
     program))
 
 (defn make-float-buffer [^floats data]
@@ -67,6 +100,7 @@
      GL46/GL_ELEMENT_ARRAY_BUFFER
      ^IntBuffer (make-int-buffer indices)
      GL46/GL_STATIC_DRAW)
+    (check-error)
     {:vao vao :vbo vbo :ibo ibo}))
 
 (defn teardown-vao [{:keys [^int vao ^int vbo ^int ibo]}]
@@ -75,7 +109,8 @@
   (GL46/glBindBuffer GL46/GL_ARRAY_BUFFER 0)
   (GL46/glDeleteBuffers vbo)
   (GL46/glBindVertexArray 0)
-  (GL46/glDeleteBuffers vao))
+  (GL46/glDeleteBuffers vao)
+  (check-error))
 
 ;;------------------------------------------------------------------
 ;; TODO: probably not general enough
@@ -101,6 +136,7 @@
                           GL46/GL_TEXTURE_WRAP_T
                           GL46/GL_REPEAT)
     (GL46/glBindTexture GL46/GL_TEXTURE_2D 0)
+    (check-error)
     texture))
 
 (defn float-texture-from-image-file [local-path remote-url]
@@ -124,7 +160,10 @@
      GL46/GL_TEXTURE_2D 0 GL46/GL_R32F pw ph 0
      GL46/GL_RED GL46/GL_FLOAT pixels)
     (GL46/glBindTexture GL46/GL_TEXTURE_2D 0)
-    [texture (max pw ph)]))
+    (check-error)
+    ;;[texture (max pw ph)]
+    [texture (math/sqrt (+ (* pw pw) (* ph ph)))]
+    ))
 
 ;;----------------------------------------------------
 
@@ -146,7 +185,8 @@
                     ^String program-aspect]
   (GL46/glUniform1f
    (GL46/glGetUniformLocation program program-aspect)
-   (/ (double window-w) window-h)))
+   (/ (double window-w) window-h))
+  (check-error))
 
 ;;----------------------------------------------------
 
