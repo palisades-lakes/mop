@@ -1,11 +1,13 @@
+(set! *warn-on-reflection* true)
+(set! *unchecked-math* :warn-on-boxed)
+;;----------------------------------------------------------------
 (ns mop.lwjgl.util
 
   {:doc     "LWJGL utilities"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-10-14"}
+   :version "2025-10-17"}
 
   (:require [clojure.math :as math]
-            [clojure.math :refer [PI]]
             [mop.image.util :as image])
 
   (:import [java.awt.image WritableRaster]
@@ -14,7 +16,7 @@
            [org.lwjgl.opengl GL46])  )
 
 ;;-------------------------------------------------------------------
-(def ^:const TwoPI (* 2.0 PI))
+(def ^Double TwoPI (* 2.0 math/PI))
 ;;-------------------------------------------------------------------
 
 (defn check-error []
@@ -44,6 +46,7 @@
    (RuntimeException.
     (str "source=" source ", type=" type ", id=" id ", severity=" severity
          ", length=" length ", message=" message ", userParam=" userParam))))
+
 ;;-------------------------------------------------------------------
 
 (defn make-shader [^String source shader-type]
@@ -167,21 +170,22 @@
 
 ;;----------------------------------------------------
 
-(defn ^[float float] angles-from-mouse-pos [[window-w window-h]
-                                            [origin-x origin-y]
-                                            [mouse-x mouse-y]
-                                            [theta-origin-x theta-origin-y]]
+(defn ^[float float] angles-from-mouse-pos
+  [[^double window-w ^double window-h]
+   [^double origin-x ^double origin-y]
+   [^double mouse-x ^double mouse-y]
+   [^double theta-origin-x ^double theta-origin-y]]
   (let [dx (- mouse-x origin-x)
         dy (- mouse-y origin-y)
-        delta-x (float (* 2.0 PI (/ dx window-w)))
-        delta-y (float (* 2.0 PI (/ dy window-h)))]
+        delta-x (float (* (double TwoPI) (/ dx window-w)))
+        delta-y (float (* (double TwoPI) (/ dy window-h)))]
     [(float (Math/IEEEremainder (+ theta-origin-x delta-x) TwoPI))
      (float (Math/IEEEremainder (+ theta-origin-y delta-y) TwoPI))]))
 
 ;;----------------------------------------------------
 
 (defn aspect-ratio [^Integer program
-                    [window-w window-h]
+                    [^double window-w ^double window-h]
                     ^String program-aspect]
   (GL46/glUniform1f
    (GL46/glGetUniformLocation program program-aspect)

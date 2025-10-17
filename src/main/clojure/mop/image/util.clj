@@ -1,8 +1,11 @@
+(set! *warn-on-reflection* true)
+(set! *unchecked-math* :warn-on-boxed)
+;;----------------------------------------------------------------
 (ns mop.image.util
 
   {:doc     "Image utilities."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-10-11"}
+   :version "2025-10-17"}
 
   (:require [clojure.java.io :as io])
   (:import [java.awt.image BufferedImage WritableRaster]

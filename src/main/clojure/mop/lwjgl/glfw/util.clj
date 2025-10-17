@@ -1,8 +1,11 @@
+(set! *warn-on-reflection* true)
+(set! *unchecked-math* :warn-on-boxed)
+;;----------------------------------------------------------------
 (ns mop.lwjgl.glfw.util
 
   {:doc "LWJGL/GLFW utilities"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-10-14"}
+   :version "2025-10-17"}
 
   (:require [clojure.math :as math]
             [mop.lwjgl.util :as lwjgl])
@@ -84,7 +87,8 @@
    (init)
    (GLFW/glfwDefaultWindowHints)
    (GLFW/glfwWindowHint GLFW/GLFW_DECORATED GLFW/GLFW_TRUE)
-   (let [[x y monitor-w monitor-h] (monitor-work-area monitor)
+   (let [[^double x ^double y ^double monitor-w ^double monitor-h]
+         (monitor-work-area monitor)
          window (GLFW/glfwCreateWindow
                  (int (/ (* 3 monitor-w) 4))
                  (int (/ (* 3 monitor-h) 4))

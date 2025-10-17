@@ -1,5 +1,5 @@
 (set! *warn-on-reflection* true)
-;;(set! *unchecked-math* :warn-on-boxed)
+(set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
 ;; clj src\scripts\clojure\mop\moon.clj
 ;;----------------------------------------------------------------
@@ -9,7 +9,7 @@
   {:doc "Mesh Viewer demo using lwjgl and glfw.
   See https://svs.gsfc.nasa.gov/4720/ for texture and elevation images."
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-10-14"}
+   :version "2025-10-17"}
 
   (:require [clojure.math :refer [to-radians]]
             [fastmath.vector :refer [add mult normalize sub vec3]]
@@ -42,7 +42,7 @@
 
 (def ^Double radius (double 1737.4))
 
-(let [[texture r]
+(let [[texture ^double r]
       (lwjgl/float-texture-from-image-file
        "images/ldem_4.tif"
        "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/ldem_4.tif")]
