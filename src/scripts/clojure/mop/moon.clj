@@ -9,23 +9,32 @@
   {:doc "Mesh Viewer demo using lwjgl and glfw.
   See https://svs.gsfc.nasa.gov/4720/ for texture and elevation images."
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-10-17"}
+   :version "2025-10-20"}
 
   (:require [clojure.math :refer [to-radians]]
             [fastmath.vector :refer [add mult normalize sub vec3]]
             [mop.lwjgl.glfw.util :as glfw]
             [mop.lwjgl.util :as lwjgl])
-  (:import [org.lwjgl.glfw GLFW]
+  (:import [org.apache.commons.geometry.euclidean.twod
+            Vector2D]
+           [org.apache.commons.geometry.euclidean.threed
+            Vector3D$Unit]
+           [org.apache.commons.geometry.euclidean.threed.rotation
+            QuaternionRotation]
+           [org.apache.commons.numbers.quaternion Quaternion]
+           [org.lwjgl.glfw GLFW]
            [org.lwjgl.opengl GL46]))
 
 ;;-------------------------------------------------------------
-
+;; UI state
 (def mouse-button (atom false))
-(def mouse-origin (atom [0.0 0.0]))
-(def theta-origin (atom [0.0 0.0]))
+(def sphere-pt-origin (atom (Vector3D$Unit/from 0.0 0.0 1.0)))
+(def q-origin (atom (QuaternionRotation/identity)))
+
+;;-------------------------------------------------------------
 
 (def window
-  (glfw/start-window "moon" mouse-button mouse-origin theta-origin))
+  (glfw/start-window "moon" mouse-button sphere-pt-origin q-origin))
 
 ;;-------------------------------------------------------------
 ;; color texture
@@ -175,23 +184,23 @@
 (GL46/glEnable GL46/GL_CULL_FACE)
 (GL46/glClearColor 0.0 0.0 0.0 1.0)
 
-(GL46/glUniform1f (GL46/glGetUniformLocation program "alpha") 0.0)
-(GL46/glUniform1f (GL46/glGetUniformLocation program "beta") 0.0)
+(lwjgl/push-quaternion-coordinates program "quaternion"@q-origin)
 
 ;; TODO: call on window resize
-(lwjgl/aspect-ratio program (glfw/window-size window) "aspect")
+(lwjgl/aspect-ratio program (glfw/window-wh window) "aspect")
 
 (while (not (GLFW/glfwWindowShouldClose window))
   (glfw/draw-quads window (count indices-sphere-high))
   (GLFW/glfwPollEvents)
   (when @mouse-button
-    (let [[alpha beta] (lwjgl/angles-from-mouse-pos
-                        (glfw/window-size window)
-                        @mouse-origin
-                        (glfw/cursor-xy window)
-                        @theta-origin)]
-      (GL46/glUniform1f (GL46/glGetUniformLocation program "alpha") alpha)
-      (GL46/glUniform1f (GL46/glGetUniformLocation program "beta") beta))))
+    (let [sphere-pt (glfw/sphere-pt
+                     (glfw/cursor-xy window)
+                     (glfw/window-center window)
+                     (glfw/window-radius window))
+          dq (QuaternionRotation/createVectorRotation
+               sphere-pt @sphere-pt-origin)
+          q (.multiply dq @q-origin)]
+      (lwjgl/push-quaternion-coordinates program "quaternion" q))))
 
 (glfw/clean-up window program
                vao-sphere-high

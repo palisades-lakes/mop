@@ -5,13 +5,15 @@
 
   {:doc     "LWJGL utilities"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-10-17"}
+   :version "2025-10-20"}
 
   (:require [clojure.math :as math]
             [mop.image.util :as image])
 
   (:import [java.awt.image WritableRaster]
            [java.nio ByteBuffer FloatBuffer IntBuffer]
+           [org.apache.commons.geometry.euclidean.threed.rotation QuaternionRotation]
+           [org.apache.commons.numbers.quaternion Quaternion]
            [org.lwjgl BufferUtils]
            [org.lwjgl.opengl GL46])  )
 
@@ -170,17 +172,16 @@
 
 ;;----------------------------------------------------
 
-(defn ^[float float] angles-from-mouse-pos
-  [[^double window-w ^double window-h]
-   [^double origin-x ^double origin-y]
-   [^double mouse-x ^double mouse-y]
-   [^double theta-origin-x ^double theta-origin-y]]
-  (let [dx (- mouse-x origin-x)
-        dy (- mouse-y origin-y)
-        delta-x (float (* (double TwoPI) (/ dx window-w)))
-        delta-y (float (* (double TwoPI) (/ dy window-h)))]
-    [(float (Math/IEEEremainder (+ theta-origin-x delta-x) TwoPI))
-     (float (Math/IEEEremainder (+ theta-origin-y delta-y) TwoPI))]))
+(defn push-quaternion-coordinates [^Integer program
+                                   ^String location
+                                   ^QuaternionRotation qr]
+  (let [^Quaternion q (.getQuaternion qr)]
+    (GL46/glUniform4f
+     (GL46/glGetUniformLocation program location)
+     (float (.getX q))
+     (float (.getY q))
+     (float (.getZ q))
+     (float (.getW q)))))
 
 ;;----------------------------------------------------
 

@@ -5,14 +5,62 @@
 
   {:doc "LWJGL/GLFW utilities"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-10-17"}
+   :version "2025-10-20"}
 
-  (:require [clojure.math :as math]
-            [mop.lwjgl.util :as lwjgl])
-  (:import [java.util Map]
-           [org.lwjgl PointerBuffer]
-           [org.lwjgl.glfw GLFW]
-           [org.lwjgl.opengl GL GL46]))
+  (:require [mop.lwjgl.util :as lwjgl])
+  (:import  [java.lang Math]
+            [java.util Map]
+            [org.apache.commons.geometry.euclidean.twod Vector2D]
+            [org.apache.commons.geometry.euclidean.threed Vector3D$Unit]
+            [org.apache.commons.geometry.euclidean.threed.rotation
+             QuaternionRotation]
+            [org.lwjgl PointerBuffer]
+            [org.lwjgl.glfw GLFW]
+            [org.lwjgl.opengl GL GL46]))
+
+;;--------------------------------------------------------------
+;; Window
+;;--------------------------------------------------------------
+
+(defn ^Vector2D window-wh [^long window]
+  (let [ww (int-array 1)
+        hh (int-array 1)]
+    (GLFW/glfwGetWindowSize window ww hh)
+    (Vector2D/of (aget ww 0) (aget hh 0))))
+
+(defn ^Double window-radius [^long window]
+  (let [ww (int-array 1)
+        hh (int-array 1)]
+    (GLFW/glfwGetWindowSize window ww hh)
+    (double (min (aget ww 0) (aget hh 0)))))
+
+(defn ^Vector2D window-center [^long window]
+  (let [ww (int-array 1)
+        hh (int-array 1)]
+    (GLFW/glfwGetWindowSize window ww hh)
+    (Vector2D/of (/ (aget ww 0) 2.0) (/ (aget hh 0) 2.0))))
+
+;; WARNING: problems with multi-threads calls!!!
+
+(let [xx (double-array 1)
+      yy (double-array 1)]
+  (defn ^Vector2D cursor-xy [^long window]
+    (GLFW/glfwGetCursorPos window xx yy)
+    (Vector2D/of (aget xx 0) (aget yy 0))))
+
+;;----------------------------------------------------------
+
+(defn ^Vector3D$Unit sphere-pt [^Vector2D screen
+                                ^Vector2D center
+                                ^double radius]
+  "Convert a mouse point on the screen to a point on the unit sphere."
+  (let [px (/ (- (.getX screen) (.getX center)) radius)
+        py (/ (- (.getY screen) (.getY center)) radius)
+        r (+ (* px px) (* py py))]
+    (if (> r 1.0)
+      (Vector3D$Unit/from px py 0.0)
+      (Vector3D$Unit/from px py (Math/sqrt (- 1.0 r))))))
+
 ;;--------------------------------------------------------------
 ;; TODO: check for prior initialization?
 
@@ -65,35 +113,22 @@
     [(aget x 0)  (aget y 0) (aget w 0) (aget h 0)]))
 
 ;;--------------------------------------------------------------
-;; Window
-;;--------------------------------------------------------------
-
-(defn window-size [^long window]
-  (let [ww (int-array 1)
-        hh (int-array 1)]
-    (GLFW/glfwGetWindowSize window ww hh)
-    [(aget ww 0) (aget hh 0)]))
-
-(defn cursor-xy [^long window]
-  (let [xx (double-array 1)
-        yy (double-array 1)]
-    (GLFW/glfwGetCursorPos window xx yy)
-    [(int (math/floor (aget xx 0))) (int (math/floor (aget yy 0)))]))
-
-;;--------------------------------------------------------------
 
 (defn ^Long start-window
-  ([monitor ^String title mouse-button mouse-origin theta-origin]
+  ([monitor ^String title mouse-button sphere-pt-origin q-origin]
    (init)
    (GLFW/glfwDefaultWindowHints)
    (GLFW/glfwWindowHint GLFW/GLFW_DECORATED GLFW/GLFW_TRUE)
-   (let [[^double x ^double y ^double monitor-w ^double monitor-h]
-         (monitor-work-area monitor)
+   (let [[^double x
+          ^double y
+          ^double monitor-w
+          ^double monitor-h] (monitor-work-area monitor)
          window (GLFW/glfwCreateWindow
                  (int (/ (* 3 monitor-w) 4))
                  (int (/ (* 3 monitor-h) 4))
                  title 0 0)
-         [_window-w _window-h] (window-size window)]
+         ;;[_window-w _window-h] (window-wh window)
+         ]
      (GLFW/glfwSetWindowPos window (+ x (/ monitor-w 8)) (+ y (/ monitor-h 8)))
      (GLFW/glfwMakeContextCurrent window)
      ;; TODO: does this belong here?
@@ -106,18 +141,18 @@
       window
       (fn [window _button action _mods]
         ;; TODO: make this atomic
-        (let [xy (cursor-xy window)]
-          (when  (= action GLFW/GLFW_PRESS)
-            (reset! mouse-button true)
-            (reset! mouse-origin xy))
-          (when (= action GLFW/GLFW_RELEASE)
-            (let [[alpha beta] (lwjgl/angles-from-mouse-pos
-                                (window-size window)
-                                @mouse-origin
-                                xy
-                                @theta-origin)]
-              (reset! mouse-button false)
-              (reset! theta-origin [alpha beta]))))))
+        (when  (= action GLFW/GLFW_PRESS)
+          (reset! mouse-button true))
+        (when (= action GLFW/GLFW_RELEASE)
+          (let [pt (sphere-pt
+                    (cursor-xy window)
+                    (window-center window)
+                    (window-radius window))
+                dq (QuaternionRotation/createVectorRotation
+                    pt @sphere-pt-origin)
+                q (.multiply dq @q-origin)]
+            (reset! mouse-button false)
+            (reset! q-origin q)))))
 
      #_(GLFW/glfwSetCursorPosCallback
         window
@@ -129,11 +164,11 @@
      window))
 
   ;; TODO: better way to choose default monitor
-  ([^String title mouse-button mouse-origin theta-origin]
+  ([^String title mouse-button sphere-pt-origin q-origin]
    (init)
    (let [mm (monitors)
          m (last mm)]
-     (start-window m title mouse-button mouse-origin theta-origin))))
+     (start-window m title mouse-button sphere-pt-origin q-origin))))
 
 ;;--------------------------------------------------------------
 

@@ -4,26 +4,18 @@
 
 uniform float fov;
 uniform float distance;
-uniform float alpha;
-uniform float beta;
+uniform vec4 quaternion;
 uniform float aspect;
 
 in vec3 point;
 out vec3 vpoint;
-out mat3 rot_y;
-out mat3 rot_x;
+
+vec3 quaternionTransform( vec4 q, vec3 v ){
+	return v + 2.0*cross(cross(v, q.xyz ) + q.w*v, q.xyz); }
 
 void main() {
 
-  rot_y = mat3(
-    vec3(cos(alpha), 0, sin(alpha)),
-    vec3(0, 1, 0),
-    vec3(-sin(alpha), 0, cos(alpha)));
-  rot_x = mat3(
-    vec3(1, 0, 0),
-    vec3(0, cos(beta), -sin(beta)),
-    vec3(0, sin(beta), cos(beta)));
-  vec3 p = rot_y * rot_x * point + vec3(0, 0, distance);
+  vec3 p = quaternionTransform(quaternion,point) + vec3(0, 0, distance);
 
   // Project vertex creating normalized device coordinates
   float f = 1.0 / tan(fov / 2.0);

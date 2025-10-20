@@ -58,6 +58,7 @@ vec3 normal(mat3 horizon, vec3 p)
 
 void main() {
   mat3 horizon = oriented_matrix(normalize(vpoint));
-  float phong = ambient + diffuse * max(0.0, dot(transpose(rot_y) * light, normal(horizon, vpoint)));
+  float phong = ambient
+   + diffuse * max(0.0, dot(transpose(rot_y) * light, normal(horizon, vpoint)));
   fragColor = vec4(color(uv(vpoint)) * phong, 1);
 }

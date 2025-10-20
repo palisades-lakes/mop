@@ -69,107 +69,11 @@
     </plugins>
   </build>
   <dependencies>
-
-    <!--
-    <dependency>
-      <groupId>org.clojure</groupId>
-      <artifactId>math.numeric-tower</artifactId>
-      <version>${clojure-math-numeric-tower-version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.clojure</groupId>
-      <artifactId>core.memoize</artifactId>
-      <version>${clojure-core-memoize-version}</version>
-    </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
-      <artifactId>commons-math3</artifactId>
-      <version>${commons-math3-version}</version>
+      <artifactId>commons-geometry-euclidean</artifactId>
+      <version>1.0</version>
     </dependency>
-    <dependency>
-      <groupId>criterium</groupId>
-      <artifactId>criterium</artifactId>
-      <version>${criterium-version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.clojure</groupId>
-          <artifactId>clojure</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-rng-sampling</artifactId>
-      <version>${commons-rng-version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-rng-simple</artifactId>
-      <version>${commons-rng-version}</version>
-    </dependency>
-    -->
-    <!-- dependency> <groupId>org.apache.commons</groupId> <artifactId>commons-rng-examples</artifactId>
-     <version>${commons-rng-version}</version> <type>pom</type> </dependency -->
-    <!-- <dependency> <groupId>io.gatling.uncommons.maths</groupId> <artifactId>uncommons-maths</artifactId>
-     <version>${uncommons-maths-version}</version> <exclusions> <exclusion> <groupId>org.jfree</groupId>
-     <artifactId>jcommon</artifactId> </exclusion> <exclusion> <groupId>org.jfree</groupId>
-     <artifactId>jfreechart</artifactId> </exclusion> <exclusion> <groupId>jfree</groupId>
-     <artifactId>jcommon</artifactId> </exclusion> <exclusion> <groupId>jfree</groupId>
-     <artifactId>jfreechart</artifactId> </exclusion> </exclusions> </dependency> -->
-    <!--
-     <dependency>
-       <groupId>com.google.guava</groupId>
-       <artifactId>guava</artifactId>
-       <version>${guava-version}</version>
-     </dependency>
-     <dependency>
-       <groupId>com.carrotsearch</groupId>
-       <artifactId>hppc</artifactId>
-       <version>${hppc-version}</version>
-     </dependency>
-     <dependency>
-       <groupId>org.junit.jupiter</groupId>
-       <artifactId>junit-jupiter-api</artifactId>
-       <version>${junit-jupiter-version}</version>
-       <scope>test</scope>
-     </dependency>
-     <dependency>
-       <groupId>org.junit.jupiter</groupId>
-       <artifactId>junit-jupiter-params</artifactId>
-       <version>${junit-jupiter-version}</version>
-       <scope>test</scope>
-     </dependency>
-     <dependency>
-       <groupId>org.junit.jupiter</groupId>
-       <artifactId>junit-jupiter-engine</artifactId>
-       <version>${junit-jupiter-version}</version>
-       <scope>test</scope>
-     </dependency>
-     <dependency>
-       <groupId>org.testng</groupId>
-       <artifactId>testng</artifactId>
-       <version>${testng-version}</version>
-       <scope>test</scope>
-     </dependency>
-
-     <dependency>
-       <groupId>com.github.peteroupc</groupId>
-       <artifactId>numbers</artifactId>
-       <version>${numbers-java-version}</version>
-       <scope>test</scope>
-     </dependency>
-
-     <dependency>
-       <groupId>org.locationtech.jts</groupId>
-       <artifactId>jts-core</artifactId>
-       <version>${jts-version}</version>
-     </dependency>
-     <dependency>
-       <groupId>org.locationtech.jts.io</groupId>
-       <artifactId>jts-io-common</artifactId>
-       <version>${jts-version}</version>
-     </dependency>
-     -->
     <dependency>
       <groupId>jonase</groupId>
       <artifactId>eastwood</artifactId>
