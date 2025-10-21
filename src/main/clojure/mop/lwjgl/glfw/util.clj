@@ -11,6 +11,7 @@
             [mop.lwjgl.util :as lwjgl])
   (:import
    [java.util Map]
+   [org.apache.commons.geometry.euclidean.threed Vector3D$Unit]
    [org.apache.commons.geometry.euclidean.threed.rotation
     QuaternionRotation]
    [org.apache.commons.geometry.euclidean.twod Vector2D]
@@ -33,7 +34,7 @@
       hh (int-array 1)]
   (defn ^Double window-radius [^long window]
     (GLFW/glfwGetWindowSize window ww hh)
-    (double (min (aget ww 0) (aget hh 0)))))
+    (double (* 0.5 (min (aget ww 0) (aget hh 0))))))
 
 (let [ww (int-array 1)
       hh (int-array 1)]
@@ -46,6 +47,12 @@
   (defn ^Vector2D cursor-xy [^long window]
     (GLFW/glfwGetCursorPos window xx yy)
     (Vector2D/of (aget xx 0) (aget yy 0))))
+
+(defn ^Vector3D$Unit cursor-sphere-pt [^long window]
+  (geom/sphere-pt
+   (cursor-xy window)
+   (window-center window)
+   (window-radius window)))
 
 ;;--------------------------------------------------------------
 ;; TODO: check for prior initialization?
@@ -101,7 +108,10 @@
 ;;--------------------------------------------------------------
 
 (defn ^Long start-window
-  ([monitor ^String title mouse-button sphere-pt-origin q-origin]
+  ([monitor ^String title
+    mouse-button
+    sphere-pt-origin
+    q-origin]
    (init)
    (GLFW/glfwDefaultWindowHints)
    (GLFW/glfwWindowHint GLFW/GLFW_DECORATED GLFW/GLFW_TRUE)
@@ -128,15 +138,14 @@
       (fn [window _button action _mods]
         ;; TODO: make this atomic
         (when  (= action GLFW/GLFW_PRESS)
-          (reset! mouse-button true))
+          (reset! mouse-button true)
+          (reset! sphere-pt-origin (cursor-sphere-pt window)))
+
         (when (= action GLFW/GLFW_RELEASE)
-          (let [pt (geom/sphere-pt
-                    (cursor-xy window)
-                    (window-center window)
-                    (window-radius window))
+          (let [pt (cursor-sphere-pt window)
                 dq (QuaternionRotation/createVectorRotation
-                    pt @sphere-pt-origin)
-                q (.multiply dq @q-origin)]
+                    @sphere-pt-origin pt)
+                q (.multiply ^QuaternionRotation @q-origin dq)]
             (reset! mouse-button false)
             (reset! q-origin q)))))
 

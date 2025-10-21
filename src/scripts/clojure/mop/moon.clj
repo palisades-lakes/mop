@@ -13,7 +13,6 @@
 
   (:require
    [fastmath.vector :refer [add mult normalize sub vec3]]
-   [mop.geom.util :as geom]
    [mop.lwjgl.glfw.util :as glfw]
    [mop.lwjgl.util :as lwjgl])
   (:import
@@ -195,16 +194,13 @@
   (glfw/draw-quads window (count indices-sphere-high))
   (GLFW/glfwPollEvents)
   (when @mouse-button
-    (let [sphere-pt (geom/sphere-pt
-                     (glfw/cursor-xy window)
-                     (glfw/window-center window)
-                     (glfw/window-radius window))
-          dq (QuaternionRotation/createVectorRotation
-               sphere-pt @sphere-pt-origin)
-          q (.multiply dq @q-origin)]
+    (let [pt (glfw/cursor-sphere-pt window)
+          dq (QuaternionRotation/createVectorRotation @sphere-pt-origin pt)
+          q (.multiply ^QuaternionRotation @q-origin dq)]
       (lwjgl/push-quaternion-coordinates program "quaternion" q))))
 
-(glfw/clean-up window program
+(glfw/clean-up window
+               program
                vao-sphere-high
                color-texture
                elevation-texture)

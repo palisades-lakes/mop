@@ -19,7 +19,7 @@
                                 ^double radius]
   "Convert a mouse point on the screen to a point on the unit sphere."
   (let [px (/ (- (.getX screen) (.getX center)) radius)
-        py (/ (- (.getY screen) (.getY center)) radius)
+        py (/ (- (.getY center) (.getY screen)) radius)
         r2 (+ (* px px) (* py py))]
     (if (> r2 1.0)
       (Vector3D$Unit/from px py 0.0)
