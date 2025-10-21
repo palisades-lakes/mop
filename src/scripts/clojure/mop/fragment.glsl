@@ -1,7 +1,11 @@
+// :author  "palisades dot lakes at gmail dot com"
+// :version "2025-10-21"
+
 #version 130
 
 #define PI 3.1415926535897932384626433832795
 
+uniform vec4 quaternion;
 uniform vec3 light;
 uniform float ambient;
 uniform float diffuse;
@@ -9,9 +13,11 @@ uniform float resolution;
 uniform sampler2D colorTexture;
 uniform sampler2D elevationTexture;
 in vec3 vpoint;
-in mat3 rot_y;
-in mat3 rot_x;
 out vec4 fragColor;
+
+// WARNING: only for unit transforms!!!
+vec3 qInverseRotate( vec4 q, vec3 v ){
+	return v + 2.0*cross(cross(v, -q.xyz ) + q.w*v, -q.xyz); }
 
 vec3 orthogonal_vector(vec3 n) {
   vec3 b;
@@ -58,7 +64,7 @@ vec3 normal(mat3 horizon, vec3 p)
 
 void main() {
   mat3 horizon = oriented_matrix(normalize(vpoint));
-  float phong = ambient
-   + diffuse * max(0.0, dot(transpose(rot_y) * light, normal(horizon, vpoint)));
+  float phong = ambient +
+  diffuse * max(0.0,dot(qInverseRotate(quaternion,light),normal(horizon, vpoint)));
   fragColor = vec4(color(uv(vpoint)) * phong, 1);
 }

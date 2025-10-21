@@ -5,61 +5,47 @@
 
   {:doc "LWJGL/GLFW utilities"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-10-20"}
+   :version "2025-10-21"}
 
-  (:require [mop.lwjgl.util :as lwjgl])
-  (:import  [java.lang Math]
-            [java.util Map]
-            [org.apache.commons.geometry.euclidean.twod Vector2D]
-            [org.apache.commons.geometry.euclidean.threed Vector3D$Unit]
-            [org.apache.commons.geometry.euclidean.threed.rotation
-             QuaternionRotation]
-            [org.lwjgl PointerBuffer]
-            [org.lwjgl.glfw GLFW]
-            [org.lwjgl.opengl GL GL46]))
+  (:require [mop.geom.util :as geom]
+            [mop.lwjgl.util :as lwjgl])
+  (:import
+   [java.util Map]
+   [org.apache.commons.geometry.euclidean.threed.rotation
+    QuaternionRotation]
+   [org.apache.commons.geometry.euclidean.twod Vector2D]
+   [org.lwjgl PointerBuffer]
+   [org.lwjgl.glfw GLFW]
+   [org.lwjgl.opengl GL GL46]))
 
 ;;--------------------------------------------------------------
 ;; Window
 ;;--------------------------------------------------------------
+;; WARNING: problems with multi-threaded calls!!!
 
-(defn ^Vector2D window-wh [^long window]
-  (let [ww (int-array 1)
-        hh (int-array 1)]
+(let [ww (int-array 1)
+      hh (int-array 1)]
+  (defn ^Vector2D window-wh [^long window]
     (GLFW/glfwGetWindowSize window ww hh)
     (Vector2D/of (aget ww 0) (aget hh 0))))
 
-(defn ^Double window-radius [^long window]
-  (let [ww (int-array 1)
-        hh (int-array 1)]
+(let [ww (int-array 1)
+      hh (int-array 1)]
+  (defn ^Double window-radius [^long window]
     (GLFW/glfwGetWindowSize window ww hh)
     (double (min (aget ww 0) (aget hh 0)))))
 
-(defn ^Vector2D window-center [^long window]
-  (let [ww (int-array 1)
-        hh (int-array 1)]
+(let [ww (int-array 1)
+      hh (int-array 1)]
+  (defn ^Vector2D window-center [^long window]
     (GLFW/glfwGetWindowSize window ww hh)
     (Vector2D/of (/ (aget ww 0) 2.0) (/ (aget hh 0) 2.0))))
-
-;; WARNING: problems with multi-threads calls!!!
 
 (let [xx (double-array 1)
       yy (double-array 1)]
   (defn ^Vector2D cursor-xy [^long window]
     (GLFW/glfwGetCursorPos window xx yy)
     (Vector2D/of (aget xx 0) (aget yy 0))))
-
-;;----------------------------------------------------------
-
-(defn ^Vector3D$Unit sphere-pt [^Vector2D screen
-                                ^Vector2D center
-                                ^double radius]
-  "Convert a mouse point on the screen to a point on the unit sphere."
-  (let [px (/ (- (.getX screen) (.getX center)) radius)
-        py (/ (- (.getY screen) (.getY center)) radius)
-        r (+ (* px px) (* py py))]
-    (if (> r 1.0)
-      (Vector3D$Unit/from px py 0.0)
-      (Vector3D$Unit/from px py (Math/sqrt (- 1.0 r))))))
 
 ;;--------------------------------------------------------------
 ;; TODO: check for prior initialization?
@@ -144,7 +130,7 @@
         (when  (= action GLFW/GLFW_PRESS)
           (reset! mouse-button true))
         (when (= action GLFW/GLFW_RELEASE)
-          (let [pt (sphere-pt
+          (let [pt (geom/sphere-pt
                     (cursor-xy window)
                     (window-center window)
                     (window-radius window))

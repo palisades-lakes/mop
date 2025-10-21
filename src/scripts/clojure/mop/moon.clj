@@ -1,5 +1,5 @@
 (set! *warn-on-reflection* true)
-(set! *unchecked-math* :warn-on-boxed)
+;;(set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
 ;; clj src\scripts\clojure\mop\moon.clj
 ;;----------------------------------------------------------------
@@ -9,24 +9,25 @@
   {:doc "Mesh Viewer demo using lwjgl and glfw.
   See https://svs.gsfc.nasa.gov/4720/ for texture and elevation images."
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-10-20"}
+   :version "2025-10-21"}
 
-  (:require [clojure.math :refer [to-radians]]
-            [fastmath.vector :refer [add mult normalize sub vec3]]
-            [mop.lwjgl.glfw.util :as glfw]
-            [mop.lwjgl.util :as lwjgl])
-  (:import [org.apache.commons.geometry.euclidean.twod
-            Vector2D]
-           [org.apache.commons.geometry.euclidean.threed
-            Vector3D$Unit]
-           [org.apache.commons.geometry.euclidean.threed.rotation
-            QuaternionRotation]
-           [org.apache.commons.numbers.quaternion Quaternion]
-           [org.lwjgl.glfw GLFW]
-           [org.lwjgl.opengl GL46]))
+  (:require
+   [fastmath.vector :refer [add mult normalize sub vec3]]
+   [mop.geom.util :as geom]
+   [mop.lwjgl.glfw.util :as glfw]
+   [mop.lwjgl.util :as lwjgl])
+  (:import
+   [java.lang Math]
+   [org.apache.commons.geometry.euclidean.threed
+    Vector3D$Unit]
+   [org.apache.commons.geometry.euclidean.threed.rotation
+    QuaternionRotation]
+   [org.lwjgl.glfw GLFW]
+   [org.lwjgl.opengl GL46]))
 
 ;;-------------------------------------------------------------
 ;; UI state
+
 (def mouse-button (atom false))
 (def sphere-pt-origin (atom (Vector3D$Unit/from 0.0 0.0 1.0)))
 (def q-origin (atom (QuaternionRotation/identity)))
@@ -155,7 +156,7 @@
 
 (GL46/glUniform1f
  (GL46/glGetUniformLocation program "fov")
- (to-radians 20.0))
+ (Math/toRadians 20.0))
 (GL46/glUniform1f
  (GL46/glGetUniformLocation program "distance")
  (* (.doubleValue radius) 12.0))
@@ -184,7 +185,8 @@
 (GL46/glEnable GL46/GL_CULL_FACE)
 (GL46/glClearColor 0.0 0.0 0.0 1.0)
 
-(lwjgl/push-quaternion-coordinates program "quaternion"@q-origin)
+(lwjgl/push-quaternion-coordinates
+ program "quaternion" @q-origin)
 
 ;; TODO: call on window resize
 (lwjgl/aspect-ratio program (glfw/window-wh window) "aspect")
@@ -193,7 +195,7 @@
   (glfw/draw-quads window (count indices-sphere-high))
   (GLFW/glfwPollEvents)
   (when @mouse-button
-    (let [sphere-pt (glfw/sphere-pt
+    (let [sphere-pt (geom/sphere-pt
                      (glfw/cursor-xy window)
                      (glfw/window-center window)
                      (glfw/window-radius window))

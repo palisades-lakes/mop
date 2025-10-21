@@ -5,7 +5,7 @@
 
   {:doc     "LWJGL utilities"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-10-20"}
+   :version "2025-10-21"}
 
   (:require [clojure.math :as math]
             [mop.image.util :as image])
@@ -13,6 +13,7 @@
   (:import [java.awt.image WritableRaster]
            [java.nio ByteBuffer FloatBuffer IntBuffer]
            [org.apache.commons.geometry.euclidean.threed.rotation QuaternionRotation]
+           [org.apache.commons.geometry.euclidean.twod Vector2D]
            [org.apache.commons.numbers.quaternion Quaternion]
            [org.lwjgl BufferUtils]
            [org.lwjgl.opengl GL46])  )
@@ -186,11 +187,11 @@
 ;;----------------------------------------------------
 
 (defn aspect-ratio [^Integer program
-                    [^double window-w ^double window-h]
+                    ^Vector2D window-wh
                     ^String program-aspect]
   (GL46/glUniform1f
    (GL46/glGetUniformLocation program program-aspect)
-   (/ (double window-w) window-h))
+   (/ (.getX window-wh) (.getY window-wh)))
   (check-error))
 
 ;;----------------------------------------------------
