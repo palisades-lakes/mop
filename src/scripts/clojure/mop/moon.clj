@@ -7,20 +7,18 @@
 
 
   {:doc "Mesh Viewer demo using lwjgl and glfw.
-  See https://svs.gsfc.nasa.gov/4720/ for texture and elevation images."
+  See https://svs.gsfc.nasa.gov/4720/ for texture and elevation images.
+  Started with https://clojurecivitas.github.io/opengl_visualization/main.html"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-10-21"}
+   :version "2025-10-22"}
 
   (:require
    [fastmath.vector :refer [add mult normalize sub vec3]]
+   [mop.geom.arcball :as arcball]
    [mop.lwjgl.glfw.util :as glfw]
    [mop.lwjgl.util :as lwjgl])
   (:import
    [java.lang Math]
-   [org.apache.commons.geometry.euclidean.threed
-    Vector3D$Unit]
-   [org.apache.commons.geometry.euclidean.threed.rotation
-    QuaternionRotation]
    [org.lwjgl.glfw GLFW]
    [org.lwjgl.opengl GL46]))
 
@@ -28,13 +26,12 @@
 ;; UI state
 
 (def mouse-button (atom false))
-(def sphere-pt-origin (atom (Vector3D$Unit/from 0.0 0.0 1.0)))
-(def q-origin (atom (QuaternionRotation/identity)))
+(def arcball (atom (arcball/ball -1 -1)))
 
 ;;-------------------------------------------------------------
 
 (def window
-  (glfw/start-window "moon" mouse-button sphere-pt-origin q-origin))
+  (glfw/start-window "moon" mouse-button arcball))
 
 ;;-------------------------------------------------------------
 ;; color texture
@@ -185,7 +182,7 @@
 (GL46/glClearColor 0.0 0.0 0.0 1.0)
 
 (lwjgl/push-quaternion-coordinates
- program "quaternion" @q-origin)
+ program "quaternion" (:q-origin @arcball))
 
 ;; TODO: call on window resize
 (lwjgl/aspect-ratio program (glfw/window-wh window) "aspect")
@@ -194,10 +191,9 @@
   (glfw/draw-quads window (count indices-sphere-high))
   (GLFW/glfwPollEvents)
   (when @mouse-button
-    (let [pt (glfw/cursor-sphere-pt window)
-          dq (QuaternionRotation/createVectorRotation @sphere-pt-origin pt)
-          q (.multiply ^QuaternionRotation @q-origin dq)]
-      (lwjgl/push-quaternion-coordinates program "quaternion" q))))
+    (lwjgl/push-quaternion-coordinates
+     program "quaternion"
+     (arcball/current-q @arcball (glfw/cursor-xy window)))))
 
 (glfw/clean-up window
                program

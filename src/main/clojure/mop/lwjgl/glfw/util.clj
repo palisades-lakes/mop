@@ -5,15 +5,12 @@
 
   {:doc "LWJGL/GLFW utilities"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-10-21"}
+   :version "2025-10-22"}
 
-  (:require [mop.geom.util :as geom]
+  (:require [mop.geom.arcball :as arcball]
             [mop.lwjgl.util :as lwjgl])
   (:import
    [java.util Map]
-   [org.apache.commons.geometry.euclidean.threed Vector3D$Unit]
-   [org.apache.commons.geometry.euclidean.threed.rotation
-    QuaternionRotation]
    [org.apache.commons.geometry.euclidean.twod Vector2D]
    [org.lwjgl PointerBuffer]
    [org.lwjgl.glfw GLFW]
@@ -22,7 +19,7 @@
 ;;--------------------------------------------------------------
 ;; Window
 ;;--------------------------------------------------------------
-;; WARNING: problems with multi-threaded calls!!!
+;; WARNING: problems with multithreaded calls!!!
 
 (let [ww (int-array 1)
       hh (int-array 1)]
@@ -30,29 +27,11 @@
     (GLFW/glfwGetWindowSize window ww hh)
     (Vector2D/of (aget ww 0) (aget hh 0))))
 
-(let [ww (int-array 1)
-      hh (int-array 1)]
-  (defn ^Double window-radius [^long window]
-    (GLFW/glfwGetWindowSize window ww hh)
-    (double (* 0.5 (min (aget ww 0) (aget hh 0))))))
-
-(let [ww (int-array 1)
-      hh (int-array 1)]
-  (defn ^Vector2D window-center [^long window]
-    (GLFW/glfwGetWindowSize window ww hh)
-    (Vector2D/of (/ (aget ww 0) 2.0) (/ (aget hh 0) 2.0))))
-
 (let [xx (double-array 1)
       yy (double-array 1)]
   (defn ^Vector2D cursor-xy [^long window]
     (GLFW/glfwGetCursorPos window xx yy)
     (Vector2D/of (aget xx 0) (aget yy 0))))
-
-(defn ^Vector3D$Unit cursor-sphere-pt [^long window]
-  (geom/sphere-pt
-   (cursor-xy window)
-   (window-center window)
-   (window-radius window)))
 
 ;;--------------------------------------------------------------
 ;; TODO: check for prior initialization?
@@ -110,21 +89,15 @@
 (defn ^Long start-window
   ([monitor ^String title
     mouse-button
-    sphere-pt-origin
-    q-origin]
+    arcball]
    (init)
    (GLFW/glfwDefaultWindowHints)
    (GLFW/glfwWindowHint GLFW/GLFW_DECORATED GLFW/GLFW_TRUE)
-   (let [[^double x
-          ^double y
-          ^double monitor-w
-          ^double monitor-h] (monitor-work-area monitor)
-         window (GLFW/glfwCreateWindow
-                 (int (/ (* 3 monitor-w) 4))
-                 (int (/ (* 3 monitor-h) 4))
-                 title 0 0)
-         ;;[_window-w _window-h] (window-wh window)
-         ]
+   (let [[^double x ^double y ^double monitor-w ^double monitor-h]
+         (monitor-work-area monitor)
+         ww (int (/ (* 3 monitor-w) 4))
+         wh (int (/ (* 3 monitor-h) 4))
+         window (GLFW/glfwCreateWindow ww wh title 0 0)]
      (GLFW/glfwSetWindowPos window (+ x (/ monitor-w 8)) (+ y (/ monitor-h 8)))
      (GLFW/glfwMakeContextCurrent window)
      ;; TODO: does this belong here?
@@ -133,21 +106,21 @@
      (lwjgl/check-error)
      (GLFW/glfwShowWindow window)
 
+     ;; TODO: reset arcball when window resized
+     (reset! arcball (arcball/ball ww wh))
+     (println @arcball)
+
      (GLFW/glfwSetMouseButtonCallback
       window
       (fn [window _button action _mods]
         ;; TODO: make this atomic
         (when  (= action GLFW/GLFW_PRESS)
           (reset! mouse-button true)
-          (reset! sphere-pt-origin (cursor-sphere-pt window)))
+          (reset! arcball (arcball/update-sphere-pt-origin @arcball (cursor-xy window))))
 
         (when (= action GLFW/GLFW_RELEASE)
-          (let [pt (cursor-sphere-pt window)
-                dq (QuaternionRotation/createVectorRotation
-                    @sphere-pt-origin pt)
-                q (.multiply ^QuaternionRotation @q-origin dq)]
-            (reset! mouse-button false)
-            (reset! q-origin q)))))
+          (reset! mouse-button false)
+          (reset! arcball (arcball/update-q-origin @arcball (cursor-xy window))))))
 
      #_(GLFW/glfwSetCursorPosCallback
         window
@@ -159,11 +132,11 @@
      window))
 
   ;; TODO: better way to choose default monitor
-  ([^String title mouse-button sphere-pt-origin q-origin]
+  ([^String title mouse-button arcball]
    (init)
    (let [mm (monitors)
          m (last mm)]
-     (start-window m title mouse-button sphere-pt-origin q-origin))))
+     (start-window m title mouse-button arcball))))
 
 ;;--------------------------------------------------------------
 
