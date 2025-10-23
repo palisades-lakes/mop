@@ -1,16 +1,14 @@
 (set! *warn-on-reflection* true)
 ;;(set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-;; clj src\scripts\clojure\mop\moon.clj
+;; clj src\scripts\clojure\mop\moon\moon.clj
 ;;----------------------------------------------------------------
-(ns mop.moon
-
-
+(ns mop.moon.moon
   {:doc "Mesh Viewer demo using lwjgl and glfw.
   See https://svs.gsfc.nasa.gov/4720/ for texture and elevation images.
   Started with https://clojurecivitas.github.io/opengl_visualization/main.html"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-10-22"}
+   :version "2025-10-23"}
 
   (:require
    [fastmath.vector :refer [add mult normalize sub vec3]]
@@ -125,11 +123,11 @@
 ;; and to reuse common functions
 
 (def vertex-shader
-  (lwjgl/make-shader (slurp "src/scripts/clojure/mop/vertex.glsl")
+  (lwjgl/make-shader (slurp "src/scripts/clojure/mop/moon/vertex.glsl")
                      GL46/GL_VERTEX_SHADER))
 
 (def fragment-shader
-  (lwjgl/make-shader (slurp "src/scripts/clojure/mop/fragment.glsl")
+  (lwjgl/make-shader (slurp "src/scripts/clojure/mop/moon/fragment.glsl")
                      GL46/GL_FRAGMENT_SHADER))
 
 (def ^Integer program

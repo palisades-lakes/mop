@@ -44,49 +44,60 @@
 ;; TODO: should support off-center and non-unit spheres, for
 ;; translation and zoom.
 
-(defn- ^Vector2D window-to-arcball
+(defn ^Vector2D window-to-arcball [^Arcball ball ^Vector2D window-xy]
   "Convert window coordinates to normalized arcball coordinates,
   relative to a unit circle centered in the window."
-  [^Arcball ball ^Vector2D window-xy]
   (let [^Vector2D c (:center ball)
         s (double (:scale ball))
         ax (* s (- (.getX window-xy) (.getX c)))
         ay (* s (- (.getY c) (.getY window-xy)))]
     (Vector2D/of ax ay)))
 
-(defn ^Vector3D$Unit sphere-pt
-  [^Arcball ball ^Vector2D window-xy]
+(defn ^Vector3D$Unit arcball-to-sphere-pt [^Vector2D axy]
   "Arcball 'projection' onto unit sphere.
-  Follow a negative Z ray from the arcball xy pt into the scene.
+  Follow a negative Z ray from the arcball <code>axy</code> pt into the scene.
   If within the unit circle, return the intersection with the (front half)
   of the unit sphere. If outside, project on the z=0 plane, and then to the unit
   circle resulting from intersecting the z=0 plane with the unit sphere."
-  (let [axy (window-to-arcball ball window-xy)
-        r2 (.normSq axy)
+  (let [r2 (.normSq axy)
         x (.getX axy)
         y (.getY axy)]
     (if (> r2 1.0)
-      ;; -z ray hits misses unit sphere
+      ;; -z ray misses unit sphere
       (Vector3D$Unit/from x y 0.0)
       ;; -z ray hits unit sphere
       (Vector3D$Unit/from x y (Math/sqrt (- 1.0 r2))))))
 
+(defn ^Vector3D$Unit window-to-sphere-pt [^Arcball ball
+                                          ^Vector2D window-xy]
+  "Arcball 'projection' onto unit sphere.
+  Follow a negative Z ray from the <code>window-xy</code> pt
+  into the scene.
+  First convert to normalized arcball coordinates.
+  If within the unit circle,
+  return the intersection with the (front half)
+  of the unit sphere.
+  If outside, project on the z=0 plane, and then to the unit
+  circle resulting from intersecting the z=0 plane
+  with the unit sphere."
+  (arcball-to-sphere-pt
+   (window-to-arcball ball window-xy)))
+
 ;;----------------------------------------------------------------
 
-(defn ^Arcball update-sphere-pt-origin [^Arcball ball ^Vector2D window-xy]
-  (assoc ball :p-origin  (sphere-pt ball window-xy)))
+(defn ^Arcball update-sphere-pt-origin [^Arcball ball
+                                        ^Vector2D window-xy]
+  (assoc ball :p-origin (window-to-sphere-pt ball window-xy)))
 
-(defn ^Arcball update-q-origin [^Arcball ball ^Vector2D window-xy]
-  (let [pt (sphere-pt ball window-xy)
-        dq (QuaternionRotation/createVectorRotation (:p-origin ball) pt)
-        q (.multiply ^QuaternionRotation (:q-origin ball) dq)]
-    (assoc ball :q-origin q)))
+(defn ^QuaternionRotation current-q [^Arcball ball
+                                     ^Vector2D window-xy]
+  (let [p (window-to-sphere-pt ball window-xy)
+        q (QuaternionRotation/createVectorRotation (:p-origin ball) p)]
+    (.multiply q (:q-origin ball))))
 
-(defn ^QuaternionRotation current-q [^Arcball ball ^Vector2D window-xy]
-  (let [pt (sphere-pt ball window-xy)
-        dq (QuaternionRotation/createVectorRotation
-            (:p-origin ball) pt)]
-    (.multiply ^QuaternionRotation (:q-origin ball) dq)))
+(defn ^Arcball update-q-origin [^Arcball ball
+                                ^Vector2D window-xy]
+  (assoc ball :q-origin (current-q ball window-xy)))
 
 ;;----------------------------------------------------------------
 

@@ -167,7 +167,6 @@
      GL46/GL_RED GL46/GL_FLOAT pixels)
     (GL46/glBindTexture GL46/GL_TEXTURE_2D 0)
     (check-error)
-    ;;[texture (max pw ph)]
     [texture (math/sqrt (+ (* pw pw) (* ph ph)))]
     ))
 

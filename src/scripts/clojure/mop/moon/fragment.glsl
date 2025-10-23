@@ -16,8 +16,32 @@ in vec3 vpoint;
 out vec4 fragColor;
 
 // WARNING: only for unit transforms!!!
-vec3 qInverseRotate( vec4 q, vec3 v ){
-	return v + 2.0*cross(cross(v, -q.xyz ) + q.w*v, -q.xyz); }
+vec3 qInverseRotate( vec4 quat, vec3 v ){
+  // TODO: why are xy signs reversed from java/clojure side?
+  float qw = quat.w;
+  float qx = quat.x;
+  float qy = quat.y;
+  float qz = -quat.z;
+
+  float x = v.x;
+  float y = v.y;
+  float z = v.z;
+
+  // calculate the Hamilton product of the quaternion and vector
+  float iw = -(qx * x) - (qy * y) - (qz * z);
+  float ix = (qw * x) + (qy * z) - (qz * y);
+  float iy = (qw * y) + (qz * x) - (qx * z);
+  float iz = (qw * z) + (qx * y) - (qy * x);
+
+  // calculate the Hamilton product of the intermediate vector and
+  // the inverse quaternion
+
+  return vec3(
+              (iw * -qx) + (ix * qw) + (iy * -qz) - (iz * -qy),
+              (iw * -qy) - (ix * -qz) + (iy * qw) + (iz * -qx),
+              (iw * -qz) + (ix * -qy) - (iy * -qx) + (iz * qw)
+          );
+}
 
 vec3 orthogonal_vector(vec3 n) {
   vec3 b;
