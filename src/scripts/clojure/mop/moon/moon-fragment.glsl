@@ -1,5 +1,5 @@
 // :author  "palisades dot lakes at gmail dot com"
-// :version "2025-10-21"
+// :version "2025-10-23"
 
 #version 130
 
@@ -18,6 +18,7 @@ out vec4 fragColor;
 // WARNING: only for unit transforms!!!
 vec3 qInverseRotate( vec4 quat, vec3 v ){
   // TODO: why are xy signs reversed from java/clojure side?
+  // TODO: would it be faster if vectorized?
   float qw = quat.w;
   float qx = quat.x;
   float qy = quat.y;

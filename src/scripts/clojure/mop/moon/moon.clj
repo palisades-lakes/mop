@@ -123,11 +123,11 @@
 ;; and to reuse common functions
 
 (def vertex-shader
-  (lwjgl/make-shader (slurp "src/scripts/clojure/mop/moon/vertex.glsl")
+  (lwjgl/make-shader (slurp "src/scripts/clojure/mop/moon/moon-vertex.glsl")
                      GL46/GL_VERTEX_SHADER))
 
 (def fragment-shader
-  (lwjgl/make-shader (slurp "src/scripts/clojure/mop/moon/fragment.glsl")
+  (lwjgl/make-shader (slurp "src/scripts/clojure/mop/moon/moon-fragment.glsl")
                      GL46/GL_FRAGMENT_SHADER))
 
 (def ^Integer program
