@@ -1,17 +1,17 @@
 (set! *warn-on-reflection* true)
 ;;(set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-;; clj src\scripts\clojure\mop\moon\moon.clj
+;; clj src\scripts\clojure\mop\cube\cube.clj
 ;;----------------------------------------------------------------
-(ns mop.moon.moon
+(ns mop.cube.cube
   {:doc "Mesh Viewer demo using lwjgl and glfw.
-  See https://svs.gsfc.nasa.gov/4720/ for texture and elevation images.
+  Colored cube to help debugging.
   Started with https://clojurecivitas.github.io/opengl_visualization/main.html"
    :author "palisades dot lakes at gmail dot com"
    :version "2025-10-25"}
 
   (:require
-   [fastmath.vector :refer [add mult normalize sub vec3]]
+   [fastmath.vector :refer [normalize vec3]]
    [mop.geom.arcball :as arcball]
    [mop.lwjgl.glfw.util :as glfw]
    [mop.lwjgl.util :as lwjgl])
@@ -29,7 +29,7 @@
 ;;-------------------------------------------------------------
 
 (def window
-  (glfw/start-window "moon" mouse-button arcball))
+  (glfw/start-window "cube" mouse-button arcball))
 
 ;;-------------------------------------------------------------
 ;; color texture
@@ -58,15 +58,17 @@
 ;;----------------------------------------------------------------------
 
 (def vertices-cube
-  (float-array  [-1.0 -1.0 -1.0
-                 1.0 -1.0 -1.0
-                 1.0  1.0 -1.0
-                 -1.0  1.0 -1.0
-                 -1.0 -1.0  1.0
-                 1.0 -1.0  1.0
-                 1.0  1.0  1.0
-                 -1.0  1.0  1.0]
-                ))
+  (float-array
+   (mapv #(* radius %)
+         [-1.0 -1.0 -1.0
+          1.0 -1.0 -1.0
+          1.0  1.0 -1.0
+          -1.0  1.0 -1.0
+          -1.0 -1.0  1.0
+          1.0 -1.0  1.0
+          1.0  1.0  1.0
+          -1.0  1.0  1.0]
+         )))
 
 (def indices-cube
   (int-array  [0 3 2 1
@@ -76,47 +78,10 @@
                2 3 7 6
                0 1 5 4]))
 
-(def points
-  (map #(apply vec3 %)
-       (partition 3 vertices-cube)))
+(def vao-cube (lwjgl/setup-vao vertices-cube indices-cube))
 
-(def corners
-  (map (fn [[i _ _ _]] (nth points i))
-       (partition 4 indices-cube)))
-
-(def u-vectors
-  (map (fn [[i j _ _]] (sub (nth points j) (nth points i)))
-       (partition 4 indices-cube)))
-
-(def v-vectors
-  (map (fn [[i _ _ l]] (sub (nth points l) (nth points i)))
-       (partition 4 indices-cube)))
-
-(defn sphere-points [n c u v]
-  (for [j (range (inc n)) i (range (inc n))]
-    (mult
-     (normalize
-      (add c (add (mult u (/ i n)) (mult v (/ j n)))))
-     radius)))
-
-(defn sphere-indices [n face]
-  (for [j (range n) i (range n)]
-    (let [offset (+ (* face (inc n) (inc n)) (* j (inc n)) i)]
-      [offset (inc offset) (+ offset n 2) (+ offset n 1)])))
-
-(def n2 16)
-(def vertices-sphere-high
-  (float-array
-   (flatten (map (partial sphere-points n2)
-                 corners u-vectors v-vectors))))
-
-(def indices-sphere-high
-  (int-array (flatten (map (partial sphere-indices n2) (range 6)))))
-
-(def vao-sphere-high
-  (lwjgl/setup-vao vertices-sphere-high indices-sphere-high))
-
-(def light (normalize (vec3 1 1 1)))
+;
+(def light (normalize (vec3 -1 0 1)))
 
 ;;----------------------------------------------------
 ;; TODO: smarter shader construction in order to not depend on
@@ -124,11 +89,11 @@
 ;; and to reuse common functions
 
 (def vertex-shader
-  (lwjgl/make-shader (slurp "src/scripts/clojure/mop/moon/moon-vertex.glsl")
+  (lwjgl/make-shader (slurp "src/scripts/clojure/mop/cube/cube-vertex.glsl")
                      GL46/GL_VERTEX_SHADER))
 
 (def fragment-shader
-  (lwjgl/make-shader (slurp "src/scripts/clojure/mop/moon/moon-fragment.glsl")
+  (lwjgl/make-shader (slurp "src/scripts/clojure/mop/cube/cube-fragment.glsl")
                      GL46/GL_FRAGMENT_SHADER))
 
 (def ^Integer program
@@ -187,7 +152,7 @@
 (lwjgl/aspect-ratio program (glfw/window-wh window) "aspect")
 
 (while (not (GLFW/glfwWindowShouldClose window))
-  (glfw/draw-quads window (count indices-sphere-high))
+  (glfw/draw-quads window (count indices-cube))
   (GLFW/glfwPollEvents)
   (when @mouse-button
     (lwjgl/push-quaternion-coordinates
@@ -196,6 +161,6 @@
 
 (glfw/clean-up window
                program
-               vao-sphere-high
+               vao-cube
                color-texture
                elevation-texture)

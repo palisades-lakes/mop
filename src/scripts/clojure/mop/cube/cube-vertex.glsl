@@ -1,5 +1,5 @@
 // :author  "palisades dot lakes at gmail dot com"
-// :version "2025-10-21"
+// :version "2025-10-25"
 
 #version 130
 
@@ -15,8 +15,8 @@ vec3 qRotate( vec4 quat, vec3 v ){
   // TODO: why are xy signs reversed from java/clojure side?
   // TODO: would it be faster if vectorized?
   float qw = quat.w;
-  float qx = -quat.x;
-  float qy = -quat.y;
+  float qx = quat.x;
+  float qy = quat.y;
   float qz = quat.z;
   
   float x = v.x;
@@ -41,12 +41,12 @@ vec3 qRotate( vec4 quat, vec3 v ){
 
 void main() {
 
-  vec3 p = qRotate(quaternion,point) + vec3(0, 0, distance);
+  vec3 p = qRotate(quaternion,point) + vec3(0, 0, -distance);
 
   // Project vertex creating normalized device coordinates
   float f = 1.0 / tan(fov / 2.0); // TODO: constant, move out of shader
-  float proj_x = (p.x / p.z) * f;
-  float proj_y = (p.y / p.z) * f * aspect;
+  float proj_x = (p.x / -p.z) * f;
+  float proj_y = (p.y / -p.z) * f * aspect;
   float proj_z = p.z / (2.0 * distance);
 
   // Output to shader pipeline.

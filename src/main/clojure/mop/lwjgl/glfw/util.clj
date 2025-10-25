@@ -5,7 +5,7 @@
 
   {:doc "LWJGL/GLFW utilities"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-10-22"}
+   :version "2025-10-25"}
 
   (:require [mop.geom.arcball :as arcball]
             [mop.lwjgl.util :as lwjgl])
@@ -139,6 +139,10 @@
 
 (defn draw-quads [^long window ^long max-index]
   (GL46/glClear GL46/GL_COLOR_BUFFER_BIT)
+  ;;(GL46/glDisable GL46/GL_CULL_FACE)
+  ;;(GL46/glEnable GL46/GL_CULL_FACE)
+  ;;(GL46/glCullFace GL46/GL_FRONT)
+  (GL46/glEnable GL46/GL_CULL_FACE)
   (GL46/glCullFace GL46/GL_BACK)
   (GL46/glDrawElements GL46/GL_QUADS max-index GL46/GL_UNSIGNED_INT 0)
   (GLFW/glfwSwapBuffers window)
