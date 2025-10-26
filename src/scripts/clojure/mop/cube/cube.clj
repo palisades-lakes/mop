@@ -8,11 +8,11 @@
   Colored cube to help debugging.
   Started with https://clojurecivitas.github.io/opengl_visualization/main.html"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-10-25"}
+   :version "2025-10-26"}
 
   (:require
-   [fastmath.vector :refer [normalize vec3]]
    [mop.geom.arcball :as arcball]
+   [mop.geom.util :as geom]
    [mop.lwjgl.glfw.util :as glfw]
    [mop.lwjgl.util :as lwjgl])
   (:import
@@ -81,7 +81,7 @@
 (def vao-cube (lwjgl/setup-vao vertices-cube indices-cube))
 
 ;
-(def light (normalize (vec3 -1 0 1)))
+(def light (geom/unit-vector -1 0 1))
 
 ;;----------------------------------------------------
 ;; TODO: smarter shader construction in order to not depend on
@@ -129,9 +129,9 @@
 (GL46/glUniform1f
  (GL46/glGetUniformLocation program "diffuse")
  0.8)
-(GL46/glUniform3f
+(GL46/glUniform3fv
  (GL46/glGetUniformLocation program "light")
- (light 0) (light 1) (light 2))
+ (geom/float-coordinates light))
 (GL46/glUniform1i
  (GL46/glGetUniformLocation program "colorTexture")
  0)

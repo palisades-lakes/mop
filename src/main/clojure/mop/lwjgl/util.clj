@@ -5,16 +5,14 @@
 
   {:doc     "LWJGL utilities"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-10-21"}
+   :version "2025-10-26"}
 
   (:require [clojure.math :as math]
+            [mop.geom.util :as geom]
             [mop.image.util :as image])
 
   (:import [java.awt.image WritableRaster]
            [java.nio ByteBuffer FloatBuffer IntBuffer]
-           [org.apache.commons.geometry.euclidean.threed.rotation QuaternionRotation]
-           [org.apache.commons.geometry.euclidean.twod Vector2D]
-           [org.apache.commons.numbers.quaternion Quaternion]
            [org.lwjgl BufferUtils]
            [org.lwjgl.opengl GL46])  )
 
@@ -174,23 +172,19 @@
 
 (defn push-quaternion-coordinates [^Integer program
                                    ^String location
-                                   ^QuaternionRotation qr]
-  (let [^Quaternion q (.getQuaternion qr)]
-    (GL46/glUniform4f
+                                   qr]
+    (GL46/glUniform4fv
      (GL46/glGetUniformLocation program location)
-     (float (.getX q))
-     (float (.getY q))
-     (float (.getZ q))
-     (float (.getW q)))))
+     (geom/float-coordinates qr)))
 
 ;;----------------------------------------------------
 
 (defn aspect-ratio [^Integer program
-                    ^Vector2D window-wh
+                    window-wh
                     ^String program-aspect]
   (GL46/glUniform1f
    (GL46/glGetUniformLocation program program-aspect)
-   (/ (.getX window-wh) (.getY window-wh)))
+   (geom/aspect window-wh))
   (check-error))
 
 ;;----------------------------------------------------

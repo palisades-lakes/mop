@@ -10,11 +10,11 @@
 
   (:require
    [clojure.pprint :as pp]
-   [mop.geom.arcball :as arcball])
+   [mop.geom.arcball :as arcball]
+   [mop.geom.util :as geom])
   (:import
    [org.apache.commons.geometry.euclidean.threed Vector3D Vector3D$Unit]
-   [org.apache.commons.geometry.euclidean.threed.rotation QuaternionRotation]
-   [org.apache.commons.geometry.euclidean.twod Vector2D]))
+   [org.apache.commons.geometry.euclidean.threed.rotation QuaternionRotation]))
 
 ;;-------------------------------------------------------------
 
@@ -43,7 +43,7 @@
       ;      1024 512
       ;      Vector3D$Unit/PLUS_X
       ;      (QuaternionRotation/identity))
-      ;wxy (Vector2D/of 512 -1)
+      ;wxy (geom/vector 512 -1)
       ;axy (arcball/window-to-arcball ball wxy)
       ;p (arcball/arcball-to-sphere-pt axy)
       ;q (arcball/current-q ball wxy)
@@ -51,7 +51,7 @@
             1024 512
             Vector3D$Unit/PLUS_Z
             (QuaternionRotation/identity))
-      wxy (Vector2D/of (+ 256 512) 256)
+      wxy (geom/make-vector (+ 256 512) 256)
       axy (arcball/window-to-arcball ball wxy)
       p (arcball/arcball-to-sphere-pt axy)
       ;;q (arcball/current-q ball wxy)

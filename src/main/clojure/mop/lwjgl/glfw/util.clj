@@ -5,13 +5,13 @@
 
   {:doc "LWJGL/GLFW utilities"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-10-25"}
+   :version "2025-10-26"}
 
   (:require [mop.geom.arcball :as arcball]
+            [mop.geom.util :as geom]
             [mop.lwjgl.util :as lwjgl])
   (:import
    [java.util Map]
-   [org.apache.commons.geometry.euclidean.twod Vector2D]
    [org.lwjgl PointerBuffer]
    [org.lwjgl.glfw GLFW]
    [org.lwjgl.opengl GL GL46]))
@@ -23,15 +23,15 @@
 
 (let [ww (int-array 1)
       hh (int-array 1)]
-  (defn ^Vector2D window-wh [^long window]
+  (defn window-wh [^long window]
     (GLFW/glfwGetWindowSize window ww hh)
-    (Vector2D/of (aget ww 0) (aget hh 0))))
+    (geom/make-vector (aget ww 0) (aget hh 0))))
 
 (let [xx (double-array 1)
       yy (double-array 1)]
-  (defn ^Vector2D cursor-xy [^long window]
+  (defn cursor-xy [^long window]
     (GLFW/glfwGetCursorPos window xx yy)
-    (Vector2D/of (aget xx 0) (aget yy 0))))
+    (geom/make-vector (aget xx 0) (aget yy 0))))
 
 ;;--------------------------------------------------------------
 ;; TODO: check for prior initialization?

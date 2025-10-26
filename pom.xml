@@ -87,27 +87,6 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>generateme</groupId>
-      <artifactId>fastmath</artifactId>
-      <version>${generateme-fastmath-version}</version>
-      <exclusions>
-        <!-- early versions of clojure 1.12 have vulnerabilities -->
-        <exclusion>
-          <groupId>org.clojure</groupId>
-          <artifactId>clojure</artifactId>
-        </exclusion>
-        <!-- don't know why these are excluded -->
-        <exclusion>
-          <groupId>com.github.haifengl</groupId>
-          <artifactId>smile-mkl</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.bytedeco</groupId>
-          <artifactId>openblas</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
       <groupId>org.lwjgl</groupId>
       <artifactId>lwjgl</artifactId>
       <version>${lwjgl.version}</version>
@@ -118,7 +97,6 @@
       <classifier>${lwjgl.natives}</classifier>
       <version>${lwjgl.version}</version>
     </dependency>
-
     <dependency>
       <groupId>org.lwjgl</groupId>
       <artifactId>lwjgl-opengl</artifactId>

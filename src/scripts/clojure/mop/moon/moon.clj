@@ -5,16 +5,19 @@
 ;;----------------------------------------------------------------
 (ns mop.moon.moon
   {:doc "Mesh Viewer demo using lwjgl and glfw.
-  See https://svs.gsfc.nasa.gov/4720/ for texture and elevation images.
-  Started with https://clojurecivitas.github.io/opengl_visualization/main.html"
+  See https://svs.gsfc.nasa.gov/4720/
+  for texture and elevation images.
+  Started with
+  https://clojurecivitas.github.io/opengl_visualization/main.html"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-10-25"}
+   :version "2025-10-26"}
 
   (:require
-   [fastmath.vector :refer [add mult normalize sub vec3]]
    [mop.geom.arcball :as arcball]
+   [mop.geom.util :as geom]
    [mop.lwjgl.glfw.util :as glfw]
    [mop.lwjgl.util :as lwjgl])
+
   (:import
    [java.lang Math]
    [org.lwjgl.glfw GLFW]
@@ -58,26 +61,27 @@
 ;;----------------------------------------------------------------------
 
 (def vertices-cube
-  (float-array  [-1.0 -1.0 -1.0
-                 1.0 -1.0 -1.0
-                 1.0  1.0 -1.0
-                 -1.0  1.0 -1.0
-                 -1.0 -1.0  1.0
-                 1.0 -1.0  1.0
-                 1.0  1.0  1.0
-                 -1.0  1.0  1.0]
-                ))
+  (float-array [-1.0 -1.0 -1.0
+                1.0 -1.0 -1.0
+                1.0  1.0 -1.0
+                -1.0  1.0 -1.0
+                -1.0 -1.0  1.0
+                1.0 -1.0  1.0
+                1.0  1.0  1.0
+                -1.0  1.0  1.0]
+               ))
 
 (def indices-cube
-  (int-array  [0 3 2 1
-               4 5 6 7
-               0 4 7 3
-               5 1 2 6
-               2 3 7 6
-               0 1 5 4]))
+  (int-array [0 3 2 1
+              4 5 6 7
+              0 4 7 3
+              5 1 2 6
+              2 3 7 6
+              0 1 5 4]))
 
 (def points
-  (map #(apply vec3 %)
+  (map (fn [[x y z]]
+         (geom/make-vector (double x) (double y) (double z)))
        (partition 3 vertices-cube)))
 
 (def corners
@@ -85,18 +89,24 @@
        (partition 4 indices-cube)))
 
 (def u-vectors
-  (map (fn [[i j _ _]] (sub (nth points j) (nth points i)))
+  (map (fn [[i j _ _]]
+         (geom/subtract (nth points j) (nth points i)))
        (partition 4 indices-cube)))
 
 (def v-vectors
-  (map (fn [[i _ _ l]] (sub (nth points l) (nth points i)))
+  (map (fn [[i _ _ l]]
+         (geom/subtract (nth points l) (nth points i)))
        (partition 4 indices-cube)))
 
 (defn sphere-points [n c u v]
   (for [j (range (inc n)) i (range (inc n))]
-    (mult
-     (normalize
-      (add c (add (mult u (/ i n)) (mult v (/ j n)))))
+    (geom/multiply
+     (geom/normalize
+      (geom/add
+       c
+       (geom/add
+        (geom/multiply u (double (/ i n)))
+        (geom/multiply v (double (/ j n))))))
      radius)))
 
 (defn sphere-indices [n face]
@@ -107,8 +117,11 @@
 (def n2 16)
 (def vertices-sphere-high
   (float-array
-   (flatten (map (partial sphere-points n2)
-                 corners u-vectors v-vectors))))
+   (flatten
+    (map geom/coordinates
+         (flatten
+          (map (partial sphere-points n2)
+               corners u-vectors v-vectors))))))
 
 (def indices-sphere-high
   (int-array (flatten (map (partial sphere-indices n2) (range 6)))))
@@ -116,7 +129,7 @@
 (def vao-sphere-high
   (lwjgl/setup-vao vertices-sphere-high indices-sphere-high))
 
-(def light (normalize (vec3 1 1 1)))
+(def light (geom/unit-vector 1.0 1.0 1.0))
 
 ;;----------------------------------------------------
 ;; TODO: smarter shader construction in order to not depend on
@@ -160,13 +173,13 @@
  resolution)
 (GL46/glUniform1f
  (GL46/glGetUniformLocation program "ambient")
- 0.2)
+ 0.3)
 (GL46/glUniform1f
  (GL46/glGetUniformLocation program "diffuse")
- 0.8)
-(GL46/glUniform3f
+ 0.5)
+(GL46/glUniform3fv
  (GL46/glGetUniformLocation program "light")
- (light 0) (light 1) (light 2))
+ (geom/float-coordinates light))
 (GL46/glUniform1i
  (GL46/glGetUniformLocation program "colorTexture")
  0)
