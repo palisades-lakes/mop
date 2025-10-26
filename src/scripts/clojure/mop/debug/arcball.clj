@@ -18,7 +18,7 @@
 
 ;;-------------------------------------------------------------
 
-(defn rotate [^QuaternionRotation qr ^Vector3D v]
+#_(defn rotate [^QuaternionRotation qr ^Vector3D v]
   (let [q (.getQuaternion qr)
         w (.getW q)
         xyz (Vector3D/of (.getX q) (.getY q) (.getZ q))

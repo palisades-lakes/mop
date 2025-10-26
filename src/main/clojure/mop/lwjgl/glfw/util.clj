@@ -104,6 +104,20 @@
      (GL/createCapabilities)
      (GL46/glDebugMessageCallback lwjgl/debug-msg-callback 0)
      (lwjgl/check-error)
+
+     ;(GL46/glDisable GL46/GL_CULL_FACE)
+     ;(GL46/glPolygonMode GL46/GL_FRONT_AND_BACK GL46/GL_LINE)
+
+     ;(GL46/glEnable GL46/GL_CULL_FACE)
+     ;(GL46/glCullFace GL46/GL_BACK)
+
+     (GL46/glDisable GL46/GL_CULL_FACE)
+     (lwjgl/check-error)
+     (GL46/glEnable GL46/GL_DEPTH_TEST)
+     (lwjgl/check-error)
+     (GL46/glDepthFunc GL46/GL_LESS)
+     (lwjgl/check-error)
+
      (GLFW/glfwShowWindow window)
 
      ;; TODO: reset arcball when window resized
@@ -138,12 +152,9 @@
 ;;--------------------------------------------------------------
 
 (defn draw-quads [^long window ^long max-index]
-  (GL46/glClear GL46/GL_COLOR_BUFFER_BIT)
-  ;;(GL46/glDisable GL46/GL_CULL_FACE)
-  ;;(GL46/glEnable GL46/GL_CULL_FACE)
-  ;;(GL46/glCullFace GL46/GL_FRONT)
-  (GL46/glEnable GL46/GL_CULL_FACE)
-  (GL46/glCullFace GL46/GL_BACK)
+  (GL46/glClear
+   (bit-or GL46/GL_COLOR_BUFFER_BIT
+           GL46/GL_DEPTH_BUFFER_BIT))
   (GL46/glDrawElements GL46/GL_QUADS max-index GL46/GL_UNSIGNED_INT 0)
   (GLFW/glfwSwapBuffers window)
   (lwjgl/check-error))
