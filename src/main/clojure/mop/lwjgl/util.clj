@@ -100,8 +100,7 @@
      ^FloatBuffer (make-float-buffer vertices)
      GL46/GL_STATIC_DRAW)
     (GL46/glBindBuffer GL46/GL_ELEMENT_ARRAY_BUFFER ibo)
-    (GL46/glBufferData
-     GL46/GL_ELEMENT_ARRAY_BUFFER
+    (GL46/glBufferData GL46/GL_ELEMENT_ARRAY_BUFFER
      ^IntBuffer (make-int-buffer indices)
      GL46/GL_STATIC_DRAW)
     (check-error)
