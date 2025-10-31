@@ -104,7 +104,7 @@
      ^IntBuffer (make-int-buffer indices)
      GL46/GL_STATIC_DRAW)
     (check-error)
-    {:vao vao :vbo vbo :ibo ibo}))
+    {:nindices (count indices) :vao vao :vbo vbo :ibo ibo}))
 
 (defn teardown-vao [{:keys [^int vao ^int vbo ^int ibo]}]
   (GL46/glBindBuffer GL46/GL_ELEMENT_ARRAY_BUFFER 0)

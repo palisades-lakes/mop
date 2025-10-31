@@ -5,8 +5,8 @@
   (:require
    [mop.commons.debug :as debug]
    [mop.geom.util :as geom]
-   [mop.mesh.complex :as cmplx]
-   [mop.mesh.mesh :as mesh]
+   [mop.cmplx.complex :as cmplx]
+   [mop.geom.mesh :as mesh]
    ))
 
 (let [z0 (cmplx/make-simplex)

@@ -8,15 +8,14 @@
   Colored cube to help debugging.
   Started with https://clojurecivitas.github.io/opengl_visualization/main.html"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-10-30"}
+   :version "2025-10-31"}
 
   (:require
    [mop.geom.arcball :as arcball]
+   [mop.geom.mesh :as mesh]
    [mop.geom.util :as geom]
    [mop.lwjgl.glfw.util :as glfw]
-   [mop.lwjgl.util :as lwjgl]
-   [mop.mesh.complex :as cmplx]
-   [mop.mesh.mesh :as mesh])
+   [mop.lwjgl.util :as lwjgl])
   (:import
    [java.lang Math]
    [org.lwjgl.glfw GLFW]
@@ -45,7 +44,7 @@
 ;;-------------------------------------------------------------------
 ;; elevation image relative to ?
 ;;-------------------------------------------------------------------
-
+;; km
 (def ^Double radius 1737.4)
 
 (let [[texture ^double r]
@@ -59,35 +58,10 @@
 ;; base geometry
 ;;----------------------------------------------------------------------
 
-(let [z0 (cmplx/make-simplex)
-      z1 (cmplx/make-simplex)
-      z2 (cmplx/make-simplex)
-      z3 (cmplx/make-simplex)
-      z4 (cmplx/make-simplex)
-      z5 (cmplx/make-simplex)
-      z6 (cmplx/make-simplex)
-      z7 (cmplx/make-simplex)
-      q0321 (cmplx/make-quad z0 z3 z2 z1)
-      q4567 (cmplx/make-quad z4 z5 z6 z7)
-      q0473 (cmplx/make-quad z0 z4 z7 z3)
-      q5126 (cmplx/make-quad z5 z1 z2 z6)
-      q2376 (cmplx/make-quad z2 z3 z7 z6)
-      q0154 (cmplx/make-quad z0 z1 z5 z4)
-      qcmplx (cmplx/make-quad-complex [q0321 q4567 q0473 q5126 q2376 q0154])
-      ;; TODO: scale and other transforms of meshes
-      embedding {z0 (geom/make-vector (- radius) (- radius) (- radius))
-                 z1 (geom/make-vector radius (- radius) (- radius))
-                 z2 (geom/make-vector radius radius (- radius))
-                 z3 (geom/make-vector (- radius) radius (- radius))
-                 z4 (geom/make-vector (- radius) (- radius) radius)
-                 z5 (geom/make-vector radius (- radius) radius)
-                 z6 (geom/make-vector radius radius radius)
-                 z7 (geom/make-vector (- radius) radius radius)}
-      mesh (mesh/make-quad-mesh qcmplx embedding)
+(let [mesh (geom/transform radius (mesh/standard-quad-cube))
       [coordinates elements] (mesh/coordinates-and-elements mesh)
       vertices-cube (float-array coordinates)
       indices-cube (int-array elements)]
-  (def nquads (* 4 (count (.quads qcmplx))) )
   (def vao-cube (lwjgl/setup-vao vertices-cube indices-cube))
   )
 
@@ -162,7 +136,7 @@
 (lwjgl/aspect-ratio program (glfw/window-wh window) "aspect")
 
 (while (not (GLFW/glfwWindowShouldClose window))
-  (glfw/draw-quads window (* 4 nquads))
+  (glfw/draw-quads window (:nindices vao-cube))
   (GLFW/glfwPollEvents)
   (when @mouse-button
     (lwjgl/push-quaternion-coordinates

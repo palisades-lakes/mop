@@ -1,7 +1,7 @@
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-(ns mop.mesh.complex
+(ns mop.cmplx.complex
   {:doc     "(Abstract) simplicial and cell complexes."
    :author  "palisades dot lakes at gmail dot com"
    :version "2025-10-30"}
@@ -183,12 +183,34 @@
        "]"))
 
 ;;---------------------------------------------------------------
+;; TODO: enforce oriented complex.
 
 (defn make-quad-complex ^QuadComplex [quads]
-  ;; accumulate the zero simplexes from the quads,
-  ;; and sort.
+  "Accumulate the zero simplexes from the quads, and sort."
   (let [zeros (sort (into #{} (flatten (map #(.zeros ^Cell %) quads))))]
     (QuadComplex. zeros quads)))
+
+;;---------------------------------------------------------------
+;; TODO: how to ensure that embeddings don't turn the cube inside out?
+
+(defn quad-cube []
+  "Return an oriented quad complex with 6 faces, topologically
+  equivalent to a sphere or cube surface."
+  (let [z0 (make-simplex)
+        z1 (make-simplex)
+        z2 (make-simplex)
+        z3 (make-simplex)
+        z4 (make-simplex)
+        z5 (make-simplex)
+        z6 (make-simplex)
+        z7 (make-simplex)
+        q0321 (make-quad z0 z3 z2 z1)
+        q4567 (make-quad z4 z5 z6 z7)
+        q0473 (make-quad z0 z4 z7 z3)
+        q5126 (make-quad z5 z1 z2 z6)
+        q2376 (make-quad z2 z3 z7 z6)
+        q0154 (make-quad z0 z1 z5 z4)] 
+    (make-quad-complex [q0321 q4567 q0473 q5126 q2376 q0154])))
 
 ;;---------------------------------------------------------------
 

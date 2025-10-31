@@ -6,7 +6,7 @@
   {:doc "Geometry utilities.
   Hide 3rd party library is used, if any."
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-10-26"}
+   :version "2025-10-31"}
 
   (:import
    [clojure.lang ISeq]
@@ -127,6 +127,21 @@
 (defn ^QuaternionRotation quaternion-from-to
   [^Vector3D from ^Vector3D to]
   (QuaternionRotation/createVectorRotation from to))
+
+;;----------------------------------------------------------------
+;; TODO: support scaling by a primitive.
+
+(defmulti transform
+          "Return a geometric object similar to <code>x</code>,
+          transformed by <code>f</code>.
+          EG, if f is a number, do linear scaling in all dimensions."
+          (fn [f x] [(class f) (class x)]))
+
+(defmethod transform [Number Vector] [^Number f ^Vector x]
+  (.multiply x f))
+
+(defmethod transform [QuaternionRotation Vector3D] [^QuaternionRotation f ^Vector3D x]
+  (.apply f x))
 
 ;;----------------------------------------------------------------
 

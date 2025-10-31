@@ -5,7 +5,7 @@
   (:require
    [clojure.pprint :as pp]
    [mop.commons.debug :as mop]
-   [mop.mesh.complex :as simplex]))
+   [mop.cmplx.complex :as simplex]))
 
 (let [z0 (simplex/make-simplex)
       z1 (simplex/make-simplex)
