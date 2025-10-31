@@ -19,24 +19,30 @@
     (io/copy in out)
     (println "done")))
 
-(defn ^WritableRaster get-writeable-raster [local-path remote-url]
+(defn- ^WritableRaster get-writeable-raster [local-path remote-url]
   (when (not (.exists (io/file local-path)))
     (download remote-url local-path))
   (let [^BufferedImage image (ImageIO/read (io/file local-path)) ]
-     (.getRaster image)))
+    (.getRaster image)))
 
-(defn pixels-as-ints [^WritableRaster raster]
-  (let [w (.getWidth raster)
-        h (.getHeight raster)
-        d (.getNumBands raster)
-        pixels (int-array (* w h d))]
-    (.getPixels raster 0 0 w h pixels)
-    [pixels w h] ))
+(defn pixels-as-ints
+  ([^WritableRaster raster]
+   (let [w (.getWidth raster)
+         h (.getHeight raster)
+         d (.getNumBands raster)
+         pixels (int-array (* w h d))]
+     (.getPixels raster 0 0 w h pixels)
+     [pixels w h] ))
+  ([^String local-path ^String remote-url]
+   (pixels-as-ints (get-writeable-raster local-path remote-url))))
 
 ;; TODO: assuming only one band?
-(defn pixels-as-floats [^WritableRaster raster]
-  (let [w (.getWidth raster)
-        h (.getHeight raster)
-        pixels (float-array (* w h))]
-    (.getPixels raster 0 0 w h pixels)
-    [pixels w h] ))
+(defn pixels-as-floats
+  ([^WritableRaster raster]
+   (let [w (.getWidth raster)
+         h (.getHeight raster)
+         pixels (float-array (* w h))]
+     (.getPixels raster 0 0 w h pixels)
+     [pixels w h] ))
+  ([^String local-path ^String remote-url]
+   (pixels-as-floats (get-writeable-raster local-path remote-url))))

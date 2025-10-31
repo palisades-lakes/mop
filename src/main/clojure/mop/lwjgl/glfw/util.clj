@@ -118,6 +118,7 @@
      (GL46/glDepthFunc GL46/GL_LESS)
      (lwjgl/check-error)
 
+     (GL46/glClearColor 0.0 0.0 0.0 1.0)
      (GLFW/glfwShowWindow window)
 
      ;; TODO: reset arcball when window resized

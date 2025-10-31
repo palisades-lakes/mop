@@ -72,20 +72,17 @@
 ;; shared names btwn clojure and glsl code,
 ;; and to reuse common functions
 
-(def vertex-shader
-  (lwjgl/make-shader (slurp "src/scripts/clojure/mop/cube/cube-vertex.glsl")
-                     GL46/GL_VERTEX_SHADER))
-
-(def fragment-shader
-  (lwjgl/make-shader (slurp "src/scripts/clojure/mop/cube/cube-fragment.glsl")
-                     GL46/GL_FRAGMENT_SHADER))
-
 (def ^Integer program
-  (lwjgl/make-program vertex-shader fragment-shader))
+  (lwjgl/make-program
+   {GL46/GL_VERTEX_SHADER
+   "src/scripts/clojure/mop/cube/cube-vertex.glsl"
+    GL46/GL_FRAGMENT_SHADER
+    "src/scripts/clojure/mop/cube/cube-fragment.glsl"}))
 
 ;;----------------------------------------------------
 ;; only way I've found to get cursive to stop complaining
 ;; about no matching call
+
 (let [index (int (GL46/glGetAttribLocation ^int program "point"))
       size (int 3)
       type (int GL46/GL_FLOAT)

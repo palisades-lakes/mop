@@ -193,7 +193,7 @@
 ;;---------------------------------------------------------------
 ;; TODO: how to ensure that embeddings don't turn the cube inside out?
 
-(defn quad-cube []
+(defn ^QuadComplex quad-cube []
   "Return an oriented quad complex with 6 faces, topologically
   equivalent to a sphere or cube surface."
   (let [z0 (make-simplex)

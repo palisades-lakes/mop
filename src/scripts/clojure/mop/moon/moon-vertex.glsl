@@ -1,5 +1,5 @@
 // :author  "palisades dot lakes at gmail dot com"
-// :version "2025-10-25"
+// :version "2025-10-31"
 
 #version 130
 
@@ -25,18 +25,16 @@ vec3 qRotate( vec4 quat, vec3 v ){
   
   // calculate the Hamilton product of the quaternion and vector
   float iw = -(qx * x) - (qy * y) - (qz * z);
-  float ix = (qw * x) + (qy * z) - (qz * y);
-  float iy = (qw * y) + (qz * x) - (qx * z);
-  float iz = (qw * z) + (qx * y) - (qy * x);
+  float ix =  (qw * x) + (qy * z) - (qz * y);
+  float iy =  (qw * y) + (qz * x) - (qx * z);
+  float iz =  (qw * z) + (qx * y) - (qy * x);
   
   // calculate the Hamilton product of the intermediate vector and
   // the inverse quaternion
   
-  return vec3(
-              (iw * -qx) + (ix * qw) + (iy * -qz) - (iz * -qy),
-              (iw * -qy) - (ix * -qz) + (iy * qw) + (iz * -qx),
-              (iw * -qz) + (ix * -qy) - (iy * -qx) + (iz * qw)
-          );
+  return vec3((iw * -qx) + (ix *  qw) + (iy * -qz) - (iz * -qy),
+              (iw * -qy) - (ix * -qz) + (iy *  qw) + (iz * -qx),
+              (iw * -qz) + (ix * -qy) - (iy * -qx) + (iz *  qw));
 }
 
 void main() {

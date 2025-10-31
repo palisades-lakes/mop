@@ -5,14 +5,13 @@
 
   {:doc     "LWJGL utilities"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-10-26"}
+   :version "2025-10-31"}
 
   (:require [clojure.math :as math]
             [mop.geom.util :as geom]
             [mop.image.util :as image])
 
-  (:import [java.awt.image WritableRaster]
-           [java.nio ByteBuffer FloatBuffer IntBuffer]
+  (:import [java.nio ByteBuffer FloatBuffer IntBuffer]
            [org.lwjgl BufferUtils]
            [org.lwjgl.opengl GL46])  )
 
@@ -60,11 +59,12 @@
     (check-error)
     shader))
 
-(defn make-program [& shaders]
+(defn make-program [paths-and-types]
   (let [program (GL46/glCreateProgram)]
-    (doseq [shader shaders]
-      (GL46/glAttachShader program shader)
-      (GL46/glDeleteShader shader))
+    (doseq [[^Integer type ^String path] paths-and-types]
+      (let [shader (make-shader (slurp path) type)]
+        (GL46/glAttachShader program shader)
+        (GL46/glDeleteShader shader)))
     (GL46/glLinkProgram program)
     (when (zero? (GL46/glGetProgrami program GL46/GL_LINK_STATUS))
       (throw (RuntimeException. (GL46/glGetProgramInfoLog program 1024))))
@@ -101,8 +101,8 @@
      GL46/GL_STATIC_DRAW)
     (GL46/glBindBuffer GL46/GL_ELEMENT_ARRAY_BUFFER ibo)
     (GL46/glBufferData GL46/GL_ELEMENT_ARRAY_BUFFER
-     ^IntBuffer (make-int-buffer indices)
-     GL46/GL_STATIC_DRAW)
+                       ^IntBuffer (make-int-buffer indices)
+                       GL46/GL_STATIC_DRAW)
     (check-error)
     {:nindices (count indices) :vao vao :vbo vbo :ibo ibo}))
 
@@ -119,8 +119,7 @@
 ;; TODO: probably not general enough
 
 (defn int-texture-from-image-file [local-path remote-url]
-  (let [^WritableRaster raster (image/get-writeable-raster local-path remote-url)
-        [pixels ^int pw ^int ph] (image/pixels-as-ints raster)
+  (let [[^ints pixels ^int pw ^int ph] (image/pixels-as-ints local-path remote-url)
         texture (GL46/glGenTextures)]
     (GL46/glBindTexture GL46/GL_TEXTURE_2D texture)
     (GL46/glTexImage2D
@@ -143,8 +142,8 @@
     texture))
 
 (defn float-texture-from-image-file [local-path remote-url]
-  (let [^WritableRaster raster (image/get-writeable-raster local-path remote-url)
-        [^floats pixels ^int pw ^int ph] (image/pixels-as-floats raster)
+  (let [[^floats pixels ^int pw ^int ph]
+        (image/pixels-as-floats local-path remote-url)
         texture (GL46/glGenTextures)]
     (GL46/glBindTexture GL46/GL_TEXTURE_2D texture)
     (GL46/glTexParameteri GL46/GL_TEXTURE_2D
@@ -164,17 +163,16 @@
      GL46/GL_RED GL46/GL_FLOAT pixels)
     (GL46/glBindTexture GL46/GL_TEXTURE_2D 0)
     (check-error)
-    [texture (math/sqrt (+ (* pw pw) (* ph ph)))]
-    ))
+    [texture (math/sqrt (+ (* pw pw) (* ph ph)))]))
 
 ;;----------------------------------------------------
 
 (defn push-quaternion-coordinates [^Integer program
                                    ^String location
                                    qr]
-    (GL46/glUniform4fv
-     (GL46/glGetUniformLocation program location)
-     (geom/float-coordinates qr)))
+  (GL46/glUniform4fv
+   (GL46/glGetUniformLocation program location)
+   (geom/float-coordinates qr)))
 
 ;;----------------------------------------------------
 

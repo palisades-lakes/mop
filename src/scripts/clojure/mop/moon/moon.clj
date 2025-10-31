@@ -10,7 +10,7 @@
   Started with
   https://clojurecivitas.github.io/opengl_visualization/main.html"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-10-26"}
+   :version "2025-10-31"}
 
   (:require
    [mop.geom.arcball :as arcball]
@@ -136,16 +136,12 @@
 ;; shared names btwn clojure and glsl code,
 ;; and to reuse common functions
 
-(def vertex-shader
-  (lwjgl/make-shader (slurp "src/scripts/clojure/mop/moon/moon-vertex.glsl")
-                     GL46/GL_VERTEX_SHADER))
-
-(def fragment-shader
-  (lwjgl/make-shader (slurp "src/scripts/clojure/mop/moon/moon-fragment.glsl")
-                     GL46/GL_FRAGMENT_SHADER))
-
 (def ^Integer program
-  (lwjgl/make-program vertex-shader fragment-shader))
+  (lwjgl/make-program
+   {GL46/GL_VERTEX_SHADER
+    "src/scripts/clojure/mop/moon/moon-vertex.glsl"
+    GL46/GL_FRAGMENT_SHADER
+    "src/scripts/clojure/mop/moon/moon-fragment.glsl"}))
 
 ;;----------------------------------------------------
 ;; only way I've found to get cursive to stop complaining
@@ -165,33 +161,41 @@
 (GL46/glUniform1f
  (GL46/glGetUniformLocation program "fov")
  (Math/toRadians 20.0))
+
+;; TODO: units?
 (GL46/glUniform1f
  (GL46/glGetUniformLocation program "distance")
  (* (.doubleValue radius) 12.0))
+
+;; used to calculate texture coordinates, shouldn't be passed to GLSL
 (GL46/glUniform1f
  (GL46/glGetUniformLocation program "resolution")
  resolution)
+
 (GL46/glUniform1f
  (GL46/glGetUniformLocation program "ambient")
  0.3)
+
 (GL46/glUniform1f
  (GL46/glGetUniformLocation program "diffuse")
  0.5)
+
 (GL46/glUniform3fv
  (GL46/glGetUniformLocation program "light")
  (geom/float-coordinates light))
+
 (GL46/glUniform1i
- (GL46/glGetUniformLocation program "colorTexture")
- 0)
-(GL46/glUniform1i
- (GL46/glGetUniformLocation program "elevationTexture") 1)
+ (GL46/glGetUniformLocation program "colorTexture") 0)
 (GL46/glActiveTexture GL46/GL_TEXTURE0)
 (GL46/glBindTexture GL46/GL_TEXTURE_2D color-texture)
+
+(GL46/glUniform1i
+ (GL46/glGetUniformLocation program "elevationTexture") 1)
 (GL46/glActiveTexture GL46/GL_TEXTURE1)
 (GL46/glBindTexture GL46/GL_TEXTURE_2D elevation-texture)
 
 (GL46/glEnable GL46/GL_CULL_FACE)
-(GL46/glClearColor 0.0 0.0 0.0 1.0)
+(GL46/glCullFace GL46/GL_BACK)
 
 (lwjgl/push-quaternion-coordinates
  program "quaternion" (:q-origin @arcball))

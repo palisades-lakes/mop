@@ -17,7 +17,6 @@ out vec4 fragColor;
 
 // WARNING: only for unit transforms!!!
 vec3 qInverseRotate( vec4 quat, vec3 v ){
-  // TODO: why are xy signs reversed from java/clojure side?
   // TODO: would it be faster if vectorized?
   float qw = quat.w;
   float qx = -quat.x;
@@ -37,11 +36,9 @@ vec3 qInverseRotate( vec4 quat, vec3 v ){
   // calculate the Hamilton product of the intermediate vector and
   // the inverse quaternion
 
-  return vec3(
-              (iw * -qx) + (ix * qw) + (iy * -qz) - (iz * -qy),
-              (iw * -qy) - (ix * -qz) + (iy * qw) + (iz * -qx),
-              (iw * -qz) + (ix * -qy) - (iy * -qx) + (iz * qw)
-          );
+  return vec3((iw * -qx) + (ix *  qw) + (iy * -qz) - (iz * -qy),
+              (iw * -qy) - (ix * -qz) + (iy *  qw) + (iz * -qx),
+              (iw * -qz) + (ix * -qy) - (iy * -qx) + (iz *  qw));
 }
 
 vec3 orthogonal_vector(vec3 n) {
@@ -66,8 +63,10 @@ mat3 oriented_matrix(vec3 n) {
   return mat3(n, o1, o2);
 }
 
+// computing texture coordinates
+// TODO: do once in calling code
 vec2 uv(vec3 p) {
-  float u = atan(p.x, -p.z) / (2.0 * PI) + 0.5;
+  float u = 0.5 + (atan(p.x, -p.z) / (2.0 * PI));
   float v = 0.5 - atan(p.y, length(p.xz)) / PI;
   return vec2(u, v);
 }
