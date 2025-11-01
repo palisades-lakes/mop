@@ -71,7 +71,17 @@
   <dependencies>
     <dependency>
       <groupId>org.apache.commons</groupId>
+      <artifactId>commons-geometry-core</artifactId>
+      <version>1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
       <artifactId>commons-geometry-euclidean</artifactId>
+      <version>1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-geometry-spherical</artifactId>
       <version>1.0</version>
     </dependency>
     <dependency>

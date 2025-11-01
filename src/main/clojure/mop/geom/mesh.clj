@@ -4,9 +4,10 @@
 (ns mop.geom.mesh
   {:doc     "Embedded cell complexes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-10-31"}
+   :version "2025-11-01"}
   (:require [mop.commons.debug :as debug]
-            [mop.geom.util :as geom]
+            [mop.geom.rn :as rn]
+            [mop.geom.s2 :as s2]
             [mop.cmplx.complex :as cmplx])
   (:import [clojure.lang IFn]
            [mop.cmplx.complex Quad QuadComplex]))
@@ -46,10 +47,10 @@
 ;; TODO: require 1st arg of <code>transform</code> to be a function.
 ;; and then <code>transform</code> could just be <code>
 
-(defmethod geom/transform [Object QuadMesh] [^Object f ^QuadMesh x]
+(defmethod rn/transform [Object QuadMesh] [^Object f ^QuadMesh x]
   (make-quad-mesh
    (.cmplx x)
-   (update-vals (.embedding x) #(geom/transform f %))))
+   (update-vals (.embedding x) #(rn/transform f %))))
 
 ;;---------------------------------------------------------------
 ;; TODO: ensure that embedded cube has the desired orientation,
@@ -65,14 +66,38 @@
         [z0 z1 z2 z3 z4 z5 z6 z7] (.zeros cmplx)]
     (make-quad-mesh
      cmplx
-     {z0 (geom/make-vector -1 -1 -1)
-      z1 (geom/make-vector  1 -1 -1)
-      z2 (geom/make-vector  1  1 -1)
-      z3 (geom/make-vector -1  1 -1)
-      z4 (geom/make-vector -1 -1  1)
-      z5 (geom/make-vector  1 -1  1)
-      z6 (geom/make-vector  1  1  1)
-      z7 (geom/make-vector -1  1  1)})))
+     {z0 (rn/vector -1 -1 -1)
+      z1 (rn/vector 1 -1 -1)
+      z2 (rn/vector 1 1 -1)
+      z3 (rn/vector -1 1 -1)
+      z4 (rn/vector -1 -1 1)
+      z5 (rn/vector 1 -1 1)
+      z6 (rn/vector 1 1 1)
+      z7 (rn/vector -1 1 1)})))
+
+;;---------------------------------------------------------------
+;; TODO: ensure that embedded cube has the desired orientation,
+;; with right-handed normals pointing out.
+
+(defn standard-quad-sphere []
+  "Return a quad mesh that evenly subdivides the unit two-sphere S_2,
+  for subdivision on the sphere and later transform to R^3,
+  via a sphere with a give R^3 center and radius."
+  (let [cmplx (cmplx/quad-cube)
+        ;; TODO: how do we know these are in the right order?
+        ;; This isn't feasible for larger complexes!
+        ;; Should be some way to walk the complex and get them in the right order.
+        [z0 z1 z2 z3 z4 z5 z6 z7] (.zeros cmplx)]
+    (make-quad-mesh
+     cmplx
+     {z0 (s2/point (rn/vector -1 -1 -1))
+      z1 (s2/point (rn/vector 1 -1 -1))
+      z2 (s2/point (rn/vector 1 1 -1))
+      z3 (s2/point (rn/vector -1 1 -1))
+      z4 (s2/point (rn/vector -1 -1 1))
+      z5 (s2/point (rn/vector 1 -1 1))
+      z6 (s2/point (rn/vector 1 1 1))
+      z7 (s2/point (rn/vector -1 1 1))})))
 
 ;;---------------------------------------------------------------
 
@@ -88,6 +113,6 @@
                              zeros
                              (range (count zeros))))
         indices (flatten (map (fn [^Quad q] (mapv #(zindex %) (.zeros q))) quads))
-        coordinates (flatten (map #(geom/coordinates (embedding %)) zeros))]
+        coordinates (flatten (map #(rn/coordinates (embedding %)) zeros))]
     [coordinates indices]))
 

@@ -4,7 +4,7 @@
 (ns mop.mesh.cube
   (:require
    [mop.commons.debug :as debug]
-   [mop.geom.util :as geom]
+   [mop.geom.rn :as rn]
    [mop.cmplx.complex :as cmplx]
    [mop.geom.mesh :as mesh]
    ))
@@ -25,14 +25,14 @@
       q0154 (cmplx/make-quad z0 z1 z5 z4)
       qcmplx (cmplx/make-quad-complex
               [q0321 q4567 q0473 q5126 q2376 q0154])
-      p0 (geom/make-vector -1.0 -1.0 -1.0)
-      p1 (geom/make-vector 1.0 -1.0 -1.0)
-      p2 (geom/make-vector 1.0  1.0 -1.0)
-      p3 (geom/make-vector -1.0  1.0 -1.0)
-      p4 (geom/make-vector -1.0 -1.0  1.0)
-      p5 (geom/make-vector 1.0 -1.0  1.0)
-      p6 (geom/make-vector 1.0  1.0  1.0)
-      p7 (geom/make-vector -1.0  1.0  1.0)
+      p0 (rn/vector -1.0 -1.0 -1.0)
+      p1 (rn/vector 1.0 -1.0 -1.0)
+      p2 (rn/vector 1.0 1.0 -1.0)
+      p3 (rn/vector -1.0 1.0 -1.0)
+      p4 (rn/vector -1.0 -1.0 1.0)
+      p5 (rn/vector 1.0 -1.0 1.0)
+      p6 (rn/vector 1.0 1.0 1.0)
+      p7 (rn/vector -1.0 1.0 1.0)
       embedding {z0 p0
                  z1 p1
                  z2 p2

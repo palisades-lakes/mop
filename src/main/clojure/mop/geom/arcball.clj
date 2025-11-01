@@ -7,7 +7,7 @@
    :author  "palisades dot lakes at gmail dot com"
    :version "2025-10-26"}
 
-  (:require [mop.geom.util :as geom])
+  (:require [mop.geom.rn :as rn])
   (:import [java.lang Math]))
 
 ;;----------------------------------------------------------------
@@ -25,13 +25,13 @@
   ([^long ww ^long wh p0 q0]
    (let [cx (* ww 0.5)
          cy (* wh 0.5)]
-     (Arcball. (geom/make-vector cx cy) (/ 1.0 (min cx cy)) p0 q0)))
+     (Arcball. (rn/vector cx cy) (/ 1.0 (min cx cy)) p0 q0)))
 
   ([^long ww ^long wh]
    (ball
     ww wh
-    (geom/unit-vector 0.0 0.0 1.0)
-    (geom/quaternion-identity))))
+    (rn/unit-vector 0.0 0.0 1.0)
+    (rn/quaternion-identity))))
 
 ;;----------------------------------------------------------------
 ;; TODO: assuming window coordinates have origin in upper left corner,
@@ -45,14 +45,14 @@
   "Convert window coordinates to normalized arcball coordinates,
   relative to a unit circle centered in the window."
   (let [c (:center ball)
-        cx (double (geom/coordinate c 0))
-        cy (double (geom/coordinate c 1))
+        cx (double (rn/coordinate c 0))
+        cy (double (rn/coordinate c 1))
         s (double (:scale ball))
-        ww (double (geom/coordinate window-xy 0))
-        wh (double (geom/coordinate window-xy 1))
+        ww (double (rn/coordinate window-xy 0))
+        wh (double (rn/coordinate window-xy 1))
         ax (* s (- ww cx))
         ay (* s (- cy wh))]
-    (geom/make-vector ax ay)))
+    (rn/vector ax ay)))
 
 (defn arcball-to-sphere-pt [axy]
   "Arcball 'projection' onto unit sphere.
@@ -60,13 +60,13 @@
   If within the unit circle, return the intersection with the (front half)
   of the unit sphere. If outside, project on the z=0 plane, and then to the unit
   circle resulting from intersecting the z=0 plane with the unit sphere."
-  (let [r2 (double (geom/norm2 axy))
-        [^double x ^double y] (geom/coordinates axy)]
+  (let [r2 (double (rn/norm2 axy))
+        [^double x ^double y] (rn/coordinates axy)]
     (if (> r2 1.0)
       ;; -z ray misses unit sphere
-      (geom/unit-vector x y 0.0)
+      (rn/unit-vector x y 0.0)
       ;; -z ray hits unit sphere
-      (geom/unit-vector x y (Math/sqrt (- 1.0 r2))))))
+      (rn/unit-vector x y (Math/sqrt (- 1.0 r2))))))
 
 (defn window-to-sphere-pt [^Arcball ball window-xy]
   "Arcball 'projection' onto unit sphere.
@@ -88,8 +88,8 @@
 
 (defn current-q [^Arcball ball window-xy]
   (let [p (window-to-sphere-pt ball window-xy)
-        q (geom/quaternion-from-to (:p-origin ball) p)]
-    (geom/quaternion-compose q (:q-origin ball))))
+        q (rn/quaternion-from-to (:p-origin ball) p)]
+    (rn/quaternion-compose q (:q-origin ball))))
 
 (defn ^Arcball update-q-origin [^Arcball ball
                                 window-xy]

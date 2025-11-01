@@ -5,10 +5,10 @@
 
   {:doc     "LWJGL utilities"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-10-31"}
+   :version "2025-11-01"}
 
   (:require [clojure.math :as math]
-            [mop.geom.util :as geom]
+            [mop.geom.rn :as rn]
             [mop.image.util :as image])
 
   (:import [java.nio ByteBuffer FloatBuffer IntBuffer]
@@ -172,7 +172,7 @@
                                    qr]
   (GL46/glUniform4fv
    (GL46/glGetUniformLocation program location)
-   (geom/float-coordinates qr)))
+   (rn/float-coordinates qr)))
 
 ;;----------------------------------------------------
 
@@ -181,7 +181,7 @@
                     ^String program-aspect]
   (GL46/glUniform1f
    (GL46/glGetUniformLocation program program-aspect)
-   (geom/aspect window-wh))
+   (rn/aspect window-wh))
   (check-error))
 
 ;;----------------------------------------------------

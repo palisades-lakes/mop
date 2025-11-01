@@ -1,12 +1,14 @@
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-(ns mop.geom.util
+(ns mop.geom.rn
 
-  {:doc "Geometry utilities.
+  {:doc "Geometry utilities for Rn, especially R2 abd R3.
   Hide 3rd party library is used, if any."
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-10-31"}
+   :version "2025-11-01"}
+
+  (:refer-clojure :exclude [vector])
 
   (:import
    [clojure.lang ISeq]
@@ -53,7 +55,7 @@
   (^Vector3D$Unit [x y z]
    (Vector3D$Unit/of (double x) (double y) (double z))))
 
-(defn make-vector
+(defn vector
   (^Vector2D [x y]
    (Vector2D/of (double x) (double y)))
   (^Vector3D [x y z]
@@ -137,10 +139,14 @@
           EG, if f is a number, do linear scaling in all dimensions."
           (fn [f x] [(class f) (class x)]))
 
-(defmethod transform [Number Vector] [^Number f ^Vector x]
+(defmethod transform
+  [Number Vector]
+  [^Number f ^Vector x]
   (.multiply x f))
 
-(defmethod transform [QuaternionRotation Vector3D] [^QuaternionRotation f ^Vector3D x]
+(defmethod transform
+  [QuaternionRotation Vector3D]
+  [^QuaternionRotation f ^Vector3D x]
   (.apply f x))
 
 ;;----------------------------------------------------------------

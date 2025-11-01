@@ -8,12 +8,13 @@
   Colored cube to help debugging.
   Started with https://clojurecivitas.github.io/opengl_visualization/main.html"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-10-31"}
+   :version "2025-11-01"}
 
   (:require
+   [clojure.pprint :as pp]
    [mop.geom.arcball :as arcball]
    [mop.geom.mesh :as mesh]
-   [mop.geom.util :as geom]
+   [mop.geom.rn :as rn]
    [mop.lwjgl.glfw.util :as glfw]
    [mop.lwjgl.util :as lwjgl])
   (:import
@@ -58,14 +59,15 @@
 ;; base geometry
 ;;----------------------------------------------------------------------
 
-(let [mesh (geom/transform radius (mesh/standard-quad-cube))
+(let [mesh (rn/transform radius (mesh/standard-quad-cube))
       [coordinates elements] (mesh/coordinates-and-elements mesh)
       vertices-cube (float-array coordinates)
       indices-cube (int-array elements)]
+  (pp/pprint (.embedding mesh))
   (def vao-cube (lwjgl/setup-vao vertices-cube indices-cube))
   )
 
-(def light (geom/unit-vector -1 0 1))
+(def light (rn/unit-vector -1 0 1))
 
 ;;----------------------------------------------------
 ;; TODO: smarter shader construction in order to not depend on
@@ -112,7 +114,7 @@
  0.8)
 (GL46/glUniform3fv
  (GL46/glGetUniformLocation program "light")
- (geom/float-coordinates light))
+ (rn/float-coordinates light))
 (GL46/glUniform1i
  (GL46/glGetUniformLocation program "colorTexture")
  0)

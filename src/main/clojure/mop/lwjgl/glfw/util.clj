@@ -8,7 +8,7 @@
    :version "2025-10-26"}
 
   (:require [mop.geom.arcball :as arcball]
-            [mop.geom.util :as geom]
+            [mop.geom.rn :as rn]
             [mop.lwjgl.util :as lwjgl])
   (:import
    [java.util Map]
@@ -25,13 +25,13 @@
       hh (int-array 1)]
   (defn window-wh [^long window]
     (GLFW/glfwGetWindowSize window ww hh)
-    (geom/make-vector (aget ww 0) (aget hh 0))))
+    (rn/vector (aget ww 0) (aget hh 0))))
 
 (let [xx (double-array 1)
       yy (double-array 1)]
   (defn cursor-xy [^long window]
     (GLFW/glfwGetCursorPos window xx yy)
-    (geom/make-vector (aget xx 0) (aget yy 0))))
+    (rn/vector (aget xx 0) (aget yy 0))))
 
 ;;--------------------------------------------------------------
 ;; TODO: check for prior initialization?
