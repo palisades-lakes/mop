@@ -5,21 +5,25 @@
 ;;----------------------------------------------------------------
 (ns mop.moon.moon
   {:doc "Mesh Viewer demo using lwjgl and glfw.
-  See https://svs.gsfc.nasa.gov/4720/
-  for texture and elevation images.
-  Started with
-  https://clojurecivitas.github.io/opengl_visualization/main.html"
+  Start with spherical quad mesh, subdivide, and transform to R^3.
+  Started with https://clojurecivitas.github.io/opengl_visualization/main.html"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-10-31"}
+   :version "2025-11-01"}
 
   (:require
+   [mop.cmplx.complex :as cmplx]
    [mop.geom.arcball :as arcball]
+   [mop.geom.mesh :as mesh]
    [mop.geom.rn :as rn]
+   [mop.geom.s2 :as s2]
    [mop.lwjgl.glfw.util :as glfw]
    [mop.lwjgl.util :as lwjgl])
 
   (:import
    [java.lang Math]
+   [mop.cmplx.complex QuadComplex]
+   [mop.geom.mesh QuadMesh]
+   [org.apache.commons.geometry.euclidean.threed Vector3D]
    [org.lwjgl.glfw GLFW]
    [org.lwjgl.opengl GL46]))
 
@@ -46,8 +50,8 @@
 ;;-------------------------------------------------------------------
 ;; elevation image relative to ?
 ;;-------------------------------------------------------------------
-
-(def ^Double radius (double 1737.4))
+;; km
+(def ^Double radius 1737.4)
 
 (let [[texture ^double r]
       (lwjgl/float-texture-from-image-file
@@ -56,78 +60,21 @@
   (def ^Integer elevation-texture texture)
   (def resolution (/ (* lwjgl/TwoPI radius) r)))
 
-;;----------------------------------------------------------------------
-;; base geometry
-;;----------------------------------------------------------------------
-
-(def vertices-cube
-  (float-array [-1.0 -1.0 -1.0
-                1.0 -1.0 -1.0
-                1.0  1.0 -1.0
-                -1.0  1.0 -1.0
-                -1.0 -1.0  1.0
-                1.0 -1.0  1.0
-                1.0  1.0  1.0
-                -1.0  1.0  1.0]
-               ))
-
-(def indices-cube
-  (int-array [0 3 2 1
-              4 5 6 7
-              0 4 7 3
-              5 1 2 6
-              2 3 7 6
-              0 1 5 4]))
-
-(def points
-  (map (fn [[x y z]]
-         (rn/vector (double x) (double y) (double z)))
-       (partition 3 vertices-cube)))
-
-(def corners
-  (map (fn [[i _ _ _]] (nth points i))
-       (partition 4 indices-cube)))
-
-(def u-vectors
-  (map (fn [[i j _ _]]
-         (rn/subtract (nth points j) (nth points i)))
-       (partition 4 indices-cube)))
-
-(def v-vectors
-  (map (fn [[i _ _ l]]
-         (rn/subtract (nth points l) (nth points i)))
-       (partition 4 indices-cube)))
-
-(defn sphere-points [n c u v]
-  (for [j (range (inc n)) i (range (inc n))]
-    (rn/multiply
-     (rn/normalize
-      (rn/add
-       c
-       (rn/add
-        (rn/multiply u (double (/ i n)))
-        (rn/multiply v (double (/ j n))))))
-     radius)))
-
-(defn sphere-indices [n face]
-  (for [j (range n) i (range n)]
-    (let [offset (+ (* face (inc n) (inc n)) (* j (inc n)) i)]
-      [offset (inc offset) (+ offset n 2) (+ offset n 1)])))
-
-(def n2 16)
-(def vertices-sphere-high
-  (float-array
-   (flatten
-    (map rn/coordinates
-         (flatten
-          (map (partial sphere-points n2)
-               corners u-vectors v-vectors))))))
-
-(def indices-sphere-high
-  (int-array (flatten (map (partial sphere-indices n2) (range 6)))))
-
-(def vao-sphere-high
-  (lwjgl/setup-vao vertices-sphere-high indices-sphere-high))
+(let [embedding (s2/embedding Vector3D/ZERO radius)
+      ;; S2 initial embedding
+      mesh-s2 (cmplx/subdivide-4
+               (cmplx/subdivide-4
+                (cmplx/subdivide-4
+                 (cmplx/subdivide-4
+                  (cmplx/subdivide-4
+                   (mesh/standard-quad-sphere))))))
+      ;; transform to R3
+      ^QuadMesh mesh-r3 (rn/transform embedding mesh-s2)
+      [coordinates elements] (mesh/coordinates-and-elements mesh-r3)
+      vertices-sphere (float-array coordinates)
+      indices-sphere (int-array elements)]
+  (def vao-sphere (lwjgl/setup-vao vertices-sphere indices-sphere))
+  (println "faces:" (count (.faces ^QuadComplex (.cmplx mesh-r3)))))
 
 (def light (rn/unit-vector 1.0 1.0 1.0))
 
@@ -146,6 +93,7 @@
 ;;----------------------------------------------------
 ;; only way I've found to get cursive to stop complaining
 ;; about no matching call
+
 (let [index (int (GL46/glGetAttribLocation ^int program "point"))
       size (int 3)
       type (int GL46/GL_FLOAT)
@@ -196,6 +144,7 @@
 
 (GL46/glEnable GL46/GL_CULL_FACE)
 (GL46/glCullFace GL46/GL_BACK)
+(GL46/glClearColor 0.0 0.0 0.0 1.0)
 
 (lwjgl/push-quaternion-coordinates
  program "quaternion" (:q-origin @arcball))
@@ -204,7 +153,7 @@
 (lwjgl/aspect-ratio program (glfw/window-wh window) "aspect")
 
 (while (not (GLFW/glfwWindowShouldClose window))
-  (glfw/draw-quads window (count indices-sphere-high))
+  (glfw/draw-quads window (:nindices vao-sphere))
   (GLFW/glfwPollEvents)
   (when @mouse-button
     (lwjgl/push-quaternion-coordinates
@@ -213,6 +162,6 @@
 
 (glfw/clean-up window
                program
-               vao-sphere-high
+               vao-sphere
                color-texture
                elevation-texture)

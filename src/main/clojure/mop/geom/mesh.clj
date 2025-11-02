@@ -4,13 +4,20 @@
 (ns mop.geom.mesh
   {:doc     "Embedded cell complexes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-01"}
-  (:require [mop.commons.debug :as debug]
+   :version "2025-11-02"}
+  (:require [mop.cmplx.complex :as cmplx]
+            [mop.commons.debug :as debug]
             [mop.geom.rn :as rn]
-            [mop.geom.s2 :as s2]
-            [mop.cmplx.complex :as cmplx])
-  (:import [clojure.lang IFn]
-           [mop.cmplx.complex Quad QuadComplex]))
+            [mop.geom.s2 :as s2])
+  (:import [clojure.lang IFn ISeq]
+           [mop.cmplx.complex
+            OneSimplex Quad QuadComplex SimplicialComplex2D
+            TwoSimplex ZeroSimplex]
+           [org.apache.commons.geometry.euclidean.threed
+            Vector3D Vector3D$Sum]
+           [org.apache.commons.geometry.spherical.twod
+            GreatArcPath Point2S]
+           [org.apache.commons.numbers.core Precision]))
 
 ;;---------------------------------------------------------------
 ;; TODO: move these to Java to get better control over construction?
@@ -21,8 +28,7 @@
 (deftype QuadMesh
   [^QuadComplex cmplx
    ^IFn embedding]
-  :load-ns true
-  )
+  :load-ns true)
 
 ;;---------------------------------------------------------------
 
@@ -35,8 +41,8 @@
 
 ;;---------------------------------------------------------------
 
-(defn make-quad-mesh ^QuadMesh [^QuadComplex cmplx
-                                ^IFn embedding]
+(defn quad-mesh ^QuadMesh [^QuadComplex cmplx
+                           ^IFn embedding]
   (doall
    (map #(assert (not (nil? (embedding %))))
         (.vertices cmplx)))
@@ -48,7 +54,7 @@
 ;; and then <code>transform</code> could just be <code>
 
 (defmethod rn/transform [Object QuadMesh] [^Object f ^QuadMesh x]
-  (make-quad-mesh
+  (quad-mesh
    (.cmplx x)
    (update-vals (.embedding x) #(rn/transform f %))))
 
@@ -64,7 +70,7 @@
         ;; This isn't feasible for larger complexes!
         ;; Should be some way to walk the complex and get them in the right order.
         [z0 z1 z2 z3 z4 z5 z6 z7] (.vertices cmplx)]
-    (make-quad-mesh
+    (quad-mesh
      cmplx
      {z0 (rn/vector -1 -1 -1)
       z1 (rn/vector 1 -1 -1)
@@ -88,7 +94,7 @@
         ;; This isn't feasible for larger complexes!
         ;; Should be some way to walk the complex and get them in the right order.
         [z0 z1 z2 z3 z4 z5 z6 z7] (.vertices cmplx)]
-    (make-quad-mesh
+    (quad-mesh
      cmplx
      {z0 (s2/point (rn/vector -1 -1 -1))
       z1 (s2/point (rn/vector 1 -1 -1))
@@ -100,6 +106,113 @@
       z7 (s2/point (rn/vector -1 1 1))})))
 
 ;;---------------------------------------------------------------
+;; TODO: defmulti?
+
+(defn- points [embedding x]
+  "Use the <code<embedding</code> to convert an abstract simplcial
+  object <code>x</code> to a list of points in some space,
+  most likely R^3 or S^2."
+  ;; just cover known cases for now
+  (cond
+    (instance? ZeroSimplex x)
+    [(embedding x)]
+
+    (instance? OneSimplex x)
+    [(embedding (.z0 ^OneSimplex x))
+     (embedding (.z1 ^OneSimplex x))]
+
+    (instance? TwoSimplex x)
+    [(embedding (.z0 ^TwoSimplex x))
+     (embedding (.z1 ^TwoSimplex x))
+     (embedding (.z2 ^TwoSimplex x))]
+
+    (instance? Quad x)
+    [(embedding (.z0 ^Quad x))
+     (embedding (.z1 ^Quad x))
+     (embedding (.z2 ^Quad x))
+     (embedding (.z3 ^Quad x))]
+
+    (instance? ISeq x)
+    (mapv embedding x)
+
+    (instance? SimplicialComplex2D x)
+    (points embedding (.vertices ^SimplicialComplex2D x))
+
+    (instance? QuadComplex x)
+    (points embedding (.vertices ^QuadComplex x))))
+
+(defn- ^Vector3D euclidean-midpoint [points]
+  (let [sum (Vector3D$Sum/create)]
+    (dorun (map #(.add sum %) points))
+    (.multiply (.get sum) (/ 1.0 (count points)))))
+
+(defn- ^Point2S spherical-midpoint
+  ([^Point2S p0 ^Point2S p1]
+   ;; midpoint of geodesic arc from p0 to p1
+   ;; can't just create an arc?
+   (assert (> (.distance p0 p1) 1.0e-7)
+           (str "distance=" (.distance p0 p1)))
+   (.getMidPoint
+    (.getStartArc
+     (GreatArcPath/fromVertices
+      [p0 p1]
+      (Precision/doubleEquivalenceOfEpsilon 1e-12)))))
+
+  ([^Point2S p0 ^Point2S p1 ^Point2S p2 ^Point2S p3]
+   (let [m01 (spherical-midpoint p0 p1)
+         m23 (spherical-midpoint p2 p3)
+         m12 (spherical-midpoint p1 p2)
+         m30 (spherical-midpoint p3 p0)
+         ^Point2S m0123 (spherical-midpoint m01 m23)
+         ^Point2S m1230 (spherical-midpoint m12 m30)]
+     ;; should these be equal, ie, a singular arc?
+     (if (<= (.distance m0123 m1230) 1.0e-6)
+          m0123
+          (spherical-midpoint m0123 m1230))))
+
+  ([points]
+   (case (count points)
+     1 (first points)
+     2 (apply spherical-midpoint points)
+     4 (apply spherical-midpoint points)
+     ;; else
+     (throw
+      (UnsupportedOperationException.
+       (str "Can't compute spherical-midpoint of "
+            (count points) " points."))))))
+
+(defn- midpoint [points]
+  "Return a 'center' of some kind for the collection of points.
+  Mean for euclidean space, not so obvious for spherical space."
+  ;; Assume all points are same class. Should fail otherwise.
+  (let [p0 (first points)]
+    (cond (instance? Vector3D p0) (euclidean-midpoint points)
+          (instance? Point2S p0) (spherical-midpoint points)
+          :else (throw (UnsupportedOperationException.
+                        (str "No midpoint method for "
+                             (.getSimpleName (class p0))))))))
+
+;;---------------------------------------------------------------
+;; TODO: Incorporate alternate subdivision rules,
+;; especially with regards to inherited embedding.
+;; Initial version puts new vertex at some centroid of parent
+;; edge/face --- reasonably straightforward in euclidean case,
+;; not so much in spherical case.
+;; TODO: should inherited vertices have themselves (or a parent vertex)
+;; as parent,
+;;
+
+(defmethod cmplx/subdivide-4 QuadMesh [^QuadMesh qm]
+  (let [{^QuadComplex child :child
+         parent :parent} (cmplx/subdivide-4 (.cmplx qm))
+        embedding (.embedding qm) ]
+    (QuadMesh.
+     child
+     (into
+      {}
+      (map
+       (fn [v] [v (midpoint (points embedding (parent v)))])
+       (.vertices child))))))
 
 ;;---------------------------------------------------------------
 
@@ -114,7 +227,7 @@
         zindex (into {} (map (fn [z i] [z i])
                              zeros
                              (range (count zeros))))
-        indices (flatten (map (fn [^Quad q] (mapv #(zindex %) (.vertices q))) quads))
+        indices (flatten (map (fn [^Quad q] (mapv #(zindex %) (.vertices q)))
+                              quads))
         coordinates (flatten (map #(rn/coordinates (embedding %)) zeros))]
     [coordinates indices]))
-

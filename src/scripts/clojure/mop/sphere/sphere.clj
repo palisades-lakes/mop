@@ -11,15 +11,17 @@
    :version "2025-11-01"}
 
   (:require
-   [clojure.pprint :as pp]
+   [mop.cmplx.complex :as cmplx]
    [mop.geom.arcball :as arcball]
    [mop.geom.mesh :as mesh]
    [mop.geom.rn :as rn]
    [mop.geom.s2 :as s2]
    [mop.lwjgl.glfw.util :as glfw]
    [mop.lwjgl.util :as lwjgl])
+
   (:import
    [java.lang Math]
+   [mop.cmplx.complex QuadComplex]
    [mop.geom.mesh QuadMesh]
    [org.apache.commons.geometry.euclidean.threed Vector3D]
    [org.lwjgl.glfw GLFW]
@@ -63,16 +65,22 @@
 ;;----------------------------------------------------------------------
 
 (let [embedding (s2/embedding Vector3D/ZERO radius)
-      sphere-mesh (mesh/standard-quad-sphere)
-      ^QuadMesh mesh (rn/transform embedding sphere-mesh)
-      [coordinates elements] (mesh/coordinates-and-elements mesh)
+      ;; S2 initial embedding
+      mesh-s2 (cmplx/subdivide-4
+               (cmplx/subdivide-4
+                (cmplx/subdivide-4
+                (cmplx/subdivide-4
+                 (cmplx/subdivide-4
+                  (mesh/standard-quad-sphere))))))
+      ;; transform to R3
+      ^QuadMesh mesh-r3 (rn/transform embedding mesh-s2)
+      [coordinates elements] (mesh/coordinates-and-elements mesh-r3)
       vertices-sphere (float-array coordinates)
       indices-sphere (int-array elements)]
-  (pp/pprint (.embedding mesh))
   (def vao-sphere (lwjgl/setup-vao vertices-sphere indices-sphere))
-  )
+  (println "faces:" (count (.faces ^QuadComplex (.cmplx mesh-r3)))))
 
-(def light (rn/unit-vector -1 0 1))
+(def light (rn/unit-vector 1.0 1.0 1.0))
 
 ;;----------------------------------------------------
 ;; TODO: smarter shader construction in order to not depend on
@@ -82,7 +90,7 @@
 (def ^Integer program
   (lwjgl/make-program
    {GL46/GL_VERTEX_SHADER
-   "src/scripts/clojure/mop/sphere/sphere-vertex.glsl"
+    "src/scripts/clojure/mop/sphere/sphere-vertex.glsl"
     GL46/GL_FRAGMENT_SHADER
     "src/scripts/clojure/mop/sphere/sphere-fragment.glsl"}))
 
@@ -105,32 +113,41 @@
 (GL46/glUniform1f
  (GL46/glGetUniformLocation program "fov")
  (Math/toRadians 20.0))
+
+;; TODO: units?
 (GL46/glUniform1f
  (GL46/glGetUniformLocation program "distance")
  (* (.doubleValue radius) 12.0))
+
+;; used to calculate texture coordinates, shouldn't be passed to GLSL
 (GL46/glUniform1f
  (GL46/glGetUniformLocation program "resolution")
  resolution)
+
 (GL46/glUniform1f
  (GL46/glGetUniformLocation program "ambient")
- 0.2)
+ 0.3)
+
 (GL46/glUniform1f
  (GL46/glGetUniformLocation program "diffuse")
  0.8)
+
 (GL46/glUniform3fv
  (GL46/glGetUniformLocation program "light")
  (rn/float-coordinates light))
+
 (GL46/glUniform1i
- (GL46/glGetUniformLocation program "colorTexture")
- 0)
-(GL46/glUniform1i
- (GL46/glGetUniformLocation program "elevationTexture") 1)
+ (GL46/glGetUniformLocation program "colorTexture") 0)
 (GL46/glActiveTexture GL46/GL_TEXTURE0)
 (GL46/glBindTexture GL46/GL_TEXTURE_2D color-texture)
+
+(GL46/glUniform1i
+ (GL46/glGetUniformLocation program "elevationTexture") 1)
 (GL46/glActiveTexture GL46/GL_TEXTURE1)
 (GL46/glBindTexture GL46/GL_TEXTURE_2D elevation-texture)
 
 (GL46/glEnable GL46/GL_CULL_FACE)
+(GL46/glCullFace GL46/GL_BACK)
 (GL46/glClearColor 0.0 0.0 0.0 1.0)
 
 (lwjgl/push-quaternion-coordinates

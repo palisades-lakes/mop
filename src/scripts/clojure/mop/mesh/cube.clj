@@ -41,7 +41,7 @@
                  z5 p5
                  z6 p6
                  z7 p7}
-      mesh (mesh/make-quad-mesh qcmplx embedding)
+      mesh (mesh/quad-mesh qcmplx embedding)
       ]
   (debug/echo
    ;;z0 z1 (identical? z0 z1)

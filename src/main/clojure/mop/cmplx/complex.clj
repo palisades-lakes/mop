@@ -4,7 +4,7 @@
 (ns mop.cmplx.complex
   {:doc     "(Abstract) simplicial and cell complexes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-01"}
+   :version "2025-11-02"}
   (:require [clojure.set :as set]
             [mop.commons.debug :as debug])
   (:import [clojure.lang ISeq]))
@@ -29,7 +29,7 @@
   :load-ns true
 
   Object
-  (toString [_] (str "Zero(" counter ")"))
+  (toString [_] (str "Z" counter))
   (hashCode [_] counter)
 
   ;; ordering will be match order of creation within a thread.
@@ -39,8 +39,7 @@
   (compareTo [_ that] (- counter (.counter ^ZeroSimplex that)))
 
   Cell
-  (vertices [this] [this])
-  )
+  (vertices [this] [this]))
 
 ;;---------------------------------------------------------------
 ;; AKA '(Abstract) Edge'.
@@ -53,8 +52,7 @@
   :load-ns true
 
   Object
-  (toString [_]
-    (str "One(" counter "; " (.counter z0) "," (.counter z1)")"))
+  (toString [_] (str "O[" counter ";" z0 "," z1 "]"))
   (hashCode [_] counter)
 
   Comparable
@@ -76,9 +74,7 @@
   :load-ns true
 
   Object
-  (toString [_]
-    (str "Two(" counter "; "
-         (.counter z0) "," (.counter z1) "," (.counter z2) ")"))
+  (toString [_] (str "T[" counter ";" z0 "," z1 "," z2 ")"))
   (hashCode [_] counter)
 
   Comparable
@@ -159,20 +155,14 @@
   :load-ns true
 
   Object
-  (toString [_]
-    (str "Quad(" counter "; "
-         (.counter z0) ","
-         (.counter z1) ","
-         (.counter z2) ","
-         (.counter z3) ")"))
+  (toString [_] (str "Q[" counter ";"  z0 "," z1 "," z2 "," z3 ")"))
   (hashCode [_] counter)
 
   Comparable
   (compareTo [_ that] (- counter (.counter ^Quad that)))
 
   Cell
-  (vertices [_] [z0 z1 z2 z3])
-  )
+  (vertices [_] [z0 z1 z2 z3]) )
 
 ;;---------------------------------------------------------------
 
@@ -216,7 +206,7 @@
 ;;---------------------------------------------------------------
 
 (defmethod debug/simple-string QuadComplex [^QuadComplex this]
-  (str "QuadCmplx["
+  (str "QCmplx["
        (apply print-str
               (map #(str \newline " " (debug/simple-string %))
                    (.faces this)))
@@ -253,8 +243,13 @@
     (quad-complex [q0321 q4567 q0473 q5126 q2376 q0154])))
 
 ;;---------------------------------------------------------------
+;; TODO: Incorporate alternate subdivision rules,
+;; especially with regards to inherited embedding
+;; TODO: Should all vertices in the child be new, or should
+;; the existing vertices be reused? Currently reusing,
+;; so the vertices of the parent complex appear in the child.
 
-(defmulti convex-subdivision-4
+(defmulti subdivide-4
           "Return a child cell complex with each face of the parent
           subdivided into 4, splitting faces and edges evenly.
           Also return a map from the new vertices to their parent edge or face,
@@ -262,41 +257,46 @@
           where the child vertex position is some centroid
           of the parent edge or face.
           Returned value looks like
-          <code>{:child new-complex :parents {v0 edge0 ... vi facei ...}}"
+          <code>
+          {:child new-complex
+           :parents {v0 edge0 ... vi facei ... vj vj ...}}"
           class)
 
-(defmethod convex-subdivision-4 QuadComplex [^QuadComplex qc]
+;; TODO: transient collections?
+
+(defmethod subdivide-4 QuadComplex [^QuadComplex qc]
   (loop [faces (.faces qc)
          child-faces []
-         edge-children {}
-         face-children {}]
+         children {}]
     (if (empty? faces)
       {:child (quad-complex child-faces)
-       :parents (merge (set/map-invert edge-children)
-                       (set/map-invert face-children))}
+       :parent (set/map-invert children)}
       ;; else
       (let [^Quad face (first faces)
             ^ZeroSimplex z0 (.z0 face)
             ^ZeroSimplex z1 (.z1 face)
             ^ZeroSimplex z2 (.z2 face)
             ^ZeroSimplex z3 (.z3 face)
-            ^ZeroSimplex z01 (simplex)
-            ^ZeroSimplex z12 (simplex)
-            ^ZeroSimplex z23 (simplex)
-            ^ZeroSimplex z30 (simplex)
-            ^ZeroSimplex z0123 (simplex)
+            ;; TODO: what about multiple edges connecting same vertices?
             e01 (sort [z0 z1])
             e12 (sort [z1 z2])
             e23 (sort [z2 z3])
-            e30 (sort [z3 z0])]
-        (recur (rest faces)
-               (concat child-faces [(quad z30 z0 z01 z0123)
-                                    (quad z01 z1 z12 z0123)
-                                    (quad z12 z2 z23 z0123)
-                                    (quad z23 z3 z30 z0123)])
-               (merge edge-children {e01 z01 e12 z12 e23 z23 e30 z30})
-               (assoc face-children face z0123))))))
+            e30 (sort [z3 z0])
+            ^ZeroSimplex z01 (or (children e01) (simplex))
+            ^ZeroSimplex z12 (or (children e12) (simplex))
+            ^ZeroSimplex z23 (or (children e23) (simplex))
+            ^ZeroSimplex z30 (or (children e30) (simplex))
+            ^ZeroSimplex z0123 (simplex)]
+        (recur
+         (rest faces)
+         (concat child-faces
+                 [(quad z30 z0 z01 z0123)
+                  (quad z01 z1 z12 z0123)
+                  (quad z12 z2 z23 z0123)
+                  (quad z23 z3 z30 z0123)])
+         (merge children
+                {z0 z0 z1 z1 z2 z2 z3 z3
+                 e01 z01 e12 z12 e23 z23 e30 z30
+                 face z0123}))))))
 
 ;;---------------------------------------------------------------
-
-
