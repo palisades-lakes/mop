@@ -5,22 +5,24 @@
   (:require
    [clojure.pprint :as pp]
    [mop.commons.debug :as mop]
-   [mop.cmplx.complex :as simplex]))
+   [mop.cmplx.complex :as cmplx]))
 
-(let [z0 (simplex/make-simplex)
-      z1 (simplex/make-simplex)
-      z2 (simplex/make-simplex)
-      e0 (simplex/make-simplex z0 z1)
-      e1 (simplex/make-simplex z1 z0)
-      e2 (simplex/make-simplex z0 z1)
-      f0 (simplex/make-simplex z0 z1 z2)]
+(let [z0 (cmplx/simplex)
+      z1 (cmplx/simplex)
+      z2 (cmplx/simplex)
+      e0 (cmplx/simplex z0 z1)
+      e1 (cmplx/simplex z1 z0)
+      e2 (cmplx/simplex z0 z1)
+      f0 (cmplx/simplex z0 z1 z2)
+      c (cmplx/make-simplicial-complex-2d [f0])]
   (newline)
   (binding [*print-readably* false
             *print-dup* false
             pp/*print-pretty* true]
     (println (str e2))
     (println (str f0))
-    (println (str [e2 e1 e0])))
+    (println (str [e2 e1 e0]))
+    (println c))
   (newline)
   #_( mop/echo
      ;z0 z1 (identical? z0 z1)

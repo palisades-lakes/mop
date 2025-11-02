@@ -39,7 +39,7 @@
                                 ^IFn embedding]
   (doall
    (map #(assert (not (nil? (embedding %))))
-        (.zeros cmplx)))
+        (.vertices cmplx)))
   (QuadMesh. cmplx embedding))
 
 ;;---------------------------------------------------------------
@@ -63,7 +63,7 @@
         ;; TODO: how do we know these are in the right order?
         ;; This isn't feasible for larger complexes!
         ;; Should be some way to walk the complex and get them in the right order.
-        [z0 z1 z2 z3 z4 z5 z6 z7] (.zeros cmplx)]
+        [z0 z1 z2 z3 z4 z5 z6 z7] (.vertices cmplx)]
     (make-quad-mesh
      cmplx
      {z0 (rn/vector -1 -1 -1)
@@ -87,7 +87,7 @@
         ;; TODO: how do we know these are in the right order?
         ;; This isn't feasible for larger complexes!
         ;; Should be some way to walk the complex and get them in the right order.
-        [z0 z1 z2 z3 z4 z5 z6 z7] (.zeros cmplx)]
+        [z0 z1 z2 z3 z4 z5 z6 z7] (.vertices cmplx)]
     (make-quad-mesh
      cmplx
      {z0 (s2/point (rn/vector -1 -1 -1))
@@ -101,18 +101,20 @@
 
 ;;---------------------------------------------------------------
 
+;;---------------------------------------------------------------
+
 (defn coordinates-and-elements [^QuadMesh mesh]
   "Return a float array and an int array suitable for passing to GLSL.
   Don't rely on any ordering of cells and vertices."
   (let [^QuadComplex cmplx (.cmplx mesh)
         embedding (.embedding mesh)
-        quads (.quads cmplx)
+        quads (.faces cmplx)
         ;; assuming iteration over zeros is always in the same order
-        zeros (.zeros cmplx)
+        zeros (.vertices cmplx)
         zindex (into {} (map (fn [z i] [z i])
                              zeros
                              (range (count zeros))))
-        indices (flatten (map (fn [^Quad q] (mapv #(zindex %) (.zeros q))) quads))
+        indices (flatten (map (fn [^Quad q] (mapv #(zindex %) (.vertices q))) quads))
         coordinates (flatten (map #(rn/coordinates (embedding %)) zeros))]
     [coordinates indices]))
 
