@@ -11,7 +11,7 @@
   (:refer-clojure :exclude [vector])
 
   (:import
-   [clojure.lang ISeq]
+   [java.util List]
    [org.apache.commons.geometry.core Vector]
    [org.apache.commons.geometry.euclidean.threed Vector3D Vector3D$Unit]
    [org.apache.commons.geometry.euclidean.threed.rotation QuaternionRotation]
@@ -84,7 +84,7 @@
 (defmethod coordinates QuaternionRotation [^QuaternionRotation qr]
   (coordinates (.getQuaternion qr)))
 
-(defmethod coordinates ISeq [^ISeq vectors]
+(defmethod coordinates List [^List vectors]
   (flatten (map coordinates vectors)))
 
 ;;----------------------------------------------------------------

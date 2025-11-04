@@ -42,10 +42,14 @@
 ;; color texture
 ;;-------------------------------------------------------------
 
-(def ^Integer color-texture
-  (lwjgl/int-texture-from-image-file
-   "images/lroc_color_poles_2k.tif"
-   "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_poles_2k.tif"))
+(let [[texture _ _]
+      (lwjgl/int-texture-from-image-file
+       "images/lroc_color_poles_2k.tif"
+       "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_poles_2k.tif")]
+  (def color-texture texture)
+  ;(def color-width w)
+  ;(def color-height h)
+  )
 
 ;;-------------------------------------------------------------------
 ;; elevation image relative to ?
@@ -60,7 +64,7 @@
   (def ^Integer elevation-texture texture)
   (def resolution (/ (* lwjgl/TwoPI radius) r)))
 
-(let [embedding (s2/embedding Vector3D/ZERO radius)
+(let [embedding-r3 (s2/r3-embedding Vector3D/ZERO radius)
       ;; S2 initial embedding
       mesh-s2 (cmplx/subdivide-4
                (cmplx/subdivide-4
@@ -69,12 +73,15 @@
                   (cmplx/subdivide-4
                    (mesh/standard-quad-sphere))))))
       ;; transform to R3
-      ^QuadMesh mesh-r3 (rn/transform embedding mesh-s2)
-      [coordinates elements] (mesh/coordinates-and-elements mesh-r3)
-      vertices-sphere (float-array coordinates)
-      indices-sphere (int-array elements)]
-  (def vao-sphere (lwjgl/setup-vao vertices-sphere indices-sphere))
-  (println "faces:" (count (.faces ^QuadComplex (.cmplx mesh-r3)))))
+      ^QuadMesh mesh-r3 (rn/transform embedding-r3 mesh-s2)
+      ;embedding-texture (s2/equirectangular-embedding color-width color-height)
+      ;^QuadMesh mesh-texture (rn/transform embedding-texture mesh-s2)
+      ]
+  ;; check
+  (def vao-sphere (lwjgl/setup-vao mesh-r3))
+  (println "faces:" (count (.faces ^QuadComplex (.cmplx mesh-r3))))
+  (println "vertices:" (count (.vertices ^QuadComplex (.cmplx mesh-r3))))
+  )
 
 (def light (rn/unit-vector 1.0 1.0 1.0))
 
@@ -93,16 +100,19 @@
 ;;----------------------------------------------------
 ;; only way I've found to get cursive to stop complaining
 ;; about no matching call
-
+;;TODO: clean this up, more general!
 (let [index (int (GL46/glGetAttribLocation ^int program "point"))
       size (int 3)
-      type (int GL46/GL_FLOAT)
-      normalized (boolean false)
-      stride (int (* 3 Float/BYTES))
-      pointer (long (* 0 Float/BYTES))]
-  (GL46/glVertexAttribPointer index size type normalized stride pointer))
-
-(GL46/glEnableVertexAttribArray 0)
+      stride (int (* 5 Float/BYTES))
+      pointer (long (* index Float/BYTES))]
+  (GL46/glVertexAttribPointer index size GL46/GL_FLOAT false stride pointer)
+  (GL46/glEnableVertexAttribArray index))
+(let [index (int (GL46/glGetAttribLocation ^int program "tex"))
+      size (int 2)
+      stride (int (* 5 Float/BYTES))
+      pointer (long (* index Float/BYTES))]
+  (GL46/glVertexAttribPointer index size GL46/GL_FLOAT false stride pointer)
+  (GL46/glEnableVertexAttribArray index))
 
 (GL46/glUseProgram program)
 
@@ -132,10 +142,23 @@
  (GL46/glGetUniformLocation program "light")
  (rn/float-coordinates light))
 
-(GL46/glUniform1i
- (GL46/glGetUniformLocation program "colorTexture") 0)
+(GL46/glUniform1i (GL46/glGetUniformLocation program "colorTexture") 0)
 (GL46/glActiveTexture GL46/GL_TEXTURE0)
 (GL46/glBindTexture GL46/GL_TEXTURE_2D color-texture)
+(lwjgl/check-error)
+(GL46/glTexParameteri GL46/GL_TEXTURE_2D GL46/GL_TEXTURE_MIN_FILTER GL46/GL_NEAREST)
+(GL46/glTexParameteri GL46/GL_TEXTURE_2D
+                      GL46/GL_TEXTURE_WRAP_S
+                      GL46/GL_CLAMP_TO_BORDER)
+(lwjgl/check-error)
+(GL46/glTexParameteri GL46/GL_TEXTURE_2D
+                      GL46/GL_TEXTURE_WRAP_T
+                      GL46/GL_CLAMP_TO_BORDER)
+(lwjgl/check-error)
+(GL46/glTexParameterfv GL46/GL_TEXTURE_2D
+                       GL46/GL_TEXTURE_BORDER_COLOR
+                       (lwjgl/make-float-buffer (float-array [1.0 0.0 1.0 1.0])))
+(lwjgl/check-error)
 
 (GL46/glUniform1i
  (GL46/glGetUniformLocation program "elevationTexture") 1)
@@ -144,7 +167,7 @@
 
 (GL46/glEnable GL46/GL_CULL_FACE)
 (GL46/glCullFace GL46/GL_BACK)
-(GL46/glClearColor 0.0 0.0 0.0 1.0)
+(GL46/glClearColor 0.2 0.2 0.2 1.0) ;; dark gray
 
 (lwjgl/push-quaternion-coordinates
  program "quaternion" (:q-origin @arcball))

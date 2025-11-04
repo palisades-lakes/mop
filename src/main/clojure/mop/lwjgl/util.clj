@@ -5,13 +5,15 @@
 
   {:doc     "LWJGL utilities"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-01"}
+   :version "2025-11-03"}
 
   (:require [clojure.math :as math]
+            [mop.geom.mesh :as mesh]
             [mop.geom.rn :as rn]
             [mop.image.util :as image])
 
   (:import [java.nio ByteBuffer FloatBuffer IntBuffer]
+           [mop.geom.mesh Mesh]
            [org.lwjgl BufferUtils]
            [org.lwjgl.opengl GL46])  )
 
@@ -53,10 +55,11 @@
   (let [shader (GL46/glCreateShader shader-type)]
     (check-error)
     (GL46/glShaderSource ^int shader source)
+    (check-error)
     (GL46/glCompileShader shader)
     (when (zero? (GL46/glGetShaderi shader GL46/GL_COMPILE_STATUS))
-      (throw (Exception. (GL46/glGetShaderInfoLog shader 1024))))
-    (check-error)
+      (throw (RuntimeException.
+              (GL46/glGetShaderInfoLog shader 1024))))
     shader))
 
 (defn make-program [paths-and-types]
@@ -64,20 +67,22 @@
     (doseq [[^Integer type ^String path] paths-and-types]
       (let [shader (make-shader (slurp path) type)]
         (GL46/glAttachShader program shader)
-        (GL46/glDeleteShader shader)))
+        (check-error)
+        (GL46/glDeleteShader shader)
+        (check-error)))
     (GL46/glLinkProgram program)
     (when (zero? (GL46/glGetProgrami program GL46/GL_LINK_STATUS))
-      (throw (RuntimeException. (GL46/glGetProgramInfoLog program 1024))))
-    (check-error)
+      (throw (RuntimeException.
+              (GL46/glGetProgramInfoLog program 1024))))
     program))
 
-(defn make-float-buffer [^floats data]
+(defn ^FloatBuffer make-float-buffer [^floats data]
   (let [buffer (BufferUtils/createFloatBuffer (count data))]
     (.put buffer data)
     (.flip buffer)
     buffer))
 
-(defn make-int-buffer [^ints data]
+(defn ^IntBuffer make-int-buffer [^ints data]
   (let [buffer (BufferUtils/createIntBuffer (count data))]
     (.put buffer data)
     (.flip buffer)
@@ -89,22 +94,28 @@
     (.flip buffer)
     buffer))
 
-(defn setup-vao [vertices indices]
-  (let [vao (GL46/glGenVertexArrays)
+;; TODO: not just QuadMesh
+(defn setup-vao
+  ([^Mesh r3-mesh]
+  (let [[coordinates elements] (mesh/coordinates-and-elements r3-mesh)
+        vao (GL46/glGenVertexArrays)
         vbo (GL46/glGenBuffers)
         ibo (GL46/glGenBuffers)]
     (GL46/glBindVertexArray vao)
+    (check-error)
     (GL46/glBindBuffer GL46/GL_ARRAY_BUFFER vbo)
-    (GL46/glBufferData
-     GL46/GL_ARRAY_BUFFER
-     ^FloatBuffer (make-float-buffer vertices)
-     GL46/GL_STATIC_DRAW)
-    (GL46/glBindBuffer GL46/GL_ELEMENT_ARRAY_BUFFER ibo)
-    (GL46/glBufferData GL46/GL_ELEMENT_ARRAY_BUFFER
-                       ^IntBuffer (make-int-buffer indices)
+    (check-error)
+    (GL46/glBufferData GL46/GL_ARRAY_BUFFER
+                       (make-float-buffer (float-array coordinates))
                        GL46/GL_STATIC_DRAW)
     (check-error)
-    {:nindices (count indices) :vao vao :vbo vbo :ibo ibo}))
+    (GL46/glBindBuffer GL46/GL_ELEMENT_ARRAY_BUFFER ibo)
+    (check-error)
+    (GL46/glBufferData GL46/GL_ELEMENT_ARRAY_BUFFER
+                       (make-int-buffer (int-array elements) )
+                       GL46/GL_STATIC_DRAW)
+    (check-error)
+    {:nindices (count elements) :vao vao :vbo vbo :ibo ibo})))
 
 (defn teardown-vao [{:keys [^int vao ^int vbo ^int ibo]}]
   (GL46/glBindBuffer GL46/GL_ELEMENT_ARRAY_BUFFER 0)
@@ -139,7 +150,7 @@
                           GL46/GL_REPEAT)
     (GL46/glBindTexture GL46/GL_TEXTURE_2D 0)
     (check-error)
-    texture))
+    [texture pw ph]))
 
 (defn float-texture-from-image-file [local-path remote-url]
   (let [[^floats pixels ^int pw ^int ph]

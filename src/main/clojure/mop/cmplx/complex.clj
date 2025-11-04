@@ -4,10 +4,10 @@
 (ns mop.cmplx.complex
   {:doc     "(Abstract) simplicial and cell complexes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-02"}
+   :version "2025-11-03"}
   (:require [clojure.set :as set]
             [mop.commons.debug :as debug])
-  (:import [clojure.lang ISeq]))
+  (:import [java.util List]))
 ;;---------------------------------------------------------------
 ;; TODO: move these to Java to get better control over construction?
 ;;---------------------------------------------------------------
@@ -101,6 +101,12 @@
      (TwoSimplex. (swap! counter inc) z0 z1 z2))))
 
 ;;---------------------------------------------------------------
+
+(definterface CellComplex
+  (^java.util.List vertices [])
+  (^java.util.List faces []))
+
+;;---------------------------------------------------------------
 ;; Abstract 2d simplicial complex.
 ;; <code>deftype</code over <code>defrecord</code> to avoid
 ;; clojure generated equals and hashCode --- want identity
@@ -109,8 +115,8 @@
 ;; TODO: immutable internal collections
 
 (deftype SimplicialComplex2D
-  [^ISeq vertices
-   ^ISeq faces]
+  [^List vertices
+   ^List faces]
   :load-ns true
 
   #_Object
@@ -122,6 +128,10 @@
                    (.counter z3) ")"))
   #_(hashCode [this] (System/identityHashCode this))
   #_(equals [this that] (identical? this that))
+
+  CellComplex
+  (vertices [this] (.vertices this))
+  (faces [this] (.faces this))
   )
 
 ;;---------------------------------------------------------------
@@ -188,8 +198,8 @@
 ;; TODO: immutable internal collections
 
 (deftype QuadComplex
-  [^ISeq vertices
-   ^ISeq faces]
+  [^List _vertices
+   ^List _faces]
   :load-ns true
 
   #_Object
@@ -201,6 +211,10 @@
                    (.counter z3) ")"))
   #_(hashCode [this] (System/identityHashCode this))
   #_(equals [this that] (identical? this that))
+
+  CellComplex
+  (vertices [this] (._vertices this))
+  (faces [this] (._faces this))
   )
 
 ;;---------------------------------------------------------------

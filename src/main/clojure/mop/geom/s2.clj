@@ -6,12 +6,13 @@
   {:doc     "Geometry utilities for the 2-dimensional sphere, S_2.
   Hide 3rd party library is used, if any."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-01"}
+   :version "2025-11-03"}
 
   (:require [mop.geom.rn :as rn])
   (:import
    [org.apache.commons.geometry.core Vector]
    [org.apache.commons.geometry.euclidean.threed Vector3D]
+   [org.apache.commons.geometry.euclidean.twod Vector2D]
    [org.apache.commons.geometry.spherical.twod Point2S]))
 
 ;;----------------------------------------------------------------
@@ -20,17 +21,37 @@
 
 ;;----------------------------------------------------------------
 
-(deftype SphereEmbedding
+(deftype R3Embedding
   [^Vector3D center
    ^Double radius])
 
-(defn ^SphereEmbedding embedding [^Vector3D center
-                                  ^Double radius]
-  (SphereEmbedding. center radius))
+(defn ^R3Embedding r3-embedding [^Vector3D center
+                                 ^Double radius]
+  (R3Embedding. center radius))
 
 (defmethod rn/transform
-  [SphereEmbedding Point2S]
-  [^SphereEmbedding s ^Point2S p]
+  [R3Embedding Point2S]
+  [^R3Embedding s ^Point2S p]
   (.add ^Vector (.center s) (.radius s) (.getVector p)))
+
+;;----------------------------------------------------------------
+;; For mapping to eg texture image coordinates.
+;; South pole goes to (0,0) and (width,0);
+;; north to (0,height) and (width, height)
+
+(deftype EquirectangularEmbedding
+  [^double width
+   ^double height])
+
+(defn ^EquirectangularEmbedding equirectangular-embedding [w h]
+  (EquirectangularEmbedding. w h))
+
+(let [TWO_PI (* 2 Math/PI)]
+  (defmethod rn/transform
+    [EquirectangularEmbedding Point2S]
+    [^EquirectangularEmbedding s ^Point2S p]
+    (let [x (* (.width s) (/ (.getAzimuth p) TWO_PI))
+          y (* (.height s) (/ (.getPolar p) Math/PI))]
+      (Vector2D/of x y))))
 
 ;;----------------------------------------------------------------

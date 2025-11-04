@@ -4,12 +4,13 @@
 (ns mop.geom.mesh
   {:doc     "Embedded cell complexes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-02"}
+   :version "2025-11-03"}
   (:require [mop.cmplx.complex :as cmplx]
             [mop.commons.debug :as debug]
             [mop.geom.rn :as rn]
             [mop.geom.s2 :as s2])
-  (:import [clojure.lang IFn ISeq]
+  (:import [clojure.lang IFn]
+           [java.util List]
            [mop.cmplx.complex
             OneSimplex Quad QuadComplex SimplicialComplex2D
             TwoSimplex ZeroSimplex]
@@ -20,15 +21,25 @@
            [org.apache.commons.numbers.core Precision]))
 
 ;;---------------------------------------------------------------
+
+(definterface Mesh
+  (^mop.cmplx.complex.CellComplex cmplx [])
+  (^clojure.lang.IFn embedding []))
+
+;;---------------------------------------------------------------
 ;; TODO: move these to Java to get better control over construction?
 ;; TODO: require sorted map for embedding consistency?
 ;;---------------------------------------------------------------
 ;; Embedded quadrilateral cell complex.
 
 (deftype QuadMesh
-  [^QuadComplex cmplx
-   ^IFn embedding]
-  :load-ns true)
+  [^QuadComplex _cmplx
+   ^IFn _embedding]
+  :load-ns true
+
+  Mesh
+  (cmplx [this] (._cmplx this))
+  (embedding [this] (._embedding this)))
 
 ;;---------------------------------------------------------------
 
@@ -36,7 +47,7 @@
   (str "QuadMesh[" \newline " "
        (debug/simple-string (.cmplx this))
        \newline
-       (debug/simple-string (.-embedding this))
+       (debug/simple-string (.embedding this))
        "]"))
 
 ;;---------------------------------------------------------------
@@ -132,7 +143,7 @@
      (embedding (.z2 ^Quad x))
      (embedding (.z3 ^Quad x))]
 
-    (instance? ISeq x)
+    (instance? List x)
     (mapv embedding x)
 
     (instance? SimplicialComplex2D x)
@@ -222,8 +233,7 @@
   (let [^QuadComplex cmplx (.cmplx mesh)
         embedding (.embedding mesh)
         quads (.faces cmplx)
-        ;; assuming iteration over zeros is always in the same order
-        zeros (.vertices cmplx)
+        zeros (sort (.vertices cmplx))
         zindex (into {} (map (fn [z i] [z i])
                              zeros
                              (range (count zeros))))

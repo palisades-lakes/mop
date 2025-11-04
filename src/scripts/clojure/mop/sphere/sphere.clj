@@ -64,7 +64,7 @@
 ;; base geometry
 ;;----------------------------------------------------------------------
 
-(let [embedding (s2/embedding Vector3D/ZERO radius)
+(let [embedding (s2/r3-embedding Vector3D/ZERO radius)
       ;; S2 initial embedding
       mesh-s2 (cmplx/subdivide-4
                (cmplx/subdivide-4
@@ -73,11 +73,8 @@
                  (cmplx/subdivide-4
                   (mesh/standard-quad-sphere))))))
       ;; transform to R3
-      ^QuadMesh mesh-r3 (rn/transform embedding mesh-s2)
-      [coordinates elements] (mesh/coordinates-and-elements mesh-r3)
-      vertices-sphere (float-array coordinates)
-      indices-sphere (int-array elements)]
-  (def vao-sphere (lwjgl/setup-vao vertices-sphere indices-sphere))
+      ^QuadMesh mesh-r3 (rn/transform embedding mesh-s2)]
+  (def vao-sphere (lwjgl/setup-vao mesh-r3))
   (println "faces:" (count (.faces ^QuadComplex (.cmplx mesh-r3)))))
 
 (def light (rn/unit-vector 1.0 1.0 1.0))

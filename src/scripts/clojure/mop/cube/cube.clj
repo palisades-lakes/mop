@@ -11,7 +11,6 @@
    :version "2025-11-01"}
 
   (:require
-   [clojure.pprint :as pp]
    [mop.geom.arcball :as arcball]
    [mop.geom.mesh :as mesh]
    [mop.geom.rn :as rn]
@@ -19,6 +18,7 @@
    [mop.lwjgl.util :as lwjgl])
   (:import
    [java.lang Math]
+   [mop.geom.mesh QuadMesh]
    [org.lwjgl.glfw GLFW]
    [org.lwjgl.opengl GL46]))
 
@@ -37,10 +37,11 @@
 ;; color texture
 ;;-------------------------------------------------------------
 
-(def ^Integer color-texture
-  (lwjgl/int-texture-from-image-file
-   "images/lroc_color_poles_2k.tif"
-   "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_poles_2k.tif"))
+(let [[texture _ _]
+      (lwjgl/int-texture-from-image-file
+       "images/lroc_color_poles_2k.tif"
+       "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_poles_2k.tif")]
+  (def color-texture texture))
 
 ;;-------------------------------------------------------------------
 ;; elevation image relative to ?
@@ -59,13 +60,8 @@
 ;; base geometry
 ;;----------------------------------------------------------------------
 
-(let [mesh (rn/transform radius (mesh/standard-quad-cube))
-      [coordinates elements] (mesh/coordinates-and-elements mesh)
-      vertices-cube (float-array coordinates)
-      indices-cube (int-array elements)]
-  (pp/pprint (.embedding mesh))
-  (def vao-cube (lwjgl/setup-vao vertices-cube indices-cube))
-  )
+(let [^QuadMesh mesh (rn/transform radius (mesh/standard-quad-cube))]
+  (def vao-cube (lwjgl/setup-vao mesh)))
 
 (def light (rn/unit-vector -1 0 1))
 
@@ -77,7 +73,7 @@
 (def ^Integer program
   (lwjgl/make-program
    {GL46/GL_VERTEX_SHADER
-   "src/scripts/clojure/mop/cube/cube-vertex.glsl"
+    "src/scripts/clojure/mop/cube/cube-vertex.glsl"
     GL46/GL_FRAGMENT_SHADER
     "src/scripts/clojure/mop/cube/cube-fragment.glsl"}))
 
@@ -112,16 +108,16 @@
 (GL46/glUniform1f
  (GL46/glGetUniformLocation program "diffuse")
  0.8)
+
 (GL46/glUniform3fv
  (GL46/glGetUniformLocation program "light")
  (rn/float-coordinates light))
-(GL46/glUniform1i
- (GL46/glGetUniformLocation program "colorTexture")
- 0)
-(GL46/glUniform1i
- (GL46/glGetUniformLocation program "elevationTexture") 1)
+
+(GL46/glUniform1i (GL46/glGetUniformLocation program "colorTexture") 0)
 (GL46/glActiveTexture GL46/GL_TEXTURE0)
 (GL46/glBindTexture GL46/GL_TEXTURE_2D color-texture)
+
+(GL46/glUniform1i (GL46/glGetUniformLocation program "elevationTexture") 1)
 (GL46/glActiveTexture GL46/GL_TEXTURE1)
 (GL46/glBindTexture GL46/GL_TEXTURE_2D elevation-texture)
 
