@@ -71,7 +71,8 @@ vec2 uv(vec3 p) {
   return vec2(u, v);
 }
 
-vec3 color (vec3 p) { return normalize(p+vec3(1,1,1)); }
+//vec3 color (vec3 p) { return normalize(p+vec3(1,1,1)); }
+vec3 color (vec3 p) { return abs(normalize(p)); }
 
 float elevation(vec3 p) { return texture(elevationTexture, uv(p)).r; }
 
@@ -89,6 +90,8 @@ vec3 normal(mat3 horizon, vec3 p)
 void main() {
   mat3 horizon = oriented_matrix(normalize(vpoint));
   float phong = ambient +
-  diffuse * max(0.0,dot(qInverseRotate(quaternion,light),normal(horizon, vpoint)));
+  diffuse * max(0.1,
+  dot(qInverseRotate(quaternion,light),
+      normal(horizon, vpoint)));
   fragColor = vec4(color(vpoint)*phong, 1);
   }

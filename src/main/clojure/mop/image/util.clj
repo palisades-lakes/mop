@@ -5,12 +5,13 @@
 
   {:doc     "Image utilities."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-10-17"}
+   :version "2025-11-05"}
 
   (:require [clojure.java.io :as io])
   (:import [java.awt.image BufferedImage WritableRaster]
            [javax.imageio ImageIO]))
 ;;---------------------------------------------------------------
+
 (defn download [url target]
   (with-open [in (io/input-stream url)
               out (io/output-stream target)]
@@ -19,7 +20,7 @@
     (io/copy in out)
     (println "done")))
 
-(defn- ^WritableRaster get-writeable-raster [local-path remote-url]
+(defn ^WritableRaster get-writeable-raster [local-path remote-url]
   (when (not (.exists (io/file local-path)))
     (download remote-url local-path))
   (let [^BufferedImage image (ImageIO/read (io/file local-path)) ]

@@ -8,7 +8,7 @@
   Start with spherical quad mesh, subdivide, and transform to R^3.
   Started with https://clojurecivitas.github.io/opengl_visualization/main.html"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-11-01"}
+   :version "2025-11-05"}
 
   (:require
    [mop.cmplx.complex :as cmplx]
@@ -16,153 +16,81 @@
    [mop.geom.mesh :as mesh]
    [mop.geom.rn :as rn]
    [mop.geom.s2 :as s2]
+   [mop.image.util :as image]
    [mop.lwjgl.glfw.util :as glfw]
    [mop.lwjgl.util :as lwjgl])
 
   (:import
-   [java.lang Math]
-   [mop.cmplx.complex QuadComplex]
+   [java.awt.image WritableRaster]
    [mop.geom.mesh QuadMesh]
    [org.apache.commons.geometry.euclidean.threed Vector3D]
-   [org.lwjgl.glfw GLFW]
-   [org.lwjgl.opengl GL46]))
+   [org.lwjgl.glfw GLFW]))
 
 ;;-------------------------------------------------------------
 ;; UI state
 
 (def mouse-button (atom false))
 (def arcball (atom (arcball/ball -1 -1)))
+(def window (glfw/start-window "sphere" mouse-button arcball))
 
 ;;-------------------------------------------------------------
 
-(def window
-  (glfw/start-window "sphere" mouse-button arcball))
-
-;;-------------------------------------------------------------
-;; color texture
-;;-------------------------------------------------------------
-
-(def ^Integer color-texture
-  (lwjgl/int-texture-from-image-file
+(def ^WritableRaster color-image
+  (image/get-writeable-raster
    "images/lroc_color_poles_2k.tif"
    "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_poles_2k.tif"))
 
-;;-------------------------------------------------------------------
 ;; elevation image relative to ?
-;;-------------------------------------------------------------------
-;; km
-(def ^Double radius 1737.4)
 
-(let [[texture ^double r]
-      (lwjgl/float-texture-from-image-file
-       "images/ldem_4.tif"
-       "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/ldem_4.tif")]
-  (def ^Integer elevation-texture texture)
-  (def resolution (/ (* lwjgl/TwoPI radius) r)))
+(def ^WritableRaster elevation-image
+  (image/get-writeable-raster
+   "images/ldem_4.tif"
+   "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/ldem_4.tif"))
 
 ;;----------------------------------------------------------------------
 ;; base geometry
 ;;----------------------------------------------------------------------
+;; km
+(def radius 1737.4)
 
-(let [embedding (s2/r3-embedding Vector3D/ZERO radius)
-      ;; S2 initial embedding
-      mesh-s2 (cmplx/subdivide-4
-               (cmplx/subdivide-4
-                (cmplx/subdivide-4
-                (cmplx/subdivide-4
-                 (cmplx/subdivide-4
-                  (mesh/standard-quad-sphere))))))
-      ;; transform to R3
-      ^QuadMesh mesh-r3 (rn/transform embedding mesh-s2)]
-  (def vao-sphere (lwjgl/setup-vao mesh-r3))
-  (println "faces:" (count (.faces ^QuadComplex (.cmplx mesh-r3)))))
-
-(def light (rn/unit-vector 1.0 1.0 1.0))
+(def ^QuadMesh mesh-r3
+  ;; transform to R3
+  (rn/transform
+   (s2/r3-embedding Vector3D/ZERO radius)
+   ;; S2 initial embedding
+   (cmplx/subdivide-4
+    (cmplx/subdivide-4
+     (cmplx/subdivide-4
+      (cmplx/subdivide-4
+       (cmplx/subdivide-4
+        (mesh/standard-quad-sphere))))))))
 
 ;;----------------------------------------------------
 ;; TODO: smarter shader construction in order to not depend on
 ;; shared names btwn clojure and glsl code,
 ;; and to reuse common functions
 
-(def ^Integer program
-  (lwjgl/make-program
-   {GL46/GL_VERTEX_SHADER
-    "src/scripts/clojure/mop/sphere/sphere-vertex.glsl"
-    GL46/GL_FRAGMENT_SHADER
-    "src/scripts/clojure/mop/sphere/sphere-fragment.glsl"}))
+(def sphere
+  (lwjgl/setup {:vertex-shader "src/scripts/clojure/mop/sphere/sphere-vertex.glsl"
+                :fragment-shader "src/scripts/clojure/mop/sphere/sphere-fragment.glsl"
+                :mesh-r3 mesh-r3
+                :radius radius
+                :color-image color-image
+                :elevation-image elevation-image
+                }))
 
 ;;----------------------------------------------------
-;; only way I've found to get cursive to stop complaining
-;; about no matching call
 
-(let [index (int (GL46/glGetAttribLocation ^int program "point"))
-      size (int 3)
-      type (int GL46/GL_FLOAT)
-      normalized (boolean false)
-      stride (int (* 3 Float/BYTES))
-      pointer (long (* 0 Float/BYTES))]
-  (GL46/glVertexAttribPointer index size type normalized stride pointer))
-
-(GL46/glEnableVertexAttribArray 0)
-
-(GL46/glUseProgram program)
-
-(GL46/glUniform1f
- (GL46/glGetUniformLocation program "fov")
- (Math/toRadians 20.0))
-
-;; TODO: units?
-(GL46/glUniform1f
- (GL46/glGetUniformLocation program "distance")
- (* (.doubleValue radius) 12.0))
-
-;; used to calculate texture coordinates, shouldn't be passed to GLSL
-(GL46/glUniform1f
- (GL46/glGetUniformLocation program "resolution")
- resolution)
-
-(GL46/glUniform1f
- (GL46/glGetUniformLocation program "ambient")
- 0.3)
-
-(GL46/glUniform1f
- (GL46/glGetUniformLocation program "diffuse")
- 0.8)
-
-(GL46/glUniform3fv
- (GL46/glGetUniformLocation program "light")
- (rn/float-coordinates light))
-
-(GL46/glUniform1i
- (GL46/glGetUniformLocation program "colorTexture") 0)
-(GL46/glActiveTexture GL46/GL_TEXTURE0)
-(GL46/glBindTexture GL46/GL_TEXTURE_2D color-texture)
-
-(GL46/glUniform1i
- (GL46/glGetUniformLocation program "elevationTexture") 1)
-(GL46/glActiveTexture GL46/GL_TEXTURE1)
-(GL46/glBindTexture GL46/GL_TEXTURE_2D elevation-texture)
-
-(GL46/glEnable GL46/GL_CULL_FACE)
-(GL46/glCullFace GL46/GL_BACK)
-(GL46/glClearColor 0.0 0.0 0.0 1.0)
-
-(lwjgl/push-quaternion-coordinates
- program "quaternion" (:q-origin @arcball))
+(lwjgl/uniform (:program sphere) "quaternion" (:q-origin @arcball))
 
 ;; TODO: call on window resize
-(lwjgl/aspect-ratio program (glfw/window-wh window) "aspect")
+(lwjgl/uniform (:program sphere)  "aspect" (rn/aspect (glfw/window-wh window)))
 
 (while (not (GLFW/glfwWindowShouldClose window))
-  (glfw/draw-quads window (:nindices vao-sphere))
+  (glfw/draw-quads window (:nindices sphere))
   (GLFW/glfwPollEvents)
   (when @mouse-button
-    (lwjgl/push-quaternion-coordinates
-     program "quaternion"
-     (arcball/current-q @arcball (glfw/cursor-xy window)))))
+    (lwjgl/uniform (:program sphere) "quaternion"
+                   (arcball/current-q @arcball (glfw/cursor-xy window)))))
 
-(glfw/clean-up window
-               program
-               vao-sphere
-               color-texture
-               elevation-texture)
+(glfw/clean-up window sphere)

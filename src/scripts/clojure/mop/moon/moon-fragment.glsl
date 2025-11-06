@@ -1,7 +1,7 @@
 // :author  "palisades dot lakes at gmail dot com"
 // :version "2025-11-03"
 
-#version 330 core
+#version 130
 
 #define PI 3.1415926535897932384626433832795
 
@@ -12,8 +12,7 @@ uniform float diffuse;
 uniform float resolution;
 uniform sampler2D colorTexture;
 uniform sampler2D elevationTexture;
-in vec3 vPoint;
-in vec2 vTex
+in vec3 vpoint;
 out vec4 fragColor;
 
 // WARNING: only for unit transforms!!!
@@ -60,25 +59,29 @@ mat3 oriented_matrix (vec3 n) {
   return mat3(n, o1, o2);
 }
 
+vec2 uv (vec3 p) {
+  float u = atan(p.x, -p.z) / (2.0 * PI) + 0.5;
+  float v = 0.5 - atan(p.y, length(p.xz)) / PI;
+  return vec2(u, v);
+}
+
 vec3 color (vec2 uv) { return texture(colorTexture, uv).rgb; }
 
-float elevation (vec2 uv) { return texture(elevationTexture, uv.r; }
+float elevation (vec3 p) { return texture(elevationTexture, uv(p)).r; }
 
 vec3 normal (mat3 horizon, vec3 p) {
-  vec3 pl = p + horizon * vec3(0,-1, 0) * resolution;
-  vec3 pr = p + horizon * vec3(0, 1, 0) * resolution;
-  vec3 pu = p + horizon * vec3(0, 0,-1) * resolution;
-  vec3 pd = p + horizon * vec3(0, 0, 1) * resolution;
-  vec3 u = horizon * vec3(elevation(pr) - elevation(pl), 2*resolution, 0);
-  vec3 v = horizon * vec3(elevation(pd) - elevation(pu), 0, 2*resolution);
+  vec3 pl = p + horizon * vec3(0, -1,  0) * resolution;
+  vec3 pr = p + horizon * vec3(0,  1,  0) * resolution;
+  vec3 pu = p + horizon * vec3(0,  0, -1) * resolution;
+  vec3 pd = p + horizon * vec3(0,  0,  1) * resolution;
+  vec3 u = horizon * vec3(elevation(pr) - elevation(pl), 2 * resolution, 0);
+  vec3 v = horizon * vec3(elevation(pd) - elevation(pu), 0, 2 * resolution);
   return normalize(cross(u, v));
 }
 
 void main () {
-  mat3 horizon = oriented_matrix(normalize(vPoint));
+  mat3 horizon = oriented_matrix(normalize(vpoint));
   float phong = ambient +
-  diffuse * max(0.0,
-                dot(qInverseRotate(quaternion,light),
-                    normal(horizon, vPoint)));
-  fragColor = vec4(color(vTex) * phong, 1);
+  diffuse * max(0.0,dot(qInverseRotate(quaternion,light),normal(horizon, vpoint)));
+  fragColor = vec4(color(uv(vpoint)) * phong, 1);
 }

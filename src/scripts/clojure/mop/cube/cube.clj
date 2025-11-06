@@ -8,19 +8,20 @@
   Colored cube to help debugging.
   Started with https://clojurecivitas.github.io/opengl_visualization/main.html"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-11-01"}
+   :version "2025-11-05"}
 
   (:require
    [mop.geom.arcball :as arcball]
    [mop.geom.mesh :as mesh]
    [mop.geom.rn :as rn]
+   [mop.image.util :as image]
    [mop.lwjgl.glfw.util :as glfw]
    [mop.lwjgl.util :as lwjgl])
+
   (:import
-   [java.lang Math]
+   [java.awt.image WritableRaster]
    [mop.geom.mesh QuadMesh]
-   [org.lwjgl.glfw GLFW]
-   [org.lwjgl.opengl GL46]))
+   [org.lwjgl.glfw GLFW]))
 
 ;;-------------------------------------------------------------
 ;; UI state
@@ -34,112 +35,53 @@
   (glfw/start-window "cube" mouse-button arcball))
 
 ;;-------------------------------------------------------------
-;; color texture
-;;-------------------------------------------------------------
 
-(let [[texture _ _]
-      (lwjgl/int-texture-from-image-file
+(def ^WritableRaster color-image 
+  (image/get-writeable-raster
        "images/lroc_color_poles_2k.tif"
-       "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_poles_2k.tif")]
-  (def color-texture texture))
+       "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_poles_2k.tif"))
 
-;;-------------------------------------------------------------------
 ;; elevation image relative to ?
-;;-------------------------------------------------------------------
-;; km
-(def ^Double radius 1737.4)
 
-(let [[texture ^double r]
-      (lwjgl/float-texture-from-image-file
-       "images/ldem_4.tif"
-       "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/ldem_4.tif")]
-  (def ^Integer elevation-texture texture)
-  (def resolution (/ (* lwjgl/TwoPI radius) r)))
+(def ^WritableRaster elevation-image
+  (image/get-writeable-raster
+   "images/ldem_4.tif"
+   "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/ldem_4.tif"))
 
 ;;----------------------------------------------------------------------
 ;; base geometry
 ;;----------------------------------------------------------------------
 
-(let [^QuadMesh mesh (rn/transform radius (mesh/standard-quad-cube))]
-  (def vao-cube (lwjgl/setup-vao mesh)))
-
-(def light (rn/unit-vector -1 0 1))
+;; km
+(def radius 1737.4)
+(def ^QuadMesh mesh-r3 (rn/transform radius (mesh/standard-quad-cube)))
 
 ;;----------------------------------------------------
 ;; TODO: smarter shader construction in order to not depend on
 ;; shared names btwn clojure and glsl code,
 ;; and to reuse common functions
 
-(def ^Integer program
-  (lwjgl/make-program
-   {GL46/GL_VERTEX_SHADER
-    "src/scripts/clojure/mop/cube/cube-vertex.glsl"
-    GL46/GL_FRAGMENT_SHADER
-    "src/scripts/clojure/mop/cube/cube-fragment.glsl"}))
+(def cube
+  (lwjgl/setup {:vertex-shader "src/scripts/clojure/mop/cube/cube-vertex.glsl"
+                :fragment-shader "src/scripts/clojure/mop/cube/cube-fragment.glsl"
+                :mesh-r3 mesh-r3
+                :radius radius
+                :color-image color-image
+                :elevation-image elevation-image
+                }))
 
 ;;----------------------------------------------------
-;; only way I've found to get cursive to stop complaining
-;; about no matching call
 
-(let [index (int (GL46/glGetAttribLocation ^int program "point"))
-      size (int 3)
-      type (int GL46/GL_FLOAT)
-      normalized (boolean false)
-      stride (int (* 3 Float/BYTES))
-      pointer (long (* 0 Float/BYTES))]
-  (GL46/glVertexAttribPointer index size type normalized stride pointer))
-
-(GL46/glEnableVertexAttribArray 0)
-
-(GL46/glUseProgram program)
-
-(GL46/glUniform1f
- (GL46/glGetUniformLocation program "fov")
- (Math/toRadians 20.0))
-(GL46/glUniform1f
- (GL46/glGetUniformLocation program "distance")
- (* (.doubleValue radius) 12.0))
-(GL46/glUniform1f
- (GL46/glGetUniformLocation program "resolution")
- resolution)
-(GL46/glUniform1f
- (GL46/glGetUniformLocation program "ambient")
- 0.2)
-(GL46/glUniform1f
- (GL46/glGetUniformLocation program "diffuse")
- 0.8)
-
-(GL46/glUniform3fv
- (GL46/glGetUniformLocation program "light")
- (rn/float-coordinates light))
-
-(GL46/glUniform1i (GL46/glGetUniformLocation program "colorTexture") 0)
-(GL46/glActiveTexture GL46/GL_TEXTURE0)
-(GL46/glBindTexture GL46/GL_TEXTURE_2D color-texture)
-
-(GL46/glUniform1i (GL46/glGetUniformLocation program "elevationTexture") 1)
-(GL46/glActiveTexture GL46/GL_TEXTURE1)
-(GL46/glBindTexture GL46/GL_TEXTURE_2D elevation-texture)
-
-(GL46/glEnable GL46/GL_CULL_FACE)
-(GL46/glClearColor 0.0 0.0 0.0 1.0)
-
-(lwjgl/push-quaternion-coordinates
- program "quaternion" (:q-origin @arcball))
+(lwjgl/uniform (:program cube) "quaternion" (:q-origin @arcball))
 
 ;; TODO: call on window resize
-(lwjgl/aspect-ratio program (glfw/window-wh window) "aspect")
+(lwjgl/uniform (:program cube)  "aspect" (rn/aspect (glfw/window-wh window)))
 
 (while (not (GLFW/glfwWindowShouldClose window))
-  (glfw/draw-quads window (:nindices vao-cube))
+  (glfw/draw-quads window (:nindices cube))
   (GLFW/glfwPollEvents)
   (when @mouse-button
-    (lwjgl/push-quaternion-coordinates
-     program "quaternion"
-     (arcball/current-q @arcball (glfw/cursor-xy window)))))
+    (lwjgl/uniform (:program cube) "quaternion"
+                   (arcball/current-q @arcball (glfw/cursor-xy window)))))
 
-(glfw/clean-up window
-               program
-               vao-cube
-               color-texture
-               elevation-texture)
+(glfw/clean-up window cube)

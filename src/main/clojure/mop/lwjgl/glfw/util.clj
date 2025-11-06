@@ -163,17 +163,19 @@
 ;;--------------------------------------------------------------
 
 (defn clean-up [^Long window
-                ^Long program
-                ^Map vao
-                ^Integer color-texture
-                ^Integer elevation-texture]
-  (GL46/glDeleteProgram program)
-  (lwjgl/teardown-vao vao)
-  (GL46/glDeleteTextures color-texture)
-  (GL46/glDeleteTextures elevation-texture)
+                ^Map setup-map]
+  (GL46/glDeleteProgram (:program setup-map))
+  (lwjgl/check-error)
+  (lwjgl/teardown setup-map)
+  (GL46/glDeleteTextures ^Integer (:color-texture setup-map))
+  (lwjgl/check-error)
+  (GL46/glDeleteTextures ^Integer (:elevation-texture setup-map))
   (lwjgl/check-error)
   (GLFW/glfwDestroyWindow window)
-  (GLFW/glfwTerminate))
+  (lwjgl/check-error)
+  (GLFW/glfwTerminate)
+  (lwjgl/check-error)
+  )
 
 ;;--------------------------------------------------------------
 
