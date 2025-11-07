@@ -8,7 +8,7 @@
   Start with spherical quad mesh, subdivide, and transform to R^3.
   Started with https://clojurecivitas.github.io/opengl_visualization/main.html"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-11-04"}
+   :version "2025-11-06"}
 
   (:require
    [mop.cmplx.complex :as cmplx]
@@ -25,6 +25,10 @@
    [mop.geom.mesh QuadMesh]
    [org.apache.commons.geometry.euclidean.threed Vector3D]
    [org.lwjgl.glfw GLFW]))
+
+;;-------------------------------------------------------------
+
+(println "LWJGL: " (org.lwjgl.Version/getVersion))
 
 ;;-------------------------------------------------------------
 ;; UI state
@@ -62,17 +66,6 @@
       (cmplx/subdivide-4
        (mesh/standard-quad-sphere)))))))
 
-(def ^QuadMesh texture-mesh
-  (rn/transform
-   (s2/equirectangular-embedding (.getWidth color-image) (.getHeight color-image))
-   s2-mesh))
-
-;; transform to R3
-(def ^QuadMesh r3-mesh
-  (rn/transform
-   (s2/r3-embedding Vector3D/ZERO radius)
-   s2-mesh))
-
 ;;----------------------------------------------------
 ;; TODO: smarter shader construction in order to not depend on
 ;; shared names btwn clojure and glsl code,
@@ -81,8 +74,12 @@
 (def moon
   (lwjgl/setup {:vertex-shader   "src/scripts/clojure/mop/moon/moon-vertex.glsl"
                 :fragment-shader "src/scripts/clojure/mop/moon/moon-fragment.glsl"
-                :mesh-r3         r3-mesh
-                :mesh-texture texture-mesh
+                :s2-mesh s2-mesh
+                :xyz-embedding  (s2/r3-embedding Vector3D/ZERO radius)
+                ;; unit vectors pointing out
+                :dual-embedding  (s2/r3-embedding Vector3D/ZERO 1.0)
+                :rgba-embedding  s2/rgba
+                :txt-embedding (s2/equirectangular-embedding 1.0 1.0)
                 :radius          radius
                 :color-image     color-image
                 :elevation-image elevation-image

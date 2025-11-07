@@ -19,6 +19,8 @@
    [org.apache.commons.numbers.quaternion Quaternion]))
 
 ;;----------------------------------------------------------------
+;; TODO: composition of embedding functions
+;;----------------------------------------------------------------
 
 (defn ^Vector add [^Vector v0 ^Vector v1] (.add v0 v1))
 
@@ -42,6 +44,13 @@
 ;  (.subtract v0 v1))
 
 ;;----------------------------------------------------------------
+;; TODO: fill this in. Homogeneous coordinates? Spacetime? RGBA?
+
+(deftype Vector4D
+  [^Vector3D xyz
+   ^double w])
+
+;;----------------------------------------------------------------
 
 (defn ^Double aspect [^Vector2D v]
   "x/y (meant as width/height)"
@@ -59,7 +68,10 @@
   (^Vector2D [x y]
    (Vector2D/of (double x) (double y)))
   (^Vector3D [x y z]
-   (Vector3D/of (double x) (double y) (double z))))
+   (Vector3D/of (double x) (double y) (double z)))
+  (^Vector4D [x y z w]
+   (Vector4D. (Vector3D/of (double x) (double y) (double z))
+              (double w))))
 
 ;;----------------------------------------------------------------
 
@@ -73,6 +85,12 @@
 
 (defmethod coordinates Vector3D [^Vector3D v]
   [(.getX v) (.getY v) (.getZ v)])
+
+(defmethod coordinates Vector4D [^Vector4D v]
+  [(.getX ^Vector3D (.xyz v))
+   (.getY ^Vector3D (.xyz v))
+   (.getZ ^Vector3D (.xyz v))
+   (.w v)])
 
 ;; returning xyzw to match GLSL and usual (?) homogeneous pt representation
 ;; TODO: swizzle functions for coordinates, eg, (xyzw q) and (wxyz q)
@@ -114,6 +132,15 @@
     0 (.getX v)
     1 (.getY v)
     2 (.getZ v)
+    ;; default
+    (throw (IllegalArgumentException. (str "Invalid coordinate: " i)))))
+
+(defmethod coordinate Vector4D [^Vector4D v ^long i]
+  (case i
+    0 (.getX ^Vector3D (.xyz v))
+    1 (.getY ^Vector3D (.xyz v))
+    2 (.getZ ^Vector3D (.xyz v))
+    3 (.w v)
     ;; default
     (throw (IllegalArgumentException. (str "Invalid coordinate: " i)))))
 

@@ -5,7 +5,7 @@
 
   {:doc "LWJGL/GLFW utilities"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-10-26"}
+   :version "2025-11-06"}
 
   (:require [mop.geom.arcball :as arcball]
             [mop.geom.rn :as rn]
@@ -13,8 +13,39 @@
   (:import
    [java.util Map]
    [org.lwjgl PointerBuffer]
-   [org.lwjgl.glfw GLFW]
+   [org.lwjgl.glfw Callbacks GLFW GLFWErrorCallback]
    [org.lwjgl.opengl GL GL46]))
+
+;;--------------------------------------------------------------
+(defn check-error []
+  (let [;;buffer (PointerBuffer/allocateDirect 1024)
+        code (GLFW/glfwGetError nil)
+        ;;msg (.getStringUTF8 buffer)
+        msg ""
+        ]
+    (condp == code
+      GLFW/GLFW_NO_ERROR
+      true
+      GLFW/GLFW_NOT_INITIALIZED
+      (throw (RuntimeException. (str "GLFW_NOT_INITIALIZED:" msg)))
+      GLFW/GLFW_NO_CURRENT_CONTEXT
+      (throw (RuntimeException. (str "GLFW_NO_CURRENT_CONTEXT:" msg)))
+      GLFW/GLFW_INVALID_ENUM
+      (throw (RuntimeException. (str "GLFW_INVALID_ENUM:" msg)))
+      GLFW/GLFW_INVALID_VALUE
+      (throw (RuntimeException. (str "GLFW_INVALID_VALUE:" msg)))
+      GLFW/GLFW_OUT_OF_MEMORY
+      (throw (RuntimeException. (str "GLFW_OUT_OF_MEMORY:" msg)))
+      GLFW/GLFW_API_UNAVAILABLE
+      (throw (RuntimeException. (str "GLFW_API_UNAVAILABLE:" msg)))
+      GLFW/GLFW_PLATFORM_ERROR
+      (throw (RuntimeException. (str "GLFW_PLATFORM_ERROR:" msg)))
+      GLFW/GLFW_API_UNAVAILABLE
+      (throw (RuntimeException. (str "GLFW_API_UNAVAILABLE:" msg)))
+      GLFW/GLFW_VERSION_UNAVAILABLE
+      (throw (RuntimeException. (str "GLFW_FORMAT_UNAVAILABLE:" msg)))
+      ;; default
+      (throw (RuntimeException. (str "Unknown error code: " code))))))
 
 ;;--------------------------------------------------------------
 ;; Window
@@ -39,6 +70,7 @@
 (let [initialized? (atom false)]
   (defn init []
     (when-not @initialized?
+      (.set (GLFWErrorCallback/createPrint System/err))
       (GLFW/glfwInit)
       (reset! initialized? true))))
 
@@ -105,20 +137,7 @@
      (GL46/glDebugMessageCallback lwjgl/debug-msg-callback 0)
      (lwjgl/check-error)
 
-     ;(GL46/glDisable GL46/GL_CULL_FACE)
-     ;(GL46/glPolygonMode GL46/GL_FRONT_AND_BACK GL46/GL_LINE)
-
-     ;(GL46/glEnable GL46/GL_CULL_FACE)
-     ;(GL46/glCullFace GL46/GL_BACK)
-
-     (GL46/glDisable GL46/GL_CULL_FACE)
-     (lwjgl/check-error)
-     (GL46/glEnable GL46/GL_DEPTH_TEST)
-     (lwjgl/check-error)
-     (GL46/glDepthFunc GL46/GL_LESS)
-     (lwjgl/check-error)
-
-     (GL46/glClearColor 0.0 0.0 0.0 1.0)
+     (GLFW/glfwSwapInterval 1)
      (GLFW/glfwShowWindow window)
 
      ;; TODO: reset arcball when window resized
@@ -153,29 +172,23 @@
 ;;--------------------------------------------------------------
 
 (defn draw-quads [^long window ^long max-index]
-  (GL46/glClear
-   (bit-or GL46/GL_COLOR_BUFFER_BIT
-           GL46/GL_DEPTH_BUFFER_BIT))
+  (GL46/glClear (bit-or GL46/GL_COLOR_BUFFER_BIT
+                        GL46/GL_DEPTH_BUFFER_BIT))
+  (lwjgl/check-error)
   (GL46/glDrawElements GL46/GL_QUADS max-index GL46/GL_UNSIGNED_INT 0)
+  (lwjgl/check-error)
   (GLFW/glfwSwapBuffers window)
-  (lwjgl/check-error))
+  (check-error))
 
 ;;--------------------------------------------------------------
-
-(defn clean-up [^Long window
-                ^Map setup-map]
-  (GL46/glDeleteProgram (:program setup-map))
-  (lwjgl/check-error)
+;; TODO: lwjgl/check-error reports problems on DestroyWindow...
+(defn clean-up [^Long window ^Map setup-map]
   (lwjgl/teardown setup-map)
-  (GL46/glDeleteTextures ^Integer (:color-texture setup-map))
-  (lwjgl/check-error)
-  (GL46/glDeleteTextures ^Integer (:elevation-texture setup-map))
-  (lwjgl/check-error)
-  (GLFW/glfwDestroyWindow window)
-  (lwjgl/check-error)
-  (GLFW/glfwTerminate)
-  (lwjgl/check-error)
-  )
+  (GLFW/glfwMakeContextCurrent 0) (check-error)
+  (Callbacks/glfwFreeCallbacks window) (check-error)
+  (GLFW/glfwDestroyWindow window) (check-error)
+  (GLFW/glfwTerminate) (check-error)
+  (.free (GLFW/glfwSetErrorCallback nil)))
 
 ;;--------------------------------------------------------------
 

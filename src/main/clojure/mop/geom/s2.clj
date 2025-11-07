@@ -6,10 +6,12 @@
   {:doc     "Geometry utilities for the 2-dimensional sphere, S_2.
   Hide 3rd party library is used, if any."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-03"}
+   :version "2025-11-05"}
 
   (:require [mop.geom.rn :as rn])
   (:import
+   [clojure.lang IFn]
+   [mop.geom.rn Vector4D]
    [org.apache.commons.geometry.core Vector]
    [org.apache.commons.geometry.euclidean.threed Vector3D]
    [org.apache.commons.geometry.euclidean.twod Vector2D]
@@ -53,5 +55,21 @@
     (let [x (* (.width s) (/ (.getAzimuth p) TWO_PI))
           y (* (.height s) (/ (.getPolar p) Math/PI))]
       (Vector2D/of x y))))
+
+;;----------------------------------------------------------------
+;; debug coloring
+;; TODO: need 4d [0,1]^4 domain for output
+
+(defn ^Vector4D rgba [^Point2S p]
+  (let [^Vector3D v (.getVector p)]
+    (rn/vector (abs (.getX v))
+               (abs (.getY v))
+               (abs (.getZ v))
+               1.0)))
+
+(defmethod rn/transform
+  [IFn Point2S]
+  [^IFn f ^Point2S p]
+  (f p))
 
 ;;----------------------------------------------------------------

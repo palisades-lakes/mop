@@ -5,9 +5,10 @@
 
   {:doc     "LWJGL utilities"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-03"}
+   :version "2025-11-05"}
 
   (:require [clojure.math :as math]
+            [clojure.pprint :as pp]
             [mop.geom.mesh :as mesh]
             [mop.geom.rn :as rn]
             [mop.image.util :as image])
@@ -111,7 +112,8 @@
     (GL46/glCompileShader shader)
     (when (zero? (GL46/glGetShaderi shader GL46/GL_COMPILE_STATUS))
       (throw (RuntimeException.
-              (GL46/glGetShaderInfoLog shader 1024))))
+              (str source \newline
+                   (GL46/glGetShaderInfoLog shader 1024)))))
     shader))
 
 (defn make-program [paths-and-types]
@@ -163,11 +165,17 @@
   (GL46/glTexParameteri target name value)
   (check-error))
 
+(defmethod texture-parameter
+  (class (make-array Float/TYPE 0))
+  [^Integer target ^Integer name ^floats value]
+  (GL46/glTexParameterfv target name value)
+  (check-error))
+
 ;;------------------------------------------------------------------
 ;; TODO: probably not general enough
 
 (defn- setup-texture [texture-name]
-  (GL46/glBindTexture GL46/GL_TEXTURE_2D texture-name)
+  (GL46/glBindTexture GL46/GL_TEXTURE_2D texture-name)(check-error)
   (texture-parameter GL46/GL_TEXTURE_2D
                      GL46/GL_TEXTURE_MIN_FILTER
                      GL46/GL_NEAREST)
@@ -180,6 +188,9 @@
   (texture-parameter GL46/GL_TEXTURE_2D
                      GL46/GL_TEXTURE_WRAP_T
                      GL46/GL_CLAMP_TO_BORDER)
+  (texture-parameter GL46/GL_TEXTURE_2D
+                     GL46/GL_TEXTURE_BORDER_COLOR
+                     (float-array [1.0 0.0 0.0 1.0]))
   (GL46/glBindTexture GL46/GL_TEXTURE_2D 0)
   (check-error))
 
@@ -187,21 +198,18 @@
   (let [[^ints pixels ^int pw ^int ph] (image/pixels-as-ints image)
         ^ByteBuffer bytes (make-byte-buffer (byte-array (map unchecked-byte pixels)))
         texture-name (GL46/glGenTextures)]
-    (setup-texture texture-name)
     (GL46/glBindTexture GL46/GL_TEXTURE_2D texture-name)
     (GL46/glTexImage2D
      GL46/GL_TEXTURE_2D 0
      GL46/GL_RGBA pw ph 0
      GL46/GL_RGB
      GL46/GL_UNSIGNED_BYTE bytes)
-    (GL46/glBindTexture GL46/GL_TEXTURE_2D 0)
-    (check-error)
+    (setup-texture texture-name)
     [texture-name pw ph]))
 
 (defn- setup-elevation-texture [^WritableRaster image]
   (let [[^floats pixels ^int pw ^int ph] (image/pixels-as-floats image)
         texture-name (GL46/glGenTextures)]
-    (setup-texture texture-name)
     (GL46/glBindTexture GL46/GL_TEXTURE_2D texture-name)
     (check-error)
     (GL46/glTexImage2D
@@ -210,14 +218,14 @@
      GL46/GL_RED
      GL46/GL_FLOAT pixels)
     (check-error)
-    (GL46/glBindTexture GL46/GL_TEXTURE_2D 0)
-    (check-error)
+    (setup-texture texture-name)
     [texture-name (math/sqrt (+ (* pw pw) (* ph ph)))]))
 
-(defn- setup-textures [^Integer program
-                       ^WritableRaster color-image
-                       ^WritableRaster elevation-image
-                       ^Double radius]
+(defn- setup-textures [{:keys
+                        [^Integer program
+                         ^WritableRaster color-image
+                         ^WritableRaster elevation-image
+                         ^Double radius]}]
   (let [[color-texture _ _] (setup-color-texture color-image)
         [elevation-texture ^Double r] (setup-elevation-texture elevation-image)
         resolution (/ (* (.doubleValue TwoPI) (.doubleValue radius))
@@ -252,63 +260,105 @@
 
 ;;------------------------------------------------------------------
 
-(defn- setup-lighting [^Integer program
-                       ^Double ambient
-                       ^Double diffuse
-                       ^Vector3D light]
+(defn- setup-lighting [{:keys
+                        [^Integer program
+                         ^Double ambient
+                         ^Double diffuse
+                         ^Vector3D light]}]
   (uniform program "ambient" ambient)
   (uniform program "diffuse" diffuse)
   (uniform program "light" light))
 
 ;;------------------------------------------------------------------
 
-(defn- setup-view [^Integer program
-                   ^Double fov
-                   ^Double radius]
+(defn- setup-view [{:keys
+                    [^Integer program
+                     ^Double fov
+                     ^Double radius]}]
   (uniform program "fov" fov)
   ;; TODO: units?
   (uniform program "distance"  (* (.doubleValue radius) 12.0)))
 
 ;;------------------------------------------------------------------
 
-(defn- setup-vertices [^Integer program ^Mesh mesh-r3]
+(defn- setup-vertices [{:keys [^Integer program
+                               ^Mesh s2-mesh
+                               xyz-embedding
+                               rgba-embedding
+                               dual-embedding
+                               txt-embedding]
+                        :as input}]
 
-  (let [[coordinates elements] (mesh/coordinates-and-elements mesh-r3)
+  (let [[coordinates elements] (mesh/coordinates-and-elements input)
+        coordinate-buffer (GL46/glGenBuffers)
+        coordinates (make-float-buffer (float-array coordinates))
+        ;; TODO: get dimensions from embedding map codomains
+        xyz-dimension (int 3)
+        rgba-dimension (int 4)
+        dual-dimension (int 3)
+        txt-dimension (int 2)
         vao (GL46/glGenVertexArrays)
-        vbo (GL46/glGenBuffers)
-        ibo (GL46/glGenBuffers)]
+        element-buffer (GL46/glGenBuffers)
+        element-indices (make-int-buffer (int-array elements))
+        stride (int (* Float/BYTES
+                       (+ xyz-dimension rgba-dimension dual-dimension txt-dimension)))
+        ]
+
+    ;; vertex xy.rgba.dual.txt coordinates
+    (GL46/glBindBuffer GL46/GL_ARRAY_BUFFER coordinate-buffer)
+    (check-error)
+    (GL46/glBufferData GL46/GL_ARRAY_BUFFER coordinates GL46/GL_STATIC_DRAW)
+    (check-error)
+
+    ;; vtx attributes, after vtx coordinate buffer setup! BindVtxArray could go before
     (GL46/glBindVertexArray vao)
     (check-error)
-    (GL46/glBindBuffer GL46/GL_ARRAY_BUFFER vbo)
+
+    (GL46/glVertexAttribPointer 0 xyz-dimension GL46/GL_FLOAT false stride 0)
     (check-error)
-    (GL46/glBufferData GL46/GL_ARRAY_BUFFER
-                       (make-float-buffer (float-array coordinates))
-                       GL46/GL_STATIC_DRAW)
-    (check-error)
-    (GL46/glBindBuffer GL46/GL_ELEMENT_ARRAY_BUFFER ibo)
-    (check-error)
-    (GL46/glBufferData GL46/GL_ELEMENT_ARRAY_BUFFER
-                       (make-int-buffer (int-array elements) )
-                       GL46/GL_STATIC_DRAW)
-    (check-error)
-    (let [index (int (GL46/glGetAttribLocation ^int program "point"))
-          size (int 3)
-          type (int GL46/GL_FLOAT)
-          normalized (boolean false)
-          stride (int (* 3 Float/BYTES))
-          pointer (long (* 0 Float/BYTES))]
-      (GL46/glVertexAttribPointer index size type normalized stride pointer))
+    (GL46/glEnableVertexAttribArray 0)
     (check-error)
 
-    (GL46/glEnableVertexAttribArray 0)
+    (GL46/glVertexAttribPointer 1 rgba-dimension GL46/GL_FLOAT false stride
+                                (* xyz-dimension Float/BYTES))
+    (check-error)
+    (GL46/glEnableVertexAttribArray 1)
+    (check-error)
+
+    (GL46/glVertexAttribPointer 2 dual-dimension GL46/GL_FLOAT false stride
+                                (* (+ xyz-dimension rgba-dimension)
+                                   Float/BYTES))
+    (check-error)
+    (GL46/glEnableVertexAttribArray 2)
+    (check-error)
+
+    (GL46/glVertexAttribPointer 3 txt-dimension GL46/GL_FLOAT false stride
+                                (* (+ xyz-dimension rgba-dimension dual-dimension)
+                                   Float/BYTES))
+    (check-error)
+    (GL46/glEnableVertexAttribArray 3)
+    (check-error)
+
+
+    ;; element indices, after VAO initialization!
+    (GL46/glBindBuffer GL46/GL_ELEMENT_ARRAY_BUFFER element-buffer)
+    (check-error)
+    (GL46/glBufferData GL46/GL_ELEMENT_ARRAY_BUFFER element-indices GL46/GL_STATIC_DRAW)
+    (check-error)
+
     {:nindices (count elements)
-     :vao vao :vbo vbo :ibo ibo}
+     :vao vao
+     :vbo coordinate-buffer
+     :ebo element-buffer}
     ))
 
 ;;------------------------------------------------------------------
 ;; TODO: not just QuadMesh
-(defn setup [{:keys [^Mesh mesh-r3
-                     ^Mesh mesh-texture
+(defn setup [{:keys [^Mesh s2-mesh
+                     xyz-embedding
+                     rgba-embedding
+                     dual-embedding
+                     txt-embedding
                      ^WritableRaster color-image
                      ^WritableRaster elevation-image
                      ^Double fov
@@ -318,36 +368,66 @@
                      ^Vector3D$Unit light
                      ^String vertex-shader
                      ^String fragment-shader]
-              :or   {fov     (Math/toRadians 20.0)
-                     ambient 0.3
-                     diffuse 0.6
-                     light   (rn/unit-vector 1.0 1.0 1.0)}}]
-
-  (assert (= (.cmplx mesh-r3) (.cmplx mesh-texture)))
+              :as input}]
 
   ;;TODO: one map with accumulated parameters passed to all inner setup fns?
-  (println "faces:" (count (.faces ^QuadComplex (.cmplx mesh-r3))))
-  (println "vertices:" (count (.vertices ^QuadComplex (.cmplx mesh-r3))))
+  (println "faces:" (count (.faces ^QuadComplex (.cmplx s2-mesh))))
+  (println "vertices:" (count (.vertices ^QuadComplex (.cmplx s2-mesh))))
 
-  (let [program (use-program
-                 {GL46/GL_VERTEX_SHADER   vertex-shader
-                  GL46/GL_FRAGMENT_SHADER fragment-shader})
-        textures (setup-textures program color-image elevation-image radius)
-        vertices (setup-vertices program mesh-r3)]
-    (setup-lighting program ambient diffuse light)
-    (setup-view program fov radius)
-    (GL46/glEnable GL46/GL_CULL_FACE)
+  (let [settings (merge {:program (use-program
+                                   {GL46/GL_VERTEX_SHADER  vertex-shader
+                                    GL46/GL_FRAGMENT_SHADER fragment-shader})
+                         :fov (Math/toRadians 20.0)
+                         :ambient 0.3
+                         :diffuse 0.6
+                         :light (rn/unit-vector 1.0 1.0 1.0)}
+                        input)
+        textures (setup-textures settings)
+        vertices (setup-vertices settings)]
+    (setup-lighting settings)
+    (setup-view settings)
+
     (GL46/glClearColor 0.0 0.0 0.0 1.0)
+
+    (GL46/glEnable GL46/GL_CULL_FACE)
+    (check-error)
+    (GL46/glCullFace GL46/GL_BACK)
+
+    ;; TODO: depth buffer rather than backface culling
+    ;; Do I need to set fragment depth in shader?
+    ;(GL46/glDisable GL46/GL_CULL_FACE)
+    ;(check-error)
+    ;(GL46/glDepthMask true)
+    ;(check-error)
+    ;(GL46/glEnable GL46/GL_DEPTH_TEST)
+    ;(check-error)
+    ;(GL46/glDepthFunc GL46/GL_LESS)
+    ;(check-error)
+
     (merge textures vertices)))
 
 ;;----------------------------------------------------
 
 (defn teardown [setup-map]
+  (pp/pprint setup-map)
+  (GL46/glDeleteTextures ^Integer (:color-texture setup-map))
+  (check-error)
+
+  (GL46/glDeleteTextures ^Integer (:elevation-texture setup-map))
+  (check-error)
+
+  (GL46/glDeleteProgram (:program setup-map))
+  (check-error)
   (GL46/glBindBuffer GL46/GL_ELEMENT_ARRAY_BUFFER 0)
-  (GL46/glDeleteBuffers ^Integer (:ibo setup-map))
+  (check-error)
+  (GL46/glDeleteBuffers ^Integer (:ebo setup-map))
+  (check-error)
   (GL46/glBindBuffer GL46/GL_ARRAY_BUFFER 0)
+  (check-error)
   (GL46/glDeleteBuffers ^Integer (:vbo setup-map))
+  (check-error)
   (GL46/glBindVertexArray 0)
+  (check-error)
   (GL46/glDeleteBuffers ^Integer (:vao setup-map))
   (check-error))
 

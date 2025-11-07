@@ -1,15 +1,22 @@
 // :author  "palisades dot lakes at gmail dot com"
-// :version "2025-11-03"
+// :version "2025-11-06"
 
-#version 130
+#version 330
 
 uniform vec4 quaternion;
 uniform float fov;
 uniform float distance;
 uniform float aspect;
 
-in vec3 point;
-out vec3 vpoint;
+layout (location = 0) in vec3 xyzIn;
+layout (location = 1) in vec4 rgbaIn;
+layout (location = 2) in vec3 dualIn;
+layout (location = 3) in vec2 txtIn;
+
+out vec3 xyzOut;
+out vec4 rgbaOut;
+out vec3 dualOut;
+out vec2 txtOut;
 
 vec3 qRotate (vec4 quat, vec3 v) {
   // TODO: would it be faster if vectorized?
@@ -38,7 +45,7 @@ vec3 qRotate (vec4 quat, vec3 v) {
 
 void main () {
 
-  vec3 p = qRotate(quaternion,point) + vec3(0, 0, -distance);
+  vec3 p = qRotate(quaternion,xyzIn) + vec3(0, 0, -distance);
 
   // Project vertex creating normalized device coordinates
   float f = 1.0 / tan(fov / 2.0); // TODO: constant, move out of shader
@@ -48,5 +55,8 @@ void main () {
 
   // Output to shader pipeline.
   gl_Position = vec4(proj_x, proj_y, proj_z, 1);
-  vpoint = point;
+  xyzOut = xyzIn;
+  rgbaOut = rgbaIn;
+  dualOut = dualIn;
+  txtOut = txtIn;
 }

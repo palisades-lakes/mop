@@ -1,7 +1,7 @@
 // :author  "palisades dot lakes at gmail dot com"
-// :version "2025-11-03"
+// :version "2025-11-06"
 
-#version 130
+#version 330
 
 #define PI 3.1415926535897932384626433832795
 
@@ -12,7 +12,10 @@ uniform float diffuse;
 uniform float resolution;
 uniform sampler2D colorTexture;
 uniform sampler2D elevationTexture;
-in vec3 vpoint;
+in vec3 xyzOut;
+in vec4 rgbaOut;
+in vec3 dualOut;
+in vec2 txtOut;
 out vec4 fragColor;
 
 // WARNING: only for unit transforms!!!
@@ -80,8 +83,11 @@ vec3 normal (mat3 horizon, vec3 p) {
 }
 
 void main () {
-  mat3 horizon = oriented_matrix(normalize(vpoint));
+  mat3 horizon = oriented_matrix(normalize(xyzOut));
   float phong = ambient +
-  diffuse * max(0.0,dot(qInverseRotate(quaternion,light),normal(horizon, vpoint)));
-  fragColor = vec4(color(uv(vpoint)) * phong, 1);
-}
+                diffuse * max(0.0,dot(qInverseRotate(quaternion,light),
+                                      normal(horizon, xyzOut)));
+  //fragColor = vec4(color(uv(xyzOut)) * phong, 1);
+  fragColor = vec4(color(txtOut) * phong, 1);
+  //fragColor = (rgbaOut + vec4(color(txtOut) * phong, 1))/2;
+  }

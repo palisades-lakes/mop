@@ -178,8 +178,8 @@
          ^Point2S m1230 (spherical-midpoint m12 m30)]
      ;; should these be equal, ie, a singular arc?
      (if (<= (.distance m0123 m1230) 1.0e-6)
-          m0123
-          (spherical-midpoint m0123 m1230))))
+       m0123
+       (spherical-midpoint m0123 m1230))))
 
   ([points]
    (case (count points)
@@ -227,11 +227,18 @@
 
 ;;---------------------------------------------------------------
 
-(defn coordinates-and-elements [^QuadMesh mesh]
+(defn coordinates-and-elements  [{:keys [^Mesh s2-mesh
+                                         xyz-embedding
+                                         rgba-embedding
+                                         dual-embedding
+                                         txt-embedding]}]
   "Return a float array and an int array suitable for passing to GLSL.
   Don't rely on any ordering of cells and vertices."
-  (let [^QuadComplex cmplx (.cmplx mesh)
-        embedding (.embedding mesh)
+  (let [xyz (.embedding ^Mesh (rn/transform xyz-embedding s2-mesh))
+        rgba (.embedding ^Mesh (rn/transform rgba-embedding s2-mesh))
+        dual (.embedding ^Mesh (rn/transform dual-embedding s2-mesh))
+        txt (.embedding ^Mesh (rn/transform txt-embedding s2-mesh))
+        ^QuadComplex cmplx  (.cmplx s2-mesh)
         quads (.faces cmplx)
         zeros (sort (.vertices cmplx))
         zindex (into {} (map (fn [z i] [z i])
@@ -239,5 +246,9 @@
                              (range (count zeros))))
         indices (flatten (map (fn [^Quad q] (mapv #(zindex %) (.vertices q)))
                               quads))
-        coordinates (flatten (map #(rn/coordinates (embedding %)) zeros))]
+        coordinates (flatten (map #(concat (rn/coordinates (xyz %))
+                                           (rn/coordinates (rgba %))
+                                           (rn/coordinates (dual %))
+                                           (rn/coordinates (txt %)))
+                                  zeros))]
     [coordinates indices]))
