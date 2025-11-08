@@ -78,7 +78,6 @@
                   (cmplx/simplex a e d)
                   (cmplx/simplex a f e)
 
-
                   (cmplx/simplex b d g)
                   (cmplx/simplex b g h)
                   (cmplx/simplex b h c)
@@ -88,25 +87,24 @@
 
                   (cmplx/simplex d e j)
                   (cmplx/simplex d j g)
-                  (cmplx/simplex d k f)
 
                   (cmplx/simplex e f k)
-                  (cmplx/simplex e j i)
+                  (cmplx/simplex e k j)
 
-                   (cmplx/simplex f k j)
+                  (cmplx/simplex f i k)
 
-                  (cmplx/simplex g d j)
+                  (cmplx/simplex g j l)
                   (cmplx/simplex g l h)
 
                   (cmplx/simplex h l i)
 
-                  (cmplx/simplex i l k)
+                  (cmplx/simplex k i l)
+                  (cmplx/simplex k l j)
                   ])
           embedding {a (rn/vector -1  r  0)
                      b (rn/vector  1  r  0)
 
                      c (rn/vector  0  1  -r)
-
                      d (rn/vector  0  1   r)
 
                      e (rn/vector -r  0  1)
