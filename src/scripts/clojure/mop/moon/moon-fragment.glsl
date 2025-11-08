@@ -1,5 +1,5 @@
 // :author  "palisades dot lakes at gmail dot com"
-// :version "2025-11-06"
+// :version "2025-11-07"
 
 #version 330
 
@@ -88,6 +88,7 @@ void main () {
                 diffuse * max(0.0,dot(qInverseRotate(quaternion,light),
                                       normal(horizon, xyzOut)));
   //fragColor = vec4(color(uv(xyzOut)) * phong, 1);
-  fragColor = vec4(color(txtOut) * phong, 1);
-  //fragColor = (rgbaOut + vec4(color(txtOut) * phong, 1))/2;
-  }
+  //fragColor = vec4(color(txtOut) * phong, 1);
+  fragColor = (rgbaOut + vec4(color(txtOut) * phong, 1))/2;
+  //  fragColor = rgbaOut * phong;
+      }

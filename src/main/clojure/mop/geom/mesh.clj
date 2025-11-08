@@ -12,10 +12,11 @@
   (:import [clojure.lang IFn]
            [java.util List]
            [mop.cmplx.complex
-            OneSimplex Quad QuadComplex SimplicialComplex2D
+            Cell CellComplex OneSimplex Quad QuadComplex SimplicialComplex2D
             TwoSimplex ZeroSimplex]
            [org.apache.commons.geometry.euclidean.threed
             Vector3D Vector3D$Sum]
+           [org.apache.commons.geometry.euclidean.threed.rotation QuaternionRotation]
            [org.apache.commons.geometry.spherical.twod
             GreatArcPath Point2S]
            [org.apache.commons.numbers.core Precision]))
@@ -25,6 +26,108 @@
 (definterface Mesh
   (^mop.cmplx.complex.CellComplex cmplx [])
   (^clojure.lang.IFn embedding []))
+
+;;---------------------------------------------------------------
+;; TODO: move these to Java to get better control over construction?
+;; TODO: require sorted map for embedding consistency?
+;;---------------------------------------------------------------
+;; Embedded quadrilateral cell complex.
+
+(deftype TriangleMesh
+  [^SimplicialComplex2D _cmplx
+   ^IFn _embedding]
+  :load-ns true
+
+  Mesh
+  (cmplx [this] (._cmplx this))
+  (embedding [this] (._embedding this)))
+
+;;---------------------------------------------------------------
+
+(defn triangle-mesh ^TriangleMesh [^SimplicialComplex2D cmplx
+                                   ^IFn embedding]
+  (doall
+   (map #(assert (not (nil? (embedding %))))
+        (.vertices cmplx)))
+  (TriangleMesh. cmplx embedding))
+
+;;---------------------------------------------------------------
+;; Create abstract complex and r3 embedding together
+;; to avoid orientation problems, etc.
+
+(let [r (/ (+ 1.0 (Math/sqrt 5.0)) 2.0)
+      -r (- r)]
+  (defn ^TriangleMesh regular-icosahedron []
+    (let [^ZeroSimplex a (cmplx/simplex)
+          ^ZeroSimplex b (cmplx/simplex)
+          ^ZeroSimplex c (cmplx/simplex)
+          ^ZeroSimplex d (cmplx/simplex)
+          ^ZeroSimplex e (cmplx/simplex)
+          ^ZeroSimplex f (cmplx/simplex)
+          ^ZeroSimplex g (cmplx/simplex)
+          ^ZeroSimplex h (cmplx/simplex)
+          ^ZeroSimplex i (cmplx/simplex)
+          ^ZeroSimplex j (cmplx/simplex)
+          ^ZeroSimplex k (cmplx/simplex)
+          ^ZeroSimplex l (cmplx/simplex)
+          cmplx (cmplx/make-simplicial-complex-2d
+                 [
+                  (cmplx/simplex a b c)
+                  (cmplx/simplex a d b)
+                  (cmplx/simplex a c f)
+                  (cmplx/simplex a e d)
+                  (cmplx/simplex a f e)
+
+
+                  (cmplx/simplex b d g)
+                  (cmplx/simplex b g h)
+                  (cmplx/simplex b h c)
+
+                  (cmplx/simplex c i f)
+                  (cmplx/simplex c h i)
+
+                  (cmplx/simplex d e j)
+                  (cmplx/simplex d j g)
+                  (cmplx/simplex d k f)
+
+                  (cmplx/simplex e f k)
+                  (cmplx/simplex e j i)
+
+                   (cmplx/simplex f k j)
+
+                  (cmplx/simplex g d j)
+                  (cmplx/simplex g l h)
+
+                  (cmplx/simplex h l i)
+
+                  (cmplx/simplex i l k)
+                  ])
+          embedding {a (rn/vector -1  r  0)
+                     b (rn/vector  1  r  0)
+
+                     c (rn/vector  0  1  -r)
+
+                     d (rn/vector  0  1   r)
+
+                     e (rn/vector -r  0  1)
+                     f (rn/vector -r  0 -1)
+
+                     g (rn/vector  r  0  1)
+                     h (rn/vector  r  0 -1)
+
+                     i (rn/vector  0 -1 -r)
+                     j (rn/vector  0 -1  r)
+
+                     k (rn/vector -1 -r  0)
+                     l (rn/vector  1 -r  0)}]
+      (TriangleMesh. cmplx embedding))))
+
+(defn ^TriangleMesh spherical-icosahedron []
+  (let [regular (regular-icosahedron)
+        r3 (.embedding regular)
+        s2 (doall (into {} (map (fn [v] [v (s2/point (r3 v))])
+                                (keys r3))))]
+    (TriangleMesh. (.cmplx regular) s2)))
 
 ;;---------------------------------------------------------------
 ;; TODO: move these to Java to get better control over construction?
@@ -60,9 +163,26 @@
   (QuadMesh. cmplx embedding))
 
 ;;---------------------------------------------------------------
+
+(defmulti mesh
+          "Create a triangle or quad mesh, depending on the complex."
+          (fn [cmplx _embedding] (class cmplx)))
+
+(defmethod mesh SimplicialComplex2D [^SimplicialComplex2D complex ^IFn embedding]
+  (triangle-mesh complex embedding))
+
+(defmethod mesh QuadComplex [^QuadComplex complex ^IFn embedding]
+  (quad-mesh complex embedding))
+
+;;---------------------------------------------------------------
 ;; just map the transform over the vals of the embedding.
 ;; TODO: require 1st arg of <code>transform</code> to be a function.
 ;; and then <code>transform</code> could just be <code>
+
+(defmethod rn/transform [Object TriangleMesh] [^Object f ^TriangleMesh x]
+  (triangle-mesh
+   (.cmplx x)
+   (update-vals (.embedding x) #(rn/transform f %))))
 
 (defmethod rn/transform [Object QuadMesh] [^Object f ^QuadMesh x]
   (quad-mesh
@@ -81,7 +201,7 @@
         ;; This isn't feasible for larger complexes!
         ;; Should be some way to walk the complex and get them in the right order.
         [z0 z1 z2 z3 z4 z5 z6 z7] (.vertices cmplx)]
-    (quad-mesh
+    (mesh
      cmplx
      {z0 (rn/vector -1 -1 -1)
       z1 (rn/vector 1 -1 -1)
@@ -104,17 +224,26 @@
         ;; TODO: how do we know these are in the right order?
         ;; This isn't feasible for larger complexes!
         ;; Should be some way to walk the complex and get them in the right order.
-        [z0 z1 z2 z3 z4 z5 z6 z7] (.vertices cmplx)]
+        #_qr #_(QuaternionRotation/createVectorRotation
+                (rn/vector -1 -1 -1)
+                (rn/vector 0 0 -1))]
     (quad-mesh
      cmplx
-     {z0 (s2/point (rn/vector -1 -1 -1))
-      z1 (s2/point (rn/vector 1 -1 -1))
-      z2 (s2/point (rn/vector 1 1 -1))
-      z3 (s2/point (rn/vector -1 1 -1))
-      z4 (s2/point (rn/vector -1 -1 1))
-      z5 (s2/point (rn/vector 1 -1 1))
-      z6 (s2/point (rn/vector 1 1 1))
-      z7 (s2/point (rn/vector -1 1 1))})))
+     (doall
+      (into
+       {}
+       (map (fn [v p]
+              ;;[v (s2/point (rn/transform qr p))])
+              [v (s2/point p)])
+            (.vertices cmplx)
+            [(rn/vector -1 -1 -1)
+             (rn/vector  1 -1 -1)
+             (rn/vector  1  1 -1)
+             (rn/vector -1  1 -1)
+             (rn/vector -1 -1  1)
+             (rn/vector  1 -1  1)
+             (rn/vector  1  1  1)
+             (rn/vector -1  1  1)]))))))
 
 ;;---------------------------------------------------------------
 ;; TODO: defmulti?
@@ -214,10 +343,10 @@
 ;;
 
 (defmethod cmplx/subdivide-4 QuadMesh [^QuadMesh qm]
-  (let [{^QuadComplex child :child
+  (let [{^CellComplex child :child
          parent :parent} (cmplx/subdivide-4 (.cmplx qm))
         embedding (.embedding qm) ]
-    (QuadMesh.
+    (mesh
      child
      (into
       {}
@@ -238,17 +367,26 @@
         rgba (.embedding ^Mesh (rn/transform rgba-embedding s2-mesh))
         dual (.embedding ^Mesh (rn/transform dual-embedding s2-mesh))
         txt (.embedding ^Mesh (rn/transform txt-embedding s2-mesh))
-        ^QuadComplex cmplx  (.cmplx s2-mesh)
-        quads (.faces cmplx)
+        ^CellComplex cmplx (.cmplx s2-mesh)
+        faces (.faces cmplx)
         zeros (sort (.vertices cmplx))
         zindex (into {} (map (fn [z i] [z i])
                              zeros
                              (range (count zeros))))
-        indices (flatten (map (fn [^Quad q] (mapv #(zindex %) (.vertices q)))
-                              quads))
+        indices (flatten (map (fn [^Cell face] (mapv #(zindex %) (.vertices face))) faces))
         coordinates (flatten (map #(concat (rn/coordinates (xyz %))
                                            (rn/coordinates (rgba %))
                                            (rn/coordinates (dual %))
                                            (rn/coordinates (txt %)))
                                   zeros))]
+    (doall
+     (map (fn [^Cell face]
+            (println (.toString face))
+            (doall (map (fn [^ZeroSimplex v]
+                          (println (.toString v))
+                          (println (rn/coordinates (xyz v)))
+                          (println (rn/coordinates (txt v))))
+                        (.vertices face)))
+            (newline))
+          faces))
     [coordinates indices]))

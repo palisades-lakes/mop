@@ -48,12 +48,14 @@
 (defn ^EquirectangularEmbedding equirectangular-embedding [w h]
   (EquirectangularEmbedding. w h))
 
-(let [TWO_PI (* 2 Math/PI)]
+(let [TWO_PI (* 2.0 Math/PI)]
   (defmethod rn/transform
     [EquirectangularEmbedding Point2S]
     [^EquirectangularEmbedding s ^Point2S p]
     (let [x (* (.width s) (/ (.getAzimuth p) TWO_PI))
           y (* (.height s) (/ (.getPolar p) Math/PI))]
+      (println "xyz" (rn/coordinates (.getVector p)))
+      (println "st" x y)
       (Vector2D/of x y))))
 
 ;;----------------------------------------------------------------

@@ -78,7 +78,7 @@
 (lwjgl/uniform (:program cube)  "aspect" (rn/aspect (glfw/window-wh window)))
 
 (while (not (GLFW/glfwWindowShouldClose window))
-  (glfw/draw-quads window (:nindices cube))
+  (glfw/draw-faces window (:nindices cube))
   (GLFW/glfwPollEvents)
   (when @mouse-button
     (lwjgl/uniform (:program cube) "quaternion"

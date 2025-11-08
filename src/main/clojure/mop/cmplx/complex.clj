@@ -115,8 +115,8 @@
 ;; TODO: immutable internal collections
 
 (deftype SimplicialComplex2D
-  [^List vertices
-   ^List faces]
+  [^List _vertices
+   ^List _faces]
   :load-ns true
 
   #_Object
@@ -130,8 +130,8 @@
   #_(equals [this that] (identical? this that))
 
   CellComplex
-  (vertices [this] (.vertices this))
-  (faces [this] (.faces this))
+  (vertices [this] (._vertices this))
+  (faces [this] (._faces this))
   )
 
 ;;---------------------------------------------------------------
@@ -146,10 +146,37 @@
 ;;---------------------------------------------------------------
 ;; TODO: enforce orientedness?
 
-(defn make-simplicial-complex-2d ^SimplicialComplex2D [faces]
+(defn make-simplicial-complex-2d [faces]
   "Accumulate the vertices from the faces, and sort."
   (let [vertices (sort (into #{} (flatten (map #(.vertices ^Cell %) faces))))]
     (SimplicialComplex2D. vertices faces)))
+
+;;---------------------------------------------------------------
+;; icosahedral 2d simplicial complex
+
+(defn ^SimplicialComplex2D icosahedron []
+  (let [^ZeroSimplex a (simplex)
+        ^ZeroSimplex b (simplex)
+        ^ZeroSimplex c (simplex)
+        ^ZeroSimplex d (simplex)
+        ^ZeroSimplex e (simplex)
+        ^ZeroSimplex f (simplex)
+        ^ZeroSimplex g (simplex)
+        ^ZeroSimplex h (simplex)
+        ^ZeroSimplex i (simplex)
+        ^ZeroSimplex j (simplex)
+        ^ZeroSimplex k (simplex)
+        ^ZeroSimplex l (simplex)]
+  (make-simplicial-complex-2d
+   [(simplex a b c) (simplex a d b) (simplex a c f) (simplex a e d) (simplex a f e)
+    (simplex b d g) (simplex b g h) (simplex b h c)
+    (simplex c f i) (simplex c i h)
+    (simplex d j g) (simplex d k f)
+    (simplex e f k) (simplex e j i)
+    (simplex f i c) (simplex f k j)
+    (simplex g d j) (simplex g l h)
+    (simplex h l i)
+    (simplex i l k)])))
 
 ;;---------------------------------------------------------------
 ;; Abstract quadrilateral cell.

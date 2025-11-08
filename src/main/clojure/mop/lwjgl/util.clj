@@ -5,7 +5,7 @@
 
   {:doc     "LWJGL utilities"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-05"}
+   :version "2025-11-07"}
 
   (:require [clojure.math :as math]
             [clojure.pprint :as pp]
@@ -15,8 +15,8 @@
 
   (:import [java.awt.image WritableRaster]
            [java.nio ByteBuffer FloatBuffer IntBuffer]
-           [mop.cmplx.complex QuadComplex]
-           [mop.geom.mesh Mesh]
+           [mop.cmplx.complex CellComplex]
+           [mop.geom.mesh Mesh TriangleMesh]
            [org.apache.commons.geometry.euclidean.threed Vector3D Vector3D$Unit]
            [org.apache.commons.geometry.euclidean.threed.rotation QuaternionRotation]
            [org.apache.commons.geometry.euclidean.twod Vector2D]
@@ -135,19 +135,21 @@
     (check-error)
     program))
 
-(defn ^FloatBuffer make-float-buffer [^floats data]
+;;-------------------------------------------------------------------
+
+(defn ^FloatBuffer float-buffer [^floats data]
   (let [buffer (BufferUtils/createFloatBuffer (count data))]
     (.put buffer data)
     (.flip buffer)
     buffer))
 
-(defn ^IntBuffer make-int-buffer [^ints data]
+(defn ^IntBuffer int-buffer [^ints data]
   (let [buffer (BufferUtils/createIntBuffer (count data))]
     (.put buffer data)
     (.flip buffer)
     buffer))
 
-(defn ^ByteBuffer make-byte-buffer [^bytes data]
+(defn ^ByteBuffer byte-buffer [^bytes data]
   (let [buffer (BufferUtils/createByteBuffer (count data))]
     (.put buffer data)
     (.flip buffer)
@@ -196,7 +198,7 @@
 
 (defn- setup-color-texture [^WritableRaster image]
   (let [[^ints pixels ^int pw ^int ph] (image/pixels-as-ints image)
-        ^ByteBuffer bytes (make-byte-buffer (byte-array (map unchecked-byte pixels)))
+        ^ByteBuffer bytes (byte-buffer (byte-array (map unchecked-byte pixels)))
         texture-name (GL46/glGenTextures)]
     (GL46/glBindTexture GL46/GL_TEXTURE_2D texture-name)
     (GL46/glTexImage2D
@@ -291,7 +293,7 @@
 
   (let [[coordinates elements] (mesh/coordinates-and-elements input)
         coordinate-buffer (GL46/glGenBuffers)
-        coordinates (make-float-buffer (float-array coordinates))
+        coordinates (float-buffer (float-array coordinates))
         ;; TODO: get dimensions from embedding map codomains
         xyz-dimension (int 3)
         rgba-dimension (int 4)
@@ -299,10 +301,12 @@
         txt-dimension (int 2)
         vao (GL46/glGenVertexArrays)
         element-buffer (GL46/glGenBuffers)
-        element-indices (make-int-buffer (int-array elements))
+        element-indices (int-buffer (int-array elements))
         stride (int (* Float/BYTES
-                       (+ xyz-dimension rgba-dimension dual-dimension txt-dimension)))
-        ]
+                       (+ xyz-dimension
+                          rgba-dimension
+                          dual-dimension
+                          txt-dimension)))]
 
     ;; vertex xy.rgba.dual.txt coordinates
     (GL46/glBindBuffer GL46/GL_ARRAY_BUFFER coordinate-buffer)
@@ -371,11 +375,11 @@
               :as input}]
 
   ;;TODO: one map with accumulated parameters passed to all inner setup fns?
-  (println "faces:" (count (.faces ^QuadComplex (.cmplx s2-mesh))))
-  (println "vertices:" (count (.vertices ^QuadComplex (.cmplx s2-mesh))))
+  (println "faces:" (count (.faces ^CellComplex (.cmplx s2-mesh))))
+  (println "vertices:" (count (.vertices ^CellComplex (.cmplx s2-mesh))))
 
   (let [settings (merge {:program (use-program
-                                   {GL46/GL_VERTEX_SHADER  vertex-shader
+                                   {GL46/GL_VERTEX_SHADER vertex-shader
                                     GL46/GL_FRAGMENT_SHADER fragment-shader})
                          :fov (Math/toRadians 20.0)
                          :ambient 0.3
@@ -392,6 +396,7 @@
     (GL46/glEnable GL46/GL_CULL_FACE)
     (check-error)
     (GL46/glCullFace GL46/GL_BACK)
+    (check-error)
 
     ;; TODO: depth buffer rather than backface culling
     ;; Do I need to set fragment depth in shader?
@@ -404,7 +409,10 @@
     ;(GL46/glDepthFunc GL46/GL_LESS)
     ;(check-error)
 
-    (merge textures vertices)))
+    (assoc (merge textures vertices)
+      :elements (if (instance? TriangleMesh s2-mesh)
+                  GL46/GL_TRIANGLES
+                  GL46/GL_QUADS))))
 
 ;;----------------------------------------------------
 
@@ -412,10 +420,8 @@
   (pp/pprint setup-map)
   (GL46/glDeleteTextures ^Integer (:color-texture setup-map))
   (check-error)
-
   (GL46/glDeleteTextures ^Integer (:elevation-texture setup-map))
   (check-error)
-
   (GL46/glDeleteProgram (:program setup-map))
   (check-error)
   (GL46/glBindBuffer GL46/GL_ELEMENT_ARRAY_BUFFER 0)

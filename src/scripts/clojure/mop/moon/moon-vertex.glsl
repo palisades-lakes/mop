@@ -1,8 +1,8 @@
 // :author  "palisades dot lakes at gmail dot com"
-// :version "2025-11-06"
+// :version "2025-11-07"
 
 #version 330
-
+#define PI 3.1415926535897932384626433832795
 uniform vec4 quaternion;
 uniform float fov;
 uniform float distance;
@@ -43,6 +43,12 @@ vec3 qRotate (vec4 quat, vec3 v) {
               (iw * -qz) + (ix * -qy) - (iy * -qx) + (iz *  qw));
 }
 
+vec2 uv (vec3 p) {
+  float u = atan(p.x, -p.z) / (2.0 * PI) + 0.5;
+  float v = 0.5 - atan(p.y, length(p.xz)) / PI;
+  return vec2(u, v);
+}
+
 void main () {
 
   vec3 p = qRotate(quaternion,xyzIn) + vec3(0, 0, -distance);
@@ -58,5 +64,6 @@ void main () {
   xyzOut = xyzIn;
   rgbaOut = rgbaIn;
   dualOut = dualIn;
+  //txtOut = uv(xyzOut);
   txtOut = txtIn;
 }

@@ -121,7 +121,8 @@
 (defn ^Long start-window
   ([monitor ^String title
     mouse-button
-    arcball]
+    arcball
+    polygon-mode]
    (init)
    (GLFW/glfwDefaultWindowHints)
    (GLFW/glfwWindowHint GLFW/GLFW_DECORATED GLFW/GLFW_TRUE)
@@ -154,34 +155,49 @@
         (when (= action GLFW/GLFW_RELEASE)
           (reset! mouse-button false)
           (reset! arcball (arcball/update-q-origin @arcball (cursor-xy window))))))
+     (check-error)
+
+     (GLFW/glfwSetKeyCallback
+      window
+      (fn [_window key scancode action _mods]
+        (when (== (int action) GLFW/GLFW_PRESS)
+          (println key)
+          (reset! polygon-mode (if (== (int @polygon-mode) GL46/GL_LINE)
+                                 GL46/GL_FILL
+                                 GL46/GL_LINE)))))
+     (check-error)
 
      #_(GLFW/glfwSetCursorPosCallback
         window
         (fn [_window x y]
           (reset! mouse-pos [x (- window-h y 1)])))
+
      #_(GLFW/glfwSetWindowSizeCallback
         window
         (fn [_window w h]))
      window))
 
   ;; TODO: better way to choose default monitor
-  ([^String title mouse-button arcball]
+  ([^String title mouse-button arcball polygon-mode]
    (init)
-   (start-window (last (monitors)) title mouse-button arcball)))
+   (start-window (last (monitors)) title mouse-button arcball polygon-mode)))
 
 ;;--------------------------------------------------------------
 
-(defn draw-quads [^long window ^long max-index]
+(defn draw-faces [^long window state]
   (GL46/glClear (bit-or GL46/GL_COLOR_BUFFER_BIT
                         GL46/GL_DEPTH_BUFFER_BIT))
   (lwjgl/check-error)
-  (GL46/glDrawElements GL46/GL_QUADS max-index GL46/GL_UNSIGNED_INT 0)
+  (GL46/glPolygonMode GL46/GL_FRONT_AND_BACK (deref (:polygon-mode state)))
+  (lwjgl/check-error)
+  (GL46/glDrawElements (:elements state) (:nindices state) GL46/GL_UNSIGNED_INT 0)
   (lwjgl/check-error)
   (GLFW/glfwSwapBuffers window)
   (check-error))
 
 ;;--------------------------------------------------------------
 ;; TODO: lwjgl/check-error reports problems on DestroyWindow...
+
 (defn clean-up [^Long window ^Map setup-map]
   (lwjgl/teardown setup-map)
   (GLFW/glfwMakeContextCurrent 0) (check-error)
@@ -189,6 +205,28 @@
   (GLFW/glfwDestroyWindow window) (check-error)
   (GLFW/glfwTerminate) (check-error)
   (.free (GLFW/glfwSetErrorCallback nil)))
+
+;;--------------------------------------------------------------
+
+(defn arcball-loop [input]
+  (let [mouse-button (atom false)
+        arcball (atom (arcball/ball -1 -1))
+        polygon-mode (atom GL46/GL_FILL)
+        window (start-window (:title input) mouse-button arcball polygon-mode)
+        state (assoc (lwjgl/setup input) :polygon-mode polygon-mode)]
+    ;; TODO: call on window resize
+    (lwjgl/uniform (:program state) "aspect" (rn/aspect (window-wh window)))
+    (lwjgl/uniform (:program state) "quaternion" (:q-origin @arcball))
+    (while (not (GLFW/glfwWindowShouldClose window))
+      (check-error)
+      (draw-faces window state)
+      (GLFW/glfwPollEvents)
+      (check-error)
+      (when @mouse-button
+        (lwjgl/uniform
+         (:program state) "quaternion"
+         (arcball/current-q @arcball (cursor-xy window)))))
+    (clean-up window state)))
 
 ;;--------------------------------------------------------------
 
