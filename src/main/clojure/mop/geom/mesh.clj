@@ -4,21 +4,18 @@
 (ns mop.geom.mesh
   {:doc     "Embedded cell complexes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-03"}
+   :version "2025-11-88"}
   (:require [mop.cmplx.complex :as cmplx]
             [mop.commons.debug :as debug]
             [mop.geom.rn :as rn]
             [mop.geom.s2 :as s2])
   (:import [clojure.lang IFn]
            [java.util List]
-           [mop.cmplx.complex
-            Cell CellComplex OneSimplex Quad QuadComplex SimplicialComplex2D
+           [mop.cmplx.complex Cell CellComplex OneSimplex Quad QuadComplex SimplicialComplex2D
             TwoSimplex ZeroSimplex]
-           [org.apache.commons.geometry.euclidean.threed
-            Vector3D Vector3D$Sum]
+           [org.apache.commons.geometry.euclidean.threed Vector3D Vector3D$Sum]
            [org.apache.commons.geometry.euclidean.threed.rotation QuaternionRotation]
-           [org.apache.commons.geometry.spherical.twod
-            GreatArcPath Point2S]
+           [org.apache.commons.geometry.spherical.twod GreatArcPath Point2S]
            [org.apache.commons.numbers.core Precision]))
 
 ;;---------------------------------------------------------------
@@ -58,67 +55,32 @@
 (let [r (/ (+ 1.0 (Math/sqrt 5.0)) 2.0)
       -r (- r)]
   (defn ^TriangleMesh regular-icosahedron []
-    (let [^ZeroSimplex a (cmplx/simplex)
-          ^ZeroSimplex b (cmplx/simplex)
-          ^ZeroSimplex c (cmplx/simplex)
-          ^ZeroSimplex d (cmplx/simplex)
-          ^ZeroSimplex e (cmplx/simplex)
-          ^ZeroSimplex f (cmplx/simplex)
-          ^ZeroSimplex g (cmplx/simplex)
-          ^ZeroSimplex h (cmplx/simplex)
-          ^ZeroSimplex i (cmplx/simplex)
-          ^ZeroSimplex j (cmplx/simplex)
-          ^ZeroSimplex k (cmplx/simplex)
-          ^ZeroSimplex l (cmplx/simplex)
-          cmplx (cmplx/make-simplicial-complex-2d
-                 [
-                  (cmplx/simplex a b c)
-                  (cmplx/simplex a d b)
-                  (cmplx/simplex a c f)
-                  (cmplx/simplex a e d)
-                  (cmplx/simplex a f e)
-
-                  (cmplx/simplex b d g)
-                  (cmplx/simplex b g h)
-                  (cmplx/simplex b h c)
-
-                  (cmplx/simplex c i f)
-                  (cmplx/simplex c h i)
-
-                  (cmplx/simplex d e j)
-                  (cmplx/simplex d j g)
-
-                  (cmplx/simplex e f k)
-                  (cmplx/simplex e k j)
-
-                  (cmplx/simplex f i k)
-
-                  (cmplx/simplex g j l)
-                  (cmplx/simplex g l h)
-
-                  (cmplx/simplex h l i)
-
-                  (cmplx/simplex k i l)
-                  (cmplx/simplex k l j)
-                  ])
-          embedding {a (rn/vector -1  r  0)
-                     b (rn/vector  1  r  0)
-
-                     c (rn/vector  0  1  -r)
-                     d (rn/vector  0  1   r)
-
-                     e (rn/vector -r  0  1)
-                     f (rn/vector -r  0 -1)
-
-                     g (rn/vector  r  0  1)
-                     h (rn/vector  r  0 -1)
-
-                     i (rn/vector  0 -1 -r)
-                     j (rn/vector  0 -1  r)
-
-                     k (rn/vector -1 -r  0)
-                     l (rn/vector  1 -r  0)}]
-      (TriangleMesh. cmplx embedding))))
+    (let [a (cmplx/simplex) b (cmplx/simplex) c (cmplx/simplex) d (cmplx/simplex)
+          e (cmplx/simplex) f (cmplx/simplex) g (cmplx/simplex) h (cmplx/simplex)
+          i (cmplx/simplex) j (cmplx/simplex) k (cmplx/simplex) l (cmplx/simplex)
+          cmplx (cmplx/simplicial-complex-2d
+                 (map #(apply cmplx/simplex %)
+                      [[a b c]
+                       ;[a d b]
+                        [a c f]
+                       ;[a e d]
+                        [a f e]
+                       ;;[b d g] [b g h]
+                       [b h c] [c i f] [c h i]
+                       [d e j] [d j g] [e f k] [e k j] [f i k]
+                       [g j l]
+                       ;[g l h] [h l i]
+                       ;[k i l]
+                       [k l j]]))
+          ;; put a at top
+          qr (QuaternionRotation/createVectorRotation (rn/vector -1  r  0) (rn/vector 0 0 1))
+          embedding {a (rn/vector -1  r  0) b (rn/vector  1  r  0)
+                     c (rn/vector  0  1 -r) d (rn/vector  0  1  r)
+                     e (rn/vector -r  0  1) f (rn/vector -r  0 -1)
+                     g (rn/vector  r  0  1) h (rn/vector  r  0 -1)
+                     i (rn/vector  0 -1 -r) j (rn/vector  0 -1  r)
+                     k (rn/vector -1 -r  0) l (rn/vector  1 -r  0)}]
+      (rn/transform qr (TriangleMesh. cmplx embedding)))))
 
 (defn ^TriangleMesh spherical-icosahedron []
   (let [regular (regular-icosahedron)
@@ -340,6 +302,17 @@
 ;; as parent,
 ;;
 
+(defmethod cmplx/subdivide-4 TriangleMesh [^TriangleMesh m]
+  (let [{^CellComplex child :child parent :parent} (cmplx/subdivide-4 (.cmplx m))
+        embedding (.embedding m)]
+    (mesh
+     child
+     (into
+      {}
+      (map
+       (fn [v] [v (midpoint (points embedding (parent v)))])
+       (.vertices child))))))
+
 (defmethod cmplx/subdivide-4 QuadMesh [^QuadMesh qm]
   (let [{^CellComplex child :child
          parent :parent} (cmplx/subdivide-4 (.cmplx qm))
@@ -381,8 +354,8 @@
      (map (fn [^Cell face]
             (println (.toString face))
             (doall (map (fn [^ZeroSimplex v]
-                          (println (.toString v))
-                          (println (rn/coordinates (xyz v)))
+                          ;(println (.toString v))
+                          ;(println (rn/coordinates (xyz v)))
                           (println (rn/coordinates (txt v))))
                         (.vertices face)))
             (newline))

@@ -4,7 +4,7 @@
 (ns mop.cmplx.complex
   {:doc     "(Abstract) simplicial and cell complexes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-03"}
+   :version "2025-11-08"}
   (:require [clojure.set :as set]
             [mop.commons.debug :as debug])
   (:import [java.util List]))
@@ -146,7 +146,7 @@
 ;;---------------------------------------------------------------
 ;; TODO: enforce orientedness?
 
-(defn make-simplicial-complex-2d [faces]
+(defn simplicial-complex-2d [faces]
   "Accumulate the vertices from the faces, and sort."
   (let [vertices (sort (into #{} (flatten (map #(.vertices ^Cell %) faces))))]
     (SimplicialComplex2D. vertices faces)))
@@ -155,28 +155,15 @@
 ;; icosahedral 2d simplicial complex
 
 (defn ^SimplicialComplex2D icosahedron []
-  (let [^ZeroSimplex a (simplex)
-        ^ZeroSimplex b (simplex)
-        ^ZeroSimplex c (simplex)
-        ^ZeroSimplex d (simplex)
-        ^ZeroSimplex e (simplex)
-        ^ZeroSimplex f (simplex)
-        ^ZeroSimplex g (simplex)
-        ^ZeroSimplex h (simplex)
-        ^ZeroSimplex i (simplex)
-        ^ZeroSimplex j (simplex)
-        ^ZeroSimplex k (simplex)
-        ^ZeroSimplex l (simplex)]
-  (make-simplicial-complex-2d
-   [(simplex a b c) (simplex a d b) (simplex a c f) (simplex a e d) (simplex a f e)
-    (simplex b d g) (simplex b g h) (simplex b h c)
-    (simplex c f i) (simplex c i h)
-    (simplex d j g) (simplex d k f)
-    (simplex e f k) (simplex e j i)
-    (simplex f i c) (simplex f k j)
-    (simplex g d j) (simplex g l h)
-    (simplex h l i)
-    (simplex i l k)])))
+  (let [a (simplex) b (simplex) c (simplex) d (simplex)
+        e (simplex) f (simplex) g (simplex) h (simplex)
+        i (simplex) j (simplex) k (simplex) l (simplex)]
+    (simplicial-complex-2d
+     (map #(apply simplex %)
+          [[a b c] [a d b] [a c f] [a e d] [a f e]
+           [b d g] [b g h] [b h c] [c i f] [c h i]
+           [d e j] [d j g] [e f k] [e k j] [f i k]
+           [g j l] [g l h] [h l i] [k i l] [k l j]]))))
 
 ;;---------------------------------------------------------------
 ;; Abstract quadrilateral cell.
@@ -303,7 +290,37 @@
            :parents {v0 edge0 ... vi facei ... vj vj ...}}"
           class)
 
+;;---------------------------------------------------------------
 ;; TODO: transient collections?
+;; TODO: what about multiple edges connecting same vertices?
+;; TODO: prone to stack overflow, not clear why,
+;; not so easy to use transients, maybe switch to local mutable java collections
+
+(defmethod subdivide-4 SimplicialComplex2D [^SimplicialComplex2D c]
+  (loop [faces (.faces c)
+         child-faces []
+         children {}]
+    (if (empty? faces)
+      {:child (simplicial-complex-2d child-faces)
+       :parent (set/map-invert children)}
+      ;; else
+      (let [^TwoSimplex face (first faces)
+            ^ZeroSimplex a (.z0 face)
+            ^ZeroSimplex b (.z1 face)
+            ^ZeroSimplex c (.z2 face)
+            eab (sort [a b])
+            ebc (sort [b c])
+            eca (sort [c a])
+            ^ZeroSimplex ab (or (children eab) (simplex))
+            ^ZeroSimplex bc (or (children ebc) (simplex))
+            ^ZeroSimplex ca (or (children eca) (simplex))]
+        (recur
+         (rest faces)
+         ;; overflow with concat instead of conj
+         (conj child-faces (simplex a ab ca) (simplex b bc ab) (simplex c ca bc) (simplex ab bc ca))
+         (merge children {a a, b b, c c, eab ab, ebc bc, eca ca}))))))
+
+;;---------------------------------------------------------------
 
 (defmethod subdivide-4 QuadComplex [^QuadComplex qc]
   (loop [faces (.faces qc)

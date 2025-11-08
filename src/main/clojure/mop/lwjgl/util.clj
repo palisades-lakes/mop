@@ -177,22 +177,14 @@
 ;; TODO: probably not general enough
 
 (defn- setup-texture [texture-name]
-  (GL46/glBindTexture GL46/GL_TEXTURE_2D texture-name)(check-error)
-  (texture-parameter GL46/GL_TEXTURE_2D
-                     GL46/GL_TEXTURE_MIN_FILTER
-                     GL46/GL_NEAREST)
-  (texture-parameter GL46/GL_TEXTURE_2D
-                     GL46/GL_TEXTURE_MAG_FILTER
-                     GL46/GL_NEAREST)
-  (texture-parameter GL46/GL_TEXTURE_2D
-                     GL46/GL_TEXTURE_WRAP_S
-                     GL46/GL_CLAMP_TO_BORDER)
-  (texture-parameter GL46/GL_TEXTURE_2D
-                     GL46/GL_TEXTURE_WRAP_T
-                     GL46/GL_CLAMP_TO_BORDER)
-  (texture-parameter GL46/GL_TEXTURE_2D
-                     GL46/GL_TEXTURE_BORDER_COLOR
-                     (float-array [1.0 0.0 0.0 1.0]))
+  (GL46/glBindTexture GL46/GL_TEXTURE_2D texture-name)
+  (check-error)
+  (texture-parameter GL46/GL_TEXTURE_2D GL46/GL_TEXTURE_MIN_FILTER GL46/GL_NEAREST)
+  (texture-parameter GL46/GL_TEXTURE_2D GL46/GL_TEXTURE_MAG_FILTER GL46/GL_NEAREST)
+  (texture-parameter GL46/GL_TEXTURE_2D GL46/GL_TEXTURE_WRAP_S GL46/GL_CLAMP_TO_BORDER)
+  (texture-parameter GL46/GL_TEXTURE_2D GL46/GL_TEXTURE_WRAP_T GL46/GL_CLAMP_TO_BORDER)
+  (texture-parameter GL46/GL_TEXTURE_2D GL46/GL_TEXTURE_BORDER_COLOR
+                     (float-array [1.0 0.0 1.0 1.0]))
   (GL46/glBindTexture GL46/GL_TEXTURE_2D 0)
   (check-error))
 
@@ -201,11 +193,7 @@
         ^ByteBuffer bytes (byte-buffer (byte-array (map unchecked-byte pixels)))
         texture-name (GL46/glGenTextures)]
     (GL46/glBindTexture GL46/GL_TEXTURE_2D texture-name)
-    (GL46/glTexImage2D
-     GL46/GL_TEXTURE_2D 0
-     GL46/GL_RGBA pw ph 0
-     GL46/GL_RGB
-     GL46/GL_UNSIGNED_BYTE bytes)
+    (GL46/glTexImage2D GL46/GL_TEXTURE_2D 0 GL46/GL_RGBA pw ph 0 GL46/GL_RGB GL46/GL_UNSIGNED_BYTE bytes)
     (setup-texture texture-name)
     [texture-name pw ph]))
 
@@ -214,11 +202,7 @@
         texture-name (GL46/glGenTextures)]
     (GL46/glBindTexture GL46/GL_TEXTURE_2D texture-name)
     (check-error)
-    (GL46/glTexImage2D
-     GL46/GL_TEXTURE_2D 0
-     GL46/GL_R32F pw ph 0
-     GL46/GL_RED
-     GL46/GL_FLOAT pixels)
+    (GL46/glTexImage2D GL46/GL_TEXTURE_2D 0 GL46/GL_R32F pw ph 0 GL46/GL_RED GL46/GL_FLOAT pixels)
     (check-error)
     (setup-texture texture-name)
     [texture-name (math/sqrt (+ (* pw pw) (* ph ph)))]))

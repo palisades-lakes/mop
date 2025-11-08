@@ -8,9 +8,10 @@
   Start with spherical quad mesh, subdivide, and transform to R^3.
   Started with https://clojurecivitas.github.io/opengl_visualization/main.html"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-11-07"}
+   :version "2025-11-08"}
 
   (:require
+   [mop.cmplx.complex :as cmplx]
    [mop.geom.mesh :as mesh]
    [mop.geom.s2 :as s2]
    [mop.image.util :as image]
@@ -47,15 +48,16 @@
 
 ;; S2 initial embedding
 (def ^TriangleMesh s2-mesh
-  ((comp ;;cmplx/subdivide-4
-         ;;cmplx/subdivide-4
-         ;;cmplx/subdivide-4
-         ;;cmplx/subdivide-4
-         ;;cmplx/subdivide-4
-         )
-   (mesh/spherical-icosahedron)
-   )
-  )
+  (let [mesh (mesh/spherical-icosahedron)
+        mesh  (cmplx/subdivide-4 mesh)
+        mesh  (cmplx/subdivide-4 mesh)
+        mesh  (cmplx/subdivide-4 mesh)
+        mesh  (cmplx/subdivide-4 mesh)
+        mesh  (cmplx/subdivide-4 mesh)
+        mesh  (cmplx/subdivide-4 mesh)
+        mesh  (cmplx/subdivide-4 mesh)
+        ]
+    mesh))
 
 ;;----------------------------------------------------
 ;; TODO: smarter shader construction in order to not depend on

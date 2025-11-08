@@ -14,7 +14,7 @@
       e1 (cmplx/simplex z1 z0)
       e2 (cmplx/simplex z0 z1)
       f0 (cmplx/simplex z0 z1 z2)
-      c (cmplx/make-simplicial-complex-2d [f0])]
+      c (cmplx/simplicial-complex-2d [f0])]
   (newline)
   (binding [*print-readably* false
             *print-dup* false

@@ -161,7 +161,7 @@
       window
       (fn [_window key scancode action _mods]
         (when (== (int action) GLFW/GLFW_PRESS)
-          (println key)
+          #_(println key)
           (reset! polygon-mode (if (== (int @polygon-mode) GL46/GL_LINE)
                                  GL46/GL_FILL
                                  GL46/GL_LINE)))))

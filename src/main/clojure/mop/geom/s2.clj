@@ -54,8 +54,8 @@
     [^EquirectangularEmbedding s ^Point2S p]
     (let [x (* (.width s) (/ (.getAzimuth p) TWO_PI))
           y (* (.height s) (/ (.getPolar p) Math/PI))]
-      (println "xyz" (rn/coordinates (.getVector p)))
-      (println "st" x y)
+      #_(println "xyz" (rn/coordinates (.getVector p)))
+      #_(println "st" x y)
       (Vector2D/of x y))))
 
 ;;----------------------------------------------------------------
