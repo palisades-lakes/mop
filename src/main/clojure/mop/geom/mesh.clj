@@ -4,18 +4,20 @@
 (ns mop.geom.mesh
   {:doc     "Embedded cell complexes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-88"}
+   :version "2025-11-09"}
   (:require [mop.cmplx.complex :as cmplx]
             [mop.commons.debug :as debug]
             [mop.geom.rn :as rn]
             [mop.geom.s2 :as s2])
   (:import [clojure.lang IFn]
+           [java.awt.geom Point2D]
            [java.util List]
            [mop.cmplx.complex Cell CellComplex OneSimplex Quad QuadComplex SimplicialComplex2D
-            TwoSimplex ZeroSimplex]
+                              TwoSimplex ZeroSimplex]
            [org.apache.commons.geometry.euclidean.threed Vector3D Vector3D$Sum]
            [org.apache.commons.geometry.euclidean.threed.rotation QuaternionRotation]
-           [org.apache.commons.geometry.spherical.twod GreatArcPath Point2S]
+           [org.apache.commons.geometry.euclidean.twod Vector2D]
+           [org.apache.commons.geometry.spherical.twod GreatArcPath GreatCircles Point2S]
            [org.apache.commons.numbers.core Precision]))
 
 ;;---------------------------------------------------------------
@@ -44,7 +46,8 @@
 (defn triangle-mesh ^TriangleMesh [^SimplicialComplex2D cmplx
                                    ^IFn embedding]
   (doall
-   (map #(assert (not (nil? (embedding %))))
+   (map #(assert (not (nil? (embedding %)))
+                 (println %))
         (.vertices cmplx)))
   (TriangleMesh. cmplx embedding))
 
@@ -60,18 +63,12 @@
           i (cmplx/simplex) j (cmplx/simplex) k (cmplx/simplex) l (cmplx/simplex)
           cmplx (cmplx/simplicial-complex-2d
                  (map #(apply cmplx/simplex %)
-                      [[a b c]
-                       ;[a d b]
-                        [a c f]
-                       ;[a e d]
-                        [a f e]
-                       ;;[b d g] [b g h]
-                       [b h c] [c i f] [c h i]
-                       [d e j] [d j g] [e f k] [e k j] [f i k]
-                       [g j l]
-                       ;[g l h] [h l i]
-                       ;[k i l]
-                       [k l j]]))
+                      [;; texture interpolation issues
+                       [a d b] [b d g] [b g h] [g l h]
+                       [a e d]   [h l i] [k i l]
+                       ;; interpolation ok
+                       [a b c] [a c f] [a f e] [b h c] [c i f] [c h i]
+                       [d e j] [d j g] [e f k] [e k j] [f i k] [g j l] [k l j]]))
           ;; put a at top
           qr (QuaternionRotation/createVectorRotation (rn/vector -1  r  0) (rn/vector 0 0 1))
           embedding {a (rn/vector -1  r  0) b (rn/vector  1  r  0)
@@ -84,10 +81,86 @@
 
 (defn ^TriangleMesh spherical-icosahedron []
   (let [regular (regular-icosahedron)
-        r3 (.embedding regular)
-        s2 (doall (into {} (map (fn [v] [v (s2/point (r3 v))])
-                                (keys r3))))]
+        s2 (update-vals (.embedding regular) #(s2/point %))]
     (TriangleMesh. (.cmplx regular) s2)))
+
+;; Cut icosahedron to simplify texture mapping and other
+;; 2d projections. Return R3 embedding.
+;; TODO: automate the cut. Key question: what to do when it's not spherical?
+;; TODO: check if this is a regular icosahedron
+
+(let [TWO_PI (* 2.0 Math/PI)
+      delta (/ TWO_PI 5.0)
+      rho (/ Math/PI 3.0)]
+  (defn ^TriangleMesh cut-icosahedron-s2 []
+    (let [a (cmplx/simplex) b (cmplx/simplex) c (cmplx/simplex) d (cmplx/simplex) e (cmplx/simplex)
+          f (cmplx/simplex) g (cmplx/simplex) h (cmplx/simplex) i (cmplx/simplex) j (cmplx/simplex)
+          k (cmplx/simplex) l (cmplx/simplex) m (cmplx/simplex) n (cmplx/simplex) o (cmplx/simplex)
+          p (cmplx/simplex) q (cmplx/simplex) r (cmplx/simplex) s (cmplx/simplex) t (cmplx/simplex)
+          u (cmplx/simplex) v (cmplx/simplex)
+          cmplx (cmplx/simplicial-complex-2d
+                 (map #(apply cmplx/simplex %)
+                      [[a f g] [b g h] [c h i] [d i j] [e j k]
+                       [f l g] [g m h] [h n i] [i o j] [j p k]
+                       [g l m] [h m n] [i n o] [j o p] [k p q]
+                       [l r m] [m s n] [n t o] [o u p] [p v q]]))
+          s2-embedding {a (Point2S/of (* 0.0 delta) 0)
+                        b (Point2S/of (* 1.0 delta) 0)
+                        c (Point2S/of (* 2.0 delta) 0)
+                        d (Point2S/of (* 3.0 delta) 0)
+                        e (Point2S/of (* 4.0 delta) 0)
+
+                        f (Point2S/of (* -0.5 delta) rho)
+                        g (Point2S/of (* 0.5 delta) rho)
+                        h (Point2S/of (* 1.5 delta) rho)
+                        i (Point2S/of (* 2.5 delta) rho)
+                        j (Point2S/of (* 3.5 delta) rho)
+                        k (Point2S/of (* 4.5 delta) rho)
+
+                        l (Point2S/of (* 0.0 delta) (* 2.0 rho))
+                        m (Point2S/of (* 1.0 delta) (* 2.0 rho))
+                        n (Point2S/of (* 2.0 delta) (* 2.0 rho))
+                        o (Point2S/of (* 3.0 delta) (* 2.0 rho))
+                        p (Point2S/of (* 4.0 delta) (* 2.0 rho))
+                        q (Point2S/of (* 5.0 delta) (* 2.0 rho))
+
+                        r (Point2S/of (* 0.5 delta) Math/PI)
+                        s (Point2S/of (* 1.5 delta) Math/PI)
+                        t (Point2S/of (* 2.5 delta) Math/PI)
+                        u (Point2S/of (* 3.5 delta) Math/PI)
+                        v (Point2S/of (* 4.5 delta) Math/PI)}
+          r3-embedding (update-vals s2-embedding #(.getVector ^Point2S %))
+          txt-embedding (let [dx (/ 1.0 9.0)
+                              dy (/ 1.0 3.0)]
+                          {a (Vector2D/of (* 0 dx) 1)
+                           b (Vector2D/of (* 2 dx) 1)
+                           c (Vector2D/of (* 4 dx) 1)
+                           d (Vector2D/of (* 6 dx) 1)
+                           e (Vector2D/of (* 8 dx) 1)
+
+                           f (Vector2D/of (* -1 dx) (* 2 dy))
+                           g (Vector2D/of (* 1 dx) (* 2 dy))
+                           h (Vector2D/of (* 3 dx) (* 2 dy))
+                           i (Vector2D/of (* 5 dx) (* 2 dy))
+                           j (Vector2D/of (* 7 dx) (* 2 dy))
+                           k (Vector2D/of (* 9 dx) (* 2 dy))
+
+                           l (Vector2D/of (* 0 dx) dy)
+                           m (Vector2D/of (* 2 dx) dy)
+                           n (Vector2D/of (* 4 dx) dy)
+                           o (Vector2D/of (* 6 dx) dy)
+                           p (Vector2D/of (* 8 dx) dy)
+                           q (Vector2D/of (* 10 dx) dy)
+
+                           r (Vector2D/of (* 1 dx) 0)
+                           s (Vector2D/of (* 3 dx) 0)
+                           t (Vector2D/of (* 5 dx) 0)
+                           u (Vector2D/of (* 7 dx) 0)
+                           v (Vector2D/of (* 9 dx) 0)})
+          ]
+      {:s2-mesh (triangle-mesh cmplx s2-embedding)
+       :xyz-mesh (triangle-mesh cmplx r3-embedding)
+       :txt-mesh (triangle-mesh cmplx txt-embedding)})))
 
 ;;---------------------------------------------------------------
 ;; TODO: move these to Java to get better control over construction?
@@ -253,10 +326,8 @@
    (assert (> (.distance p0 p1) 1.0e-7)
            (str "distance=" (.distance p0 p1)))
    (.getMidPoint
-    (.getStartArc
-     (GreatArcPath/fromVertices
-      [p0 p1]
-      (Precision/doubleEquivalenceOfEpsilon 1e-12)))))
+    (GreatCircles/arcFromPoints
+     p0 p1 (Precision/doubleEquivalenceOfEpsilon 1e-12))))
 
   ([^Point2S p0 ^Point2S p1 ^Point2S p2 ^Point2S p3]
    (let [m01 (spherical-midpoint p0 p1)
@@ -327,37 +398,54 @@
 
 ;;---------------------------------------------------------------
 
+(defn- ^Double signed-area [^TwoSimplex face ^IFn txt]
+  (let [^Vector2D p0 (txt (.z0 face))
+        ^Vector2D p1 (txt (.z1 face))
+        ^Vector2D p2 (txt (.z2 face))
+        v0 (.subtract p1 p0)
+        v1 (.subtract p1 p2)
+        ]
+    (.signedArea v0 v1)))
+
+;;---------------------------------------------------------------
+
 (defn coordinates-and-elements  [{:keys [^Mesh s2-mesh
+                                         ^Mesh txt-mesh
                                          xyz-embedding
                                          rgba-embedding
                                          dual-embedding
                                          txt-embedding]}]
   "Return a float array and an int array suitable for passing to GLSL.
   Don't rely on any ordering of cells and vertices."
+  (assert (identical? (.cmplx s2-mesh) (.cmplx txt-mesh)))
   (let [xyz (.embedding ^Mesh (rn/transform xyz-embedding s2-mesh))
         rgba (.embedding ^Mesh (rn/transform rgba-embedding s2-mesh))
         dual (.embedding ^Mesh (rn/transform dual-embedding s2-mesh))
-        txt (.embedding ^Mesh (rn/transform txt-embedding s2-mesh))
+        txt (.embedding txt-mesh)
         ^CellComplex cmplx (.cmplx s2-mesh)
         faces (.faces cmplx)
         zeros (sort (.vertices cmplx))
         zindex (into {} (map (fn [z i] [z i])
-                             zeros
-                             (range (count zeros))))
-        indices (flatten (map (fn [^Cell face] (mapv #(zindex %) (.vertices face))) faces))
+                             zeros (range (count zeros))))
+        indices (flatten (map (fn [^Cell face]
+                                (mapv #(zindex %) (.vertices face)))
+                              faces))
         coordinates (flatten (map #(concat (rn/coordinates (xyz %))
                                            (rn/coordinates (rgba %))
                                            (rn/coordinates (dual %))
                                            (rn/coordinates (txt %)))
                                   zeros))]
     (doall
-     (map (fn [^Cell face]
-            (println (.toString face))
-            (doall (map (fn [^ZeroSimplex v]
-                          ;(println (.toString v))
-                          ;(println (rn/coordinates (xyz v)))
-                          (println (rn/coordinates (txt v))))
-                        (.vertices face)))
-            (newline))
-          faces))
+     (let [s2 (.embedding s2-mesh)]
+       (map (fn [^TwoSimplex face]
+              (println (.toString face))
+              (println "signed area: " (signed-area face txt))
+              (doall (map (fn [^ZeroSimplex v]
+                            ;(println (.toString v))
+                            ;(println (rn/coordinates (xyz v)))
+                            (println (s2 v))
+                            (println (rn/coordinates (txt v))))
+                          (.vertices face)))
+              (newline))
+            faces)))
     [coordinates indices]))

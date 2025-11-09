@@ -152,7 +152,7 @@
     (SimplicialComplex2D. vertices faces)))
 
 ;;---------------------------------------------------------------
-;; icosahedral 2d simplicial complex
+;; icosahedral 2d simplicial complex with spherical topology
 
 (defn ^SimplicialComplex2D icosahedron []
   (let [a (simplex) b (simplex) c (simplex) d (simplex)
@@ -164,6 +164,22 @@
            [b d g] [b g h] [b h c] [c i f] [c h i]
            [d e j] [d j g] [e f k] [e k j] [f i k]
            [g j l] [g l h] [h l i] [k i l] [k l j]]))))
+
+;; Cut icosahedron to simplify texture mapping and other
+;; 2d projections.
+
+(defn ^SimplicialComplex2D cut-icosahedron []
+  (let [a (simplex) b (simplex) c (simplex) d (simplex) e (simplex)
+        f (simplex) g (simplex) h (simplex) i (simplex) j (simplex)
+        k (simplex) l (simplex) m (simplex) n (simplex) o (simplex)
+        p (simplex) q (simplex) r (simplex) s (simplex) t (simplex)
+        u (simplex) v (simplex)]
+    (simplicial-complex-2d
+     (map #(apply simplex %)
+          [[a f g] [b g h] [c h i] [d i j] [e j k]
+           [f l g] [g m h] [h n i] [i o j] [j p k]
+           [g l m] [h m n] [i n o] [j o p] [k p q]
+           [l r m] [m s n] [n t o] [o u p] [p v q]]))))
 
 ;;---------------------------------------------------------------
 ;; Abstract quadrilateral cell.

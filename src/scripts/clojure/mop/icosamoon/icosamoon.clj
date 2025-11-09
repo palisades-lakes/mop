@@ -47,17 +47,7 @@
 (def radius 1737.4)
 
 ;; S2 initial embedding
-(def ^TriangleMesh s2-mesh
-  (let [mesh (mesh/spherical-icosahedron)
-        mesh  (cmplx/subdivide-4 mesh)
-        mesh  (cmplx/subdivide-4 mesh)
-        mesh  (cmplx/subdivide-4 mesh)
-        mesh  (cmplx/subdivide-4 mesh)
-        mesh  (cmplx/subdivide-4 mesh)
-        mesh  (cmplx/subdivide-4 mesh)
-        mesh  (cmplx/subdivide-4 mesh)
-        ]
-    mesh))
+(def icosahedron (mesh/cut-icosahedron-s2))
 
 ;;----------------------------------------------------
 ;; TODO: smarter shader construction in order to not depend on
@@ -65,16 +55,17 @@
 ;; and to reuse common functions
 
 (glfw/arcball-loop
- {:title "icosamoon"
-  :vertex-shader   "src/scripts/clojure/mop/icosamoon/icosamoon-vertex.glsl"
-  :fragment-shader "src/scripts/clojure/mop/icosamoon/icosamoon-fragment.glsl"
-  :s2-mesh s2-mesh
-  :xyz-embedding  (s2/r3-embedding Vector3D/ZERO radius)
-  ;; unit vectors pointing out
-  :dual-embedding  (s2/r3-embedding Vector3D/ZERO 1.0)
-  :rgba-embedding  s2/rgba
-  :txt-embedding (s2/equirectangular-embedding 1.0 1.0)
-  :radius          radius
-  :color-image     color-image
-  :elevation-image elevation-image
-  })
+ (merge
+  icosahedron
+  {:title "icosamoon"
+   :vertex-shader   "src/scripts/clojure/mop/icosamoon/icosamoon-vertex.glsl"
+   :fragment-shader "src/scripts/clojure/mop/icosamoon/icosamoon-fragment.glsl"
+   :xyz-embedding  (s2/r3-embedding Vector3D/ZERO radius)
+   ;; unit vectors pointing out
+   :dual-embedding  (s2/r3-embedding Vector3D/ZERO 1.0)
+   :txt-embedding (s2/equirectangular-embedding 1.0 1.0)
+   :rgba-embedding  s2/rgba
+   :radius          radius
+   :color-image     color-image
+   :elevation-image elevation-image
+   }))

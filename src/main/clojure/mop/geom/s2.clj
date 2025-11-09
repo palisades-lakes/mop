@@ -6,7 +6,7 @@
   {:doc     "Geometry utilities for the 2-dimensional sphere, S_2.
   Hide 3rd party library is used, if any."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-05"}
+   :version "2025-11-09"}
 
   (:require [mop.geom.rn :as rn])
   (:import
@@ -18,6 +18,10 @@
    [org.apache.commons.geometry.spherical.twod Point2S]))
 
 ;;----------------------------------------------------------------
+
+(defmethod rn/coordinates Point2S [^Point2S v]
+  [(.getAzimuth v) (.getPolar v)])
+
 
 (defn ^Point2S point [^Vector3D v] (Point2S/from v))
 

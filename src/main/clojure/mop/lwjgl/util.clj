@@ -5,7 +5,7 @@
 
   {:doc     "LWJGL utilities"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-07"}
+   :version "2025-11-09"}
 
   (:require [clojure.math :as math]
             [clojure.pprint :as pp]
@@ -181,8 +181,8 @@
   (check-error)
   (texture-parameter GL46/GL_TEXTURE_2D GL46/GL_TEXTURE_MIN_FILTER GL46/GL_NEAREST)
   (texture-parameter GL46/GL_TEXTURE_2D GL46/GL_TEXTURE_MAG_FILTER GL46/GL_NEAREST)
-  (texture-parameter GL46/GL_TEXTURE_2D GL46/GL_TEXTURE_WRAP_S GL46/GL_CLAMP_TO_BORDER)
-  (texture-parameter GL46/GL_TEXTURE_2D GL46/GL_TEXTURE_WRAP_T GL46/GL_CLAMP_TO_BORDER)
+  (texture-parameter GL46/GL_TEXTURE_2D GL46/GL_TEXTURE_WRAP_S GL46/GL_REPEAT)
+  (texture-parameter GL46/GL_TEXTURE_2D GL46/GL_TEXTURE_WRAP_T GL46/GL_REPEAT)
   (texture-parameter GL46/GL_TEXTURE_2D GL46/GL_TEXTURE_BORDER_COLOR
                      (float-array [1.0 0.0 1.0 1.0]))
   (GL46/glBindTexture GL46/GL_TEXTURE_2D 0)
@@ -269,6 +269,7 @@
 
 (defn- setup-vertices [{:keys [^Integer program
                                ^Mesh s2-mesh
+                               ^Mesh txt-mesh
                                xyz-embedding
                                rgba-embedding
                                dual-embedding
