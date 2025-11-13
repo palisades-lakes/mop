@@ -5,7 +5,7 @@
 
   {:doc "LWJGL/GLFW utilities"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-11-06"}
+   :version "2025-11-12"}
 
   (:require [mop.geom.arcball :as arcball]
             [mop.geom.rn :as rn]
@@ -159,7 +159,7 @@
 
      (GLFW/glfwSetKeyCallback
       window
-      (fn [_window key scancode action _mods]
+      (fn [_window _key _scancode action _mods]
         (when (== (int action) GLFW/GLFW_PRESS)
           #_(println key)
           (reset! polygon-mode (if (== (int @polygon-mode) GL46/GL_LINE)
