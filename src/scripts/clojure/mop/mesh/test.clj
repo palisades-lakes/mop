@@ -7,9 +7,9 @@
    [mop.commons.debug :as mop]
    [mop.cmplx.complex :as cmplx]))
 
-(let [z0 (cmplx/simplex)
-      z1 (cmplx/simplex)
-      z2 (cmplx/simplex)
+(let [z0 (cmplx/simplex "a")
+      z1 (cmplx/simplex "b")
+      z2 (cmplx/simplex "c")
       e0 (cmplx/simplex z0 z1)
       e1 (cmplx/simplex z1 z0)
       e2 (cmplx/simplex z0 z1)

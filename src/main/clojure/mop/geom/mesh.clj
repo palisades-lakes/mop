@@ -4,7 +4,7 @@
 (ns mop.geom.mesh
   {:doc     "Embedded cell complexes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-12"}
+   :version "2025-11-13"}
   (:require [mop.cmplx.complex :as cmplx]
             [mop.commons.debug :as debug]
             [mop.geom.rn :as rn]
@@ -17,7 +17,7 @@
            [org.apache.commons.geometry.euclidean.threed Vector3D Vector3D$Sum]
            [org.apache.commons.geometry.euclidean.threed.rotation QuaternionRotation]
            [org.apache.commons.geometry.euclidean.twod Vector2D Vector2D$Sum]
-           [org.apache.commons.geometry.spherical.twod GreatCircles Point2S]
+           [org.apache.commons.geometry.spherical.twod GreatArc GreatCircles Point2S]
            [org.apache.commons.numbers.core Precision]))
 
 ;;---------------------------------------------------------------
@@ -25,6 +25,8 @@
 (definterface Mesh
   (^mop.cmplx.complex.CellComplex cmplx [])
   (^clojure.lang.IFn embedding []))
+
+(defn faces [^Mesh mesh] (.faces (.cmplx mesh)))
 
 ;;---------------------------------------------------------------
 ;; TODO: move these to Java to get better control over construction?
@@ -292,12 +294,12 @@
 (defmethod midpoint Vector2D [^Vector2D p0 & points]
   (let [sum (Vector2D$Sum/of p0)]
     (dorun (map #(.add sum %) points))
-    (.multiply (.get sum) (/ 1.0 (inc (count points))))))
+    (rn/multiply (.get sum) (/ 1.0 (inc (count points))))))
 
 (defmethod midpoint Vector3D [^Vector3D p0 & points]
   (let [sum (Vector3D$Sum/of p0)]
     (dorun (map #(.add sum %) points))
-    (.multiply (.get sum) (/ 1.0 (inc (count points))))))
+    (rn/multiply (.get sum) (/ 1.0 (inc (count points))))))
 
 ;;---------------------------------------------------------------
 ;; TODO: Incorporate alternate subdivision rules,
@@ -334,7 +336,7 @@
 
 ;;---------------------------------------------------------------
 
-#_(defn- ^Double signed-area [^TwoSimplex face ^IFn txt]
+#_(defn ^Double signed-area [^TwoSimplex face ^IFn txt]
     (let [^Vector2D p0 (txt (.z0 face))
           ^Vector2D p1 (txt (.z1 face))
           ^Vector2D p2 (txt (.z2 face))
@@ -342,6 +344,13 @@
           v1 (.subtract p1 p2)
           ]
       (.signedArea v0 v1)))
+
+;;---------------------------------------------------------------
+
+(defn ^GreatArc arc
+  ([^IFn s2 ^ZeroSimplex a ^ZeroSimplex b]
+   (s2/arc ^Point2S (s2 a) ^Point2S (s2 b)))
+  ([s2 ^OneSimplex ab] (arc s2 (.z0 ab) (.z1 ab))))
 
 ;;---------------------------------------------------------------
 

@@ -169,7 +169,7 @@
 (defmethod transform
   [Number Vector]
   [^Number f ^Vector x]
-  (.multiply x f))
+  (multiply x f))
 
 (defmethod transform
   [QuaternionRotation Vector3D]

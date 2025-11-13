@@ -4,7 +4,7 @@
 (ns mop.cmplx.complex
   {:doc     "(Abstract) simplicial and cell complexes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-08"}
+   :version "2025-11-13"}
   (:require [clojure.set :as set]
             [mop.commons.debug :as debug])
   (:import [java.util List]))
@@ -25,12 +25,18 @@
 ;;  vertices, edges, etc.
 
 (deftype ZeroSimplex
-  [^long counter]
+  [^long counter
+   ^String name]
   :load-ns true
 
   Object
-  (toString [_] (str "Z" counter))
+  (toString [_] name)
   (hashCode [_] counter)
+  (equals [this that]
+    (cond
+      (identical? this that) true
+      (not (instance? ZeroSimplex that)) false
+      :else (== (.counter this) (.counter ^ZeroSimplex that))))
 
   ;; ordering will be match order of creation within a thread.
   ;; will be used to identify which point goes with which zero simplex
@@ -52,8 +58,13 @@
   :load-ns true
 
   Object
-  (toString [_] (str "O[" counter ";" z0 "," z1 "]"))
+  (toString [_] (str z0 "->" z1))
   (hashCode [_] counter)
+  (equals [this that]
+    (cond
+      (identical? this that) true
+      (not (instance? OneSimplex that)) false
+      :else (== (.counter this) (.counter ^OneSimplex that))))
 
   Comparable
   (compareTo [_ that] (- counter (.counter ^OneSimplex that)))
@@ -74,8 +85,13 @@
   :load-ns true
 
   Object
-  (toString [_] (str "T[" counter ";" z0 "," z1 "," z2 ")"))
+  (toString [_] (str z0 "->" z1 "->" z2))
   (hashCode [_] counter)
+  (equals [this that]
+    (cond
+      (identical? this that) true
+      (not (instance? TwoSimplex that)) false
+      :else (== (.counter this) (.counter ^TwoSimplex that))))
 
   Comparable
   (compareTo [_ that] (- counter (.counter ^TwoSimplex that)))
@@ -87,7 +103,7 @@
 
 (let [counter (atom -1)]
   (defn simplex
-    (^ZeroSimplex [] (ZeroSimplex. (swap! counter inc)))
+    (^ZeroSimplex [^String name] (ZeroSimplex. (swap! counter inc) name))
     (^OneSimplex [^ZeroSimplex z0
                   ^ZeroSimplex z1]
      (assert (not= z0 z1))
@@ -155,9 +171,9 @@
 ;; icosahedral 2d simplicial complex with spherical topology
 
 (defn ^SimplicialComplex2D icosahedron []
-  (let [a (simplex) b (simplex) c (simplex) d (simplex)
-        e (simplex) f (simplex) g (simplex) h (simplex)
-        i (simplex) j (simplex) k (simplex) l (simplex)]
+  (let [a (simplex "a") b (simplex"b") c (simplex"c") d (simplex"d")
+        e (simplex"e") f (simplex"f") g (simplex"g") h (simplex"h")
+        i (simplex"i") j (simplex"j") k (simplex"k") l (simplex"l")]
     (simplicial-complex-2d
      (map #(apply simplex %)
           [[a b c] [a d b] [a c f] [a e d] [a f e]
@@ -169,11 +185,12 @@
 ;; 2d projections.
 
 (defn ^SimplicialComplex2D cut-icosahedron []
-  (let [a (simplex) b (simplex) c (simplex) d (simplex) e (simplex)
-        f (simplex) g (simplex) h (simplex) i (simplex) j (simplex)
-        k (simplex) l (simplex) m (simplex) n (simplex) o (simplex)
-        p (simplex) q (simplex) r (simplex) s (simplex) t (simplex)
-        u (simplex) v (simplex)]
+  (let [a (simplex "a") b (simplex"b") c (simplex"c") d (simplex"d")
+        e (simplex"e") f (simplex"f") g (simplex"g") h (simplex"h")
+        i (simplex"i") j (simplex"j") k (simplex"k") l (simplex"l")
+        m (simplex"m") n (simplex"n") o (simplex"o")
+        p (simplex"p") q (simplex"q") r (simplex"r") s (simplex"s") t (simplex"t")
+        u (simplex"u") v (simplex"v")]
     (simplicial-complex-2d
      (map #(apply simplex %)
           [[a f g] [b g h] [c h i] [d i j] [e j k]
@@ -270,14 +287,14 @@
 (defn ^QuadComplex quad-cube []
   "Return an oriented quad complex with 6 faces, topologically
   equivalent to a sphere or cube surface."
-  (let [z0 (simplex)
-        z1 (simplex)
-        z2 (simplex)
-        z3 (simplex)
-        z4 (simplex)
-        z5 (simplex)
-        z6 (simplex)
-        z7 (simplex)
+  (let [z0 (simplex"a")
+        z1 (simplex"b")
+        z2 (simplex"c")
+        z3 (simplex"d")
+        z4 (simplex"e")
+        z5 (simplex"f")
+        z6 (simplex"g")
+        z7 (simplex"h")
         q0321 (quad z0 z3 z2 z1)
         q4567 (quad z4 z5 z6 z7)
         q0473 (quad z0 z4 z7 z3)
@@ -327,9 +344,9 @@
             eab (sort [a b])
             ebc (sort [b c])
             eca (sort [c a])
-            ^ZeroSimplex ab (or (children eab) (simplex))
-            ^ZeroSimplex bc (or (children ebc) (simplex))
-            ^ZeroSimplex ca (or (children eca) (simplex))]
+            ^ZeroSimplex ab (or (children eab) (simplex"ab"))
+            ^ZeroSimplex bc (or (children ebc) (simplex"bc"))
+            ^ZeroSimplex ca (or (children eca) (simplex"ca"))]
         (recur
          (rest faces)
          ;; overflow with concat instead of conj
@@ -356,11 +373,11 @@
             e12 (sort [z1 z2])
             e23 (sort [z2 z3])
             e30 (sort [z3 z0])
-            ^ZeroSimplex z01 (or (children e01) (simplex))
-            ^ZeroSimplex z12 (or (children e12) (simplex))
-            ^ZeroSimplex z23 (or (children e23) (simplex))
-            ^ZeroSimplex z30 (or (children e30) (simplex))
-            ^ZeroSimplex z0123 (simplex)]
+            ^ZeroSimplex z01 (or (children e01) (simplex"ab"))
+            ^ZeroSimplex z12 (or (children e12) (simplex"bc"))
+            ^ZeroSimplex z23 (or (children e23) (simplex"cd"))
+            ^ZeroSimplex z30 (or (children e30) (simplex"da"))
+            ^ZeroSimplex z0123 (simplex"abcd")]
         (recur
          (rest faces)
          (concat child-faces

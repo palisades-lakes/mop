@@ -6,7 +6,7 @@
 (ns mop.debug.subdivide
   {:doc     "check subdivision"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-03"}
+   :version "2025-11-13"}
 
   (:require
    [mop.commons.debug :as debug]
@@ -18,12 +18,13 @@
 ;;-------------------------------------------------------------
 ;; TODO: convert to unit test, check singular cases.
 
-(let [;z0 (cmplx/simplex)
-      ;z1 (cmplx/simplex)
-      ;z2 (cmplx/simplex)
-      ;z3 (cmplx/simplex)
-      ;z4 (cmplx/simplex)
-      ;z5 (cmplx/simplex)
+(let [
+      ;z0 (cmplx/simplex "a")
+      ;z1 (cmplx/simplex "b")
+      ;z2 (cmplx/simplex "c")
+      ;z3 (cmplx/simplex "d")
+      ;z4 (cmplx/simplex "e")
+      ;z5 (cmplx/simplex "f")
       ;q0321 (cmplx/quad z0 z1 z2 z3)
       ;q1452 (cmplx/quad z1 z4 z5 z2)
       ;pair (cmplx/quad-complex [q0321 q1452])

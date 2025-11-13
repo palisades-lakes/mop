@@ -9,36 +9,19 @@
    :version "2025-11-12"}
   (:require
    [mop.commons.debug :as debug]
-   [mop.geom.mesh :as mesh])
-  (:import [org.apache.commons.geometry.euclidean.threed Vector3D Vector3D$Unit]
-           [org.apache.commons.geometry.euclidean.twod Vector2D]
-           [org.apache.commons.geometry.spherical.twod Point2S]))
+   [mop.geom.mesh :as mesh]
+   [mop.geom.s2 :as s2])
+  (:import [org.apache.commons.geometry.euclidean.twod Vector2D]))
 ;;-------------------------------------------------------------
-(let [TWO_PI (double (* 2.0 Math/PI))]
-
-  (defn ^Point2S txt-to-s2 [^Vector2D t]
-    "Map [0,1]^2 to S2 (azimuth,polar) with wrap-around for coordinates outside [0,1].
-    (x,y) -> (2*PI*x,PI(1-y))"
-    (Point2S/of (* TWO_PI (.getX t)) (* Math/PI (- 1.0 (.getY t)))))
-
-  (defn ^Vector3D s2-to-txt [^Point2S p]
-    (Vector2D/of (/ (.getAzimuth p) TWO_PI) (- 1.0 (/ (.getPolar p) Math/PI))))
-
-  (defn ^Vector3D$Unit s2-to-r3 [^Point2S p]
-    (.getVector p))
-
-  (defn ^Point2S r3-to-s2 [^Vector3D v]
-    (Point2S/from v))
-  )
 
 (defmacro round-trips [v]
   (println "v:" v)
   `(do
      (debug/echo ~v)
-     (debug/echo (txt-to-s2 ~v))
-     (debug/echo (s2-to-txt (txt-to-s2 ~v)))
-     (debug/echo (s2-to-r3 (txt-to-s2 ~v)))
-     (debug/echo (r3-to-s2 (s2-to-r3 (txt-to-s2 ~v))))
+     (debug/echo (s2/txt-to-s2 ~v))
+     (debug/echo (s2/s2-to-txt (s2/txt-to-s2 ~v)))
+     (debug/echo (s2/s2-to-r3 (s2/txt-to-s2 ~v)))
+     (debug/echo (s2/r3-to-s2 (s2/s2-to-r3 (s2/txt-to-s2 ~v))))
      (println)
      )
   )
@@ -46,12 +29,12 @@
 (defmacro midpoints [t0 t1]
   (let [s0 (gensym t0)
         s1 (gensym t1)]
-    `(let [~s0 (txt-to-s2 ~t0)
-           ~s1 (txt-to-s2 ~t1)]
+    `(let [~s0 (s2/txt-to-s2 ~t0)
+           ~s1 (s2/txt-to-s2 ~t1)]
        (debug/echo ~t0 ~t1)
        (debug/echo (mesh/midpoint ~t0 ~t1))
        (debug/echo ~s0 ~s1)
-       (debug/echo (txt-to-s2 (mesh/midpoint ~t0 ~t1)))
+       (debug/echo (s2/txt-to-s2 (mesh/midpoint ~t0 ~t1)))
        (debug/echo (mesh/midpoint ~s0 ~s1))
        (println))))
 

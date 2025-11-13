@@ -19,6 +19,9 @@
           "Return a string for debug logging, with just enough info."
           class)
 
+(defmethod simple-string nil [_]
+  "nil")
+
 (defmethod simple-string Object [^Object this]
   (.toString this))
 
