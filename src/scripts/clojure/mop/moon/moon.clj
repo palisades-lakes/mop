@@ -8,10 +8,9 @@
   Start with spherical quad mesh, subdivide, and transform to R^3.
   Started with https://clojurecivitas.github.io/opengl_visualization/main.html"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-11-07"}
+   :version "2025-11-12"}
 
   (:require
-   [mop.cmplx.complex :as cmplx]
    [mop.geom.mesh :as mesh]
    [mop.geom.s2 :as s2]
    [mop.image.util :as image]
@@ -64,15 +63,15 @@
 ;; and to reuse common functions
 
 (glfw/arcball-loop
- {:title "moon"
+ {:title           "moon"
   :vertex-shader   "src/scripts/clojure/mop/moon/moon-vertex.glsl"
   :fragment-shader "src/scripts/clojure/mop/moon/moon-fragment.glsl"
-  :s2-mesh s2-mesh
-  :xyz-embedding  (s2/r3-embedding Vector3D/ZERO radius)
+  :s2-mesh         s2-mesh
+  :xyz-embedding   (s2/r3-embedding Vector3D/ZERO radius)
   ;; unit vectors pointing out
   :dual-embedding  (s2/r3-embedding Vector3D/ZERO 1.0)
-  :rgba-embedding  s2/rgba
-  :txt-embedding (s2/equirectangular-embedding 1.0 1.0)
+  :rgba-embedding  s2/s2-to-rgba
+  :txt-embedding   (s2/equirectangular-embedding 1.0 1.0)
   :radius          radius
   :color-image     color-image
   :elevation-image elevation-image

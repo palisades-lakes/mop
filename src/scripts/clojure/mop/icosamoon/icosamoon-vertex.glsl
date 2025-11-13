@@ -60,7 +60,7 @@ void main () {
   float proj_z = p.z / (2.0 * distance);
 
   // Output to shader pipeline.
-  gl_Position = vec4(proj_x, proj_y, proj_z, 1);
+  gl_Position = vec4(proj_x, proj_y, -proj_z, 1);
   xyzOut = xyzIn;
   rgbaOut = rgbaIn;
   dualOut = dualIn;

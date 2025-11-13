@@ -4,20 +4,20 @@
 (ns mop.geom.mesh
   {:doc     "Embedded cell complexes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-09"}
+   :version "2025-11-12"}
   (:require [mop.cmplx.complex :as cmplx]
             [mop.commons.debug :as debug]
             [mop.geom.rn :as rn]
             [mop.geom.s2 :as s2])
   (:import [clojure.lang IFn]
-           [java.awt.geom Point2D]
            [java.util List]
            [mop.cmplx.complex Cell CellComplex OneSimplex Quad QuadComplex SimplicialComplex2D
                               TwoSimplex ZeroSimplex]
+           [mop.java.geom Point2U]
            [org.apache.commons.geometry.euclidean.threed Vector3D Vector3D$Sum]
            [org.apache.commons.geometry.euclidean.threed.rotation QuaternionRotation]
-           [org.apache.commons.geometry.euclidean.twod Vector2D]
-           [org.apache.commons.geometry.spherical.twod GreatArcPath GreatCircles Point2S]
+           [org.apache.commons.geometry.euclidean.twod Vector2D Vector2D$Sum]
+           [org.apache.commons.geometry.spherical.twod GreatCircles Point2S]
            [org.apache.commons.numbers.core Precision]))
 
 ;;---------------------------------------------------------------
@@ -50,117 +50,6 @@
                  (println %))
         (.vertices cmplx)))
   (TriangleMesh. cmplx embedding))
-
-;;---------------------------------------------------------------
-;; Create abstract complex and r3 embedding together
-;; to avoid orientation problems, etc.
-
-(let [r (/ (+ 1.0 (Math/sqrt 5.0)) 2.0)
-      -r (- r)]
-  (defn ^TriangleMesh regular-icosahedron []
-    (let [a (cmplx/simplex) b (cmplx/simplex) c (cmplx/simplex) d (cmplx/simplex)
-          e (cmplx/simplex) f (cmplx/simplex) g (cmplx/simplex) h (cmplx/simplex)
-          i (cmplx/simplex) j (cmplx/simplex) k (cmplx/simplex) l (cmplx/simplex)
-          cmplx (cmplx/simplicial-complex-2d
-                 (map #(apply cmplx/simplex %)
-                      [;; texture interpolation issues
-                       [a d b] [b d g] [b g h] [g l h]
-                       [a e d]   [h l i] [k i l]
-                       ;; interpolation ok
-                       [a b c] [a c f] [a f e] [b h c] [c i f] [c h i]
-                       [d e j] [d j g] [e f k] [e k j] [f i k] [g j l] [k l j]]))
-          ;; put a at top
-          qr (QuaternionRotation/createVectorRotation (rn/vector -1  r  0) (rn/vector 0 0 1))
-          embedding {a (rn/vector -1  r  0) b (rn/vector  1  r  0)
-                     c (rn/vector  0  1 -r) d (rn/vector  0  1  r)
-                     e (rn/vector -r  0  1) f (rn/vector -r  0 -1)
-                     g (rn/vector  r  0  1) h (rn/vector  r  0 -1)
-                     i (rn/vector  0 -1 -r) j (rn/vector  0 -1  r)
-                     k (rn/vector -1 -r  0) l (rn/vector  1 -r  0)}]
-      (rn/transform qr (TriangleMesh. cmplx embedding)))))
-
-(defn ^TriangleMesh spherical-icosahedron []
-  (let [regular (regular-icosahedron)
-        s2 (update-vals (.embedding regular) #(s2/point %))]
-    (TriangleMesh. (.cmplx regular) s2)))
-
-;; Cut icosahedron to simplify texture mapping and other
-;; 2d projections. Return R3 embedding.
-;; TODO: automate the cut. Key question: what to do when it's not spherical?
-;; TODO: check if this is a regular icosahedron
-
-(let [TWO_PI (* 2.0 Math/PI)
-      delta (/ TWO_PI 5.0)
-      rho (/ Math/PI 3.0)]
-  (defn ^TriangleMesh cut-icosahedron-s2 []
-    (let [a (cmplx/simplex) b (cmplx/simplex) c (cmplx/simplex) d (cmplx/simplex) e (cmplx/simplex)
-          f (cmplx/simplex) g (cmplx/simplex) h (cmplx/simplex) i (cmplx/simplex) j (cmplx/simplex)
-          k (cmplx/simplex) l (cmplx/simplex) m (cmplx/simplex) n (cmplx/simplex) o (cmplx/simplex)
-          p (cmplx/simplex) q (cmplx/simplex) r (cmplx/simplex) s (cmplx/simplex) t (cmplx/simplex)
-          u (cmplx/simplex) v (cmplx/simplex)
-          cmplx (cmplx/simplicial-complex-2d
-                 (map #(apply cmplx/simplex %)
-                      [[a f g] [b g h] [c h i] [d i j] [e j k]
-                       [f l g] [g m h] [h n i] [i o j] [j p k]
-                       [g l m] [h m n] [i n o] [j o p] [k p q]
-                       [l r m] [m s n] [n t o] [o u p] [p v q]]))
-          s2-embedding {a (Point2S/of (* 0.0 delta) 0)
-                        b (Point2S/of (* 1.0 delta) 0)
-                        c (Point2S/of (* 2.0 delta) 0)
-                        d (Point2S/of (* 3.0 delta) 0)
-                        e (Point2S/of (* 4.0 delta) 0)
-
-                        f (Point2S/of (* -0.5 delta) rho)
-                        g (Point2S/of (* 0.5 delta) rho)
-                        h (Point2S/of (* 1.5 delta) rho)
-                        i (Point2S/of (* 2.5 delta) rho)
-                        j (Point2S/of (* 3.5 delta) rho)
-                        k (Point2S/of (* 4.5 delta) rho)
-
-                        l (Point2S/of (* 0.0 delta) (* 2.0 rho))
-                        m (Point2S/of (* 1.0 delta) (* 2.0 rho))
-                        n (Point2S/of (* 2.0 delta) (* 2.0 rho))
-                        o (Point2S/of (* 3.0 delta) (* 2.0 rho))
-                        p (Point2S/of (* 4.0 delta) (* 2.0 rho))
-                        q (Point2S/of (* 5.0 delta) (* 2.0 rho))
-
-                        r (Point2S/of (* 0.5 delta) Math/PI)
-                        s (Point2S/of (* 1.5 delta) Math/PI)
-                        t (Point2S/of (* 2.5 delta) Math/PI)
-                        u (Point2S/of (* 3.5 delta) Math/PI)
-                        v (Point2S/of (* 4.5 delta) Math/PI)}
-          r3-embedding (update-vals s2-embedding #(.getVector ^Point2S %))
-          txt-embedding (let [dx (/ 1.0 9.0)
-                              dy (/ 1.0 3.0)]
-                          {a (Vector2D/of (* 0 dx) 1)
-                           b (Vector2D/of (* 2 dx) 1)
-                           c (Vector2D/of (* 4 dx) 1)
-                           d (Vector2D/of (* 6 dx) 1)
-                           e (Vector2D/of (* 8 dx) 1)
-
-                           f (Vector2D/of (* -1 dx) (* 2 dy))
-                           g (Vector2D/of (* 1 dx) (* 2 dy))
-                           h (Vector2D/of (* 3 dx) (* 2 dy))
-                           i (Vector2D/of (* 5 dx) (* 2 dy))
-                           j (Vector2D/of (* 7 dx) (* 2 dy))
-                           k (Vector2D/of (* 9 dx) (* 2 dy))
-
-                           l (Vector2D/of (* 0 dx) dy)
-                           m (Vector2D/of (* 2 dx) dy)
-                           n (Vector2D/of (* 4 dx) dy)
-                           o (Vector2D/of (* 6 dx) dy)
-                           p (Vector2D/of (* 8 dx) dy)
-                           q (Vector2D/of (* 10 dx) dy)
-
-                           r (Vector2D/of (* 1 dx) 0)
-                           s (Vector2D/of (* 3 dx) 0)
-                           t (Vector2D/of (* 5 dx) 0)
-                           u (Vector2D/of (* 7 dx) 0)
-                           v (Vector2D/of (* 9 dx) 0)})
-          ]
-      {:s2-mesh (triangle-mesh cmplx s2-embedding)
-       :xyz-mesh (triangle-mesh cmplx r3-embedding)
-       :txt-mesh (triangle-mesh cmplx txt-embedding)})))
 
 ;;---------------------------------------------------------------
 ;; TODO: move these to Java to get better control over construction?
@@ -282,7 +171,7 @@
 ;; TODO: defmulti?
 
 (defn- points [embedding x]
-  "Use the <code<embedding</code> to convert an abstract simplcial
+  "Use the <code<embedding</code> to convert an abstract simplicial
   object <code>x</code> to a list of points in some space,
   most likely R^3 or S^2."
   ;; just cover known cases for now
@@ -314,15 +203,41 @@
     (instance? QuadComplex x)
     (points embedding (.vertices ^QuadComplex x))))
 
-(defn- ^Vector3D euclidean-midpoint [points]
-  (let [sum (Vector3D$Sum/create)]
-    (dorun (map #(.add sum %) points))
-    (.multiply (.get sum) (/ 1.0 (count points)))))
+;;---------------------------------------------------------------
+
+(defn- ^Point2U u2-midpoint
+  ([^Point2U uv0 ^Point2U uv1]
+   ;; midpoint of geodesic arc from uv0 to uv1
+   ;; rotate about polar axis to avoid singularity
+   (let [u0 (.getU uv0)
+         u1 (.getU uv1)
+         u (Math/min u0 u1)
+         p0 (Point2S/of (- u0 u) (.getV uv0))
+         p1 (Point2S/of (- u1 u) (.getV uv1))
+         mid (.getMidPoint
+    (GreatCircles/arcFromPoints
+     p0 p1 (Precision/doubleEquivalenceOfEpsilon 1e-12)))]
+     (Point2U/of (+ u (.getAzimuth mid)) (.getPolar mid))))
+
+  ([^Point2U p0 ^Point2U p1 ^Point2U p2 ^Point2U p3]
+   "As far as I know, this isn't exactly any common centroid definition."
+   (let [m01 (u2-midpoint p0 p1)
+         m23 (u2-midpoint p2 p3)
+         m12 (u2-midpoint p1 p2)
+         m30 (u2-midpoint p3 p0)
+         ^Point2U m0123 (u2-midpoint m01 m23)
+         ^Point2U m1230 (u2-midpoint m12 m30)]
+     ;; should these be equal, ie, a singular arc?
+     (if (<= (.distance m0123 m1230) 1.0e-6)
+       m0123
+       (u2-midpoint m0123 m1230))))
+  )
+
+;;---------------------------------------------------------------
 
 (defn- ^Point2S spherical-midpoint
   ([^Point2S p0 ^Point2S p1]
    ;; midpoint of geodesic arc from p0 to p1
-   ;; can't just create an arc?
    (assert (> (.distance p0 p1) 1.0e-7)
            (str "distance=" (.distance p0 p1)))
    (.getMidPoint
@@ -330,6 +245,7 @@
      p0 p1 (Precision/doubleEquivalenceOfEpsilon 1e-12))))
 
   ([^Point2S p0 ^Point2S p1 ^Point2S p2 ^Point2S p3]
+   "As far as I know, this isn't exactly any common centroid definition."
    (let [m01 (spherical-midpoint p0 p1)
          m23 (spherical-midpoint p2 p3)
          m12 (spherical-midpoint p1 p2)
@@ -340,28 +256,48 @@
      (if (<= (.distance m0123 m1230) 1.0e-6)
        m0123
        (spherical-midpoint m0123 m1230))))
+  )
 
-  ([points]
-   (case (count points)
-     1 (first points)
-     2 (apply spherical-midpoint points)
-     4 (apply spherical-midpoint points)
-     ;; else
-     (throw
-      (UnsupportedOperationException.
-       (str "Can't compute spherical-midpoint of "
-            (count points) " points."))))))
+;;---------------------------------------------------------------
 
-(defn- midpoint [points]
-  "Return a 'center' of some kind for the collection of points.
-  Mean for euclidean space, not so obvious for spherical space."
-  ;; Assume all points are same class. Should fail otherwise.
-  (let [p0 (first points)]
-    (cond (instance? Vector3D p0) (euclidean-midpoint points)
-          (instance? Point2S p0) (spherical-midpoint points)
-          :else (throw (UnsupportedOperationException.
-                        (str "No midpoint method for "
-                             (.getSimpleName (class p0))))))))
+(defmulti midpoint
+          "Return a 'center' of some kind for the collection of points.
+          Mean for euclidean space, not so obvious for spherical space.
+          Assume all points are the same type, throw an exceptions otherwise."
+          (fn [p0 & _points] (class p0)))
+
+(defmethod midpoint Point2U [^Point2U p0 & points]
+  (case (count points)
+    0 p0
+    1 (u2-midpoint p0 (first points))
+    3 (let [[^Point2S p1 ^Point2S p2 ^Point2S p3] points]
+        (u2-midpoint p0 p1 p2 p3))
+    ;; else
+    (throw
+     (UnsupportedOperationException.
+      (str "Can't compute u2-midpoint of " (count points) " points.")))))
+
+(defmethod midpoint Point2S [^Point2S p0 & points]
+  (case (count points)
+    0 p0
+    1 (spherical-midpoint p0 (first points))
+    3 (let [[^Point2S p1 ^Point2S p2 ^Point2S p3] points]
+        (spherical-midpoint p0 p1 p2 p3))
+    ;; else
+    (throw
+     (UnsupportedOperationException.
+      (str "Can't compute spherical-midpoint of "
+           (count points) " points.")))))
+
+(defmethod midpoint Vector2D [^Vector2D p0 & points]
+  (let [sum (Vector2D$Sum/of p0)]
+    (dorun (map #(.add sum %) points))
+    (.multiply (.get sum) (/ 1.0 (inc (count points))))))
+
+(defmethod midpoint Vector3D [^Vector3D p0 & points]
+  (let [sum (Vector3D$Sum/of p0)]
+    (dorun (map #(.add sum %) points))
+    (.multiply (.get sum) (/ 1.0 (inc (count points))))))
 
 ;;---------------------------------------------------------------
 ;; TODO: Incorporate alternate subdivision rules,
@@ -381,7 +317,7 @@
      (into
       {}
       (map
-       (fn [v] [v (midpoint (points embedding (parent v)))])
+       (fn [v] [v (apply midpoint (points embedding (parent v)))])
        (.vertices child))))))
 
 (defmethod cmplx/subdivide-4 QuadMesh [^QuadMesh qm]
@@ -393,59 +329,40 @@
      (into
       {}
       (map
-       (fn [v] [v (midpoint (points embedding (parent v)))])
+       (fn [v] [v (apply midpoint (points embedding (parent v)))])
        (.vertices child))))))
 
 ;;---------------------------------------------------------------
 
-(defn- ^Double signed-area [^TwoSimplex face ^IFn txt]
-  (let [^Vector2D p0 (txt (.z0 face))
-        ^Vector2D p1 (txt (.z1 face))
-        ^Vector2D p2 (txt (.z2 face))
-        v0 (.subtract p1 p0)
-        v1 (.subtract p1 p2)
-        ]
-    (.signedArea v0 v1)))
+#_(defn- ^Double signed-area [^TwoSimplex face ^IFn txt]
+    (let [^Vector2D p0 (txt (.z0 face))
+          ^Vector2D p1 (txt (.z1 face))
+          ^Vector2D p2 (txt (.z2 face))
+          v0 (.subtract p1 p0)
+          v1 (.subtract p1 p2)
+          ]
+      (.signedArea v0 v1)))
 
 ;;---------------------------------------------------------------
 
-(defn coordinates-and-elements  [{:keys [^Mesh s2-mesh
-                                         ^Mesh txt-mesh
+(defn coordinates-and-elements  [{:keys [^CellComplex cmplx
+                                         _s2-embedding
                                          xyz-embedding
                                          rgba-embedding
                                          dual-embedding
                                          txt-embedding]}]
   "Return a float array and an int array suitable for passing to GLSL.
   Don't rely on any ordering of cells and vertices."
-  (assert (identical? (.cmplx s2-mesh) (.cmplx txt-mesh)))
-  (let [xyz (.embedding ^Mesh (rn/transform xyz-embedding s2-mesh))
-        rgba (.embedding ^Mesh (rn/transform rgba-embedding s2-mesh))
-        dual (.embedding ^Mesh (rn/transform dual-embedding s2-mesh))
-        txt (.embedding txt-mesh)
-        ^CellComplex cmplx (.cmplx s2-mesh)
-        faces (.faces cmplx)
+  (let [faces (.faces cmplx)
         zeros (sort (.vertices cmplx))
         zindex (into {} (map (fn [z i] [z i])
                              zeros (range (count zeros))))
         indices (flatten (map (fn [^Cell face]
                                 (mapv #(zindex %) (.vertices face)))
                               faces))
-        coordinates (flatten (map #(concat (rn/coordinates (xyz %))
-                                           (rn/coordinates (rgba %))
-                                           (rn/coordinates (dual %))
-                                           (rn/coordinates (txt %)))
+        coordinates (flatten (map #(concat (rn/coordinates (xyz-embedding %))
+                                           (rn/coordinates (rgba-embedding %))
+                                           (rn/coordinates (dual-embedding %))
+                                           (rn/coordinates (txt-embedding %)))
                                   zeros))]
-    (doall
-     (let [s2 (.embedding s2-mesh)]
-       (map (fn [^TwoSimplex face]
-              (println (.toString face))
-              (println "signed area: " (signed-area face txt))
-              (doall (map (fn [^ZeroSimplex v]
-                            ;(println (.toString v))
-                            ;(println (rn/coordinates (xyz v)))
-                            (println (s2 v))
-                            (println (rn/coordinates (txt v))))
-                          (.vertices face)))
-              (newline))
-            faces)))
     [coordinates indices]))

@@ -47,11 +47,15 @@
   "Print the expressions followed by their values.
    Useful for quick logging."
   [& exps]
-  (let [ppe (map print-str exps)]
-    `(let [strings# (mapv (fn [e# v#]
-                           (str e# \newline (simple-string v#) \newline ))
-                         [~@ppe]
-                         [~@exps])]
-       (doall (map println strings#)))))
+  (let [ppe (map print-str exps)
+        s (gensym "s")
+        e (gensym "e")
+        v (gensym "v")]
+    `(let [~s (mapv (fn [~e ~v]
+                      (str ~e \newline
+                           (simple-string ~v)))
+                    [~@ppe]
+                    [~@exps])]
+       (doall (map println ~s)))))
 
 ;;----------------------------------------------------------------

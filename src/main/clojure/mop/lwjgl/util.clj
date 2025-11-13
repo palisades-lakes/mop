@@ -5,7 +5,7 @@
 
   {:doc     "LWJGL utilities"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-09"}
+   :version "2025-11-12"}
 
   (:require [clojure.math :as math]
             [clojure.pprint :as pp]
@@ -15,9 +15,8 @@
 
   (:import [java.awt.image WritableRaster]
            [java.nio ByteBuffer FloatBuffer IntBuffer]
-           [mop.cmplx.complex CellComplex]
-           [mop.geom.mesh Mesh TriangleMesh]
-           [org.apache.commons.geometry.euclidean.threed Vector3D Vector3D$Unit]
+           [mop.cmplx.complex CellComplex SimplicialComplex2D]
+           [org.apache.commons.geometry.euclidean.threed Vector3D]
            [org.apache.commons.geometry.euclidean.threed.rotation QuaternionRotation]
            [org.apache.commons.geometry.euclidean.twod Vector2D]
            [org.lwjgl BufferUtils]
@@ -267,14 +266,17 @@
 
 ;;------------------------------------------------------------------
 
-(defn- setup-vertices [{:keys [^Integer program
-                               ^Mesh s2-mesh
-                               ^Mesh txt-mesh
-                               xyz-embedding
-                               rgba-embedding
-                               dual-embedding
-                               txt-embedding]
-                        :as input}]
+(defn- setup-vertices [input
+                       ;{:keys [^Integer program
+                       ;        ^SimplicialComplex2D cmplx
+                       ;        s2-embedding
+                       ;        xyz-embedding
+                       ;        rgba-embedding
+                       ;        dual-embedding
+                       ;        txt-embedding
+                       ;        ]
+                       ; :as input}
+                       ]
 
   (let [[coordinates elements] (mesh/coordinates-and-elements input)
         coordinate-buffer (GL46/glGenBuffers)
@@ -343,25 +345,27 @@
 
 ;;------------------------------------------------------------------
 ;; TODO: not just QuadMesh
-(defn setup [{:keys [^Mesh s2-mesh
-                     xyz-embedding
-                     rgba-embedding
-                     dual-embedding
-                     txt-embedding
-                     ^WritableRaster color-image
-                     ^WritableRaster elevation-image
-                     ^Double fov
-                     ^Double radius
-                     ^Double ambient
-                     ^Double diffuse
-                     ^Vector3D$Unit light
+(defn setup [{:keys [^SimplicialComplex2D cmplx
+                     ;xyz-embedding
+                     ;rgba-embedding
+                     ;dual-embedding
+                     ;txt-embedding
+                     ;s2-embedding
+                     ;^WritableRaster color-image
+                     ;^WritableRaster elevation-image
+                     ;^Double fov
+                     ;^Double radius
+                     ;^Double ambient
+                     ;^Double diffuse
+                     ;^Vector3D$Unit light
                      ^String vertex-shader
                      ^String fragment-shader]
-              :as input}]
+              :as input}
+             ]
 
   ;;TODO: one map with accumulated parameters passed to all inner setup fns?
-  (println "faces:" (count (.faces ^CellComplex (.cmplx s2-mesh))))
-  (println "vertices:" (count (.vertices ^CellComplex (.cmplx s2-mesh))))
+  (println "faces:" (count (.faces ^CellComplex cmplx)))
+  (println "vertices:" (count (.vertices ^CellComplex cmplx)))
 
   (let [settings (merge {:program (use-program
                                    {GL46/GL_VERTEX_SHADER vertex-shader
@@ -378,24 +382,16 @@
 
     (GL46/glClearColor 0.0 0.0 0.0 1.0)
 
-    (GL46/glEnable GL46/GL_CULL_FACE)
-    (check-error)
-    (GL46/glCullFace GL46/GL_BACK)
-    (check-error)
-
     ;; TODO: depth buffer rather than backface culling
     ;; Do I need to set fragment depth in shader?
-    ;(GL46/glDisable GL46/GL_CULL_FACE)
-    ;(check-error)
-    ;(GL46/glDepthMask true)
-    ;(check-error)
-    ;(GL46/glEnable GL46/GL_DEPTH_TEST)
-    ;(check-error)
-    ;(GL46/glDepthFunc GL46/GL_LESS)
-    ;(check-error)
+    (GL46/glEnable GL46/GL_DEPTH_TEST)
+    (GL46/glDepthMask true)
+    (check-error)
+    (GL46/glDepthFunc GL46/GL_LESS)
+    (check-error)
 
     (assoc (merge textures vertices)
-      :elements (if (instance? TriangleMesh s2-mesh)
+      :elements (if (instance? SimplicialComplex2D cmplx)
                   GL46/GL_TRIANGLES
                   GL46/GL_QUADS))))
 
