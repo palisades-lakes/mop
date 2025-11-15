@@ -120,6 +120,7 @@
 
 (definterface CellComplex
   (^java.util.List vertices [])
+  ;; oriented faces
   (^java.util.List faces []))
 
 ;;---------------------------------------------------------------
@@ -149,6 +150,17 @@
   (vertices [this] (._vertices this))
   (faces [this] (._faces this))
   )
+
+;;---------------------------------------------------------------
+
+(defmulti vertex-pairs "Unoriented vertex pairs" class)
+
+(defmethod vertex-pairs TwoSimplex [^TwoSimplex ts]
+  (let [a (.z0 ts) b (.z1 ts) c (.z2 ts)]
+    #{(sort [a b]) (sort [b c]) (sort [c a])}))
+
+(defmethod vertex-pairs SimplicialComplex2D [^SimplicialComplex2D sc]
+  (reduce set/union (map vertex-pairs (.faces sc))))
 
 ;;---------------------------------------------------------------
 

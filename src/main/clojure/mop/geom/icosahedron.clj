@@ -45,7 +45,7 @@
       (TriangleMesh. cmplx embedding))))
 
 (defn ^TriangleMesh s2-icosahedron []
-  (let [da (double (* Math/PI 0.2))
+  (let [da (double (* 0.2 Math/PI))
         p1 (double (/ Math/PI 3.0))
         p2 (double (* 2 p1))
         a (cmplx/simplex "a") b (cmplx/simplex "b") c (cmplx/simplex "c") d (cmplx/simplex "d")
@@ -53,25 +53,28 @@
         i (cmplx/simplex "i") j (cmplx/simplex "j") k (cmplx/simplex "k") l (cmplx/simplex "l")
         cmplx (cmplx/simplicial-complex-2d
                (map #(apply cmplx/simplex %)
-                    [[a b c] [a c d] [a d e] [a e f] [a f b]
+                    [[a b c]
+                     [a c d] [a d e] [a e f] [a f b]
                      [b g c] [c h d] [d i e] [e j f] [f k b]
                      [c g h] [d h i] [e i j] [f j k] [b k g]
-                     [l h g] [l i h] [l j i] [l k j] [l g k]]))
-        embedding {a Point2S/PLUS_K
+                     [l h g] [l i h] [l j i] [l k j] [l g k]
+                    ]
+                    ))
+        embedding {a (s2/point 0.0 0.0)
 
-                   b (s2/point (* -1 da) p1)
-                   c (s2/point (*  1 da) p1)
-                   d (s2/point (*  3 da) p1)
-                   e (s2/point (*  5 da) p1)
-                   f (s2/point (*  7 da) p1)
+                   b (s2/point (* -0.5 da) p1)
+                   c (s2/point (*  1.5 da) p1)
+                   d (s2/point (*  3.5 da) p1)
+                   e (s2/point (*  5.5 da) p1)
+                   f (s2/point (*  7.5 da) p1)
 
-                   g (s2/point (*  0 da) p2)
-                   h (s2/point (*  2 da) p2)
-                   i (s2/point (*  4 da) p2)
-                   j (s2/point (*  6 da) p2)
-                   k (s2/point (*  8 da) p2)
+                   g (s2/point (*  0.5 da) p2)
+                   h (s2/point (*  2.5 da) p2)
+                   i (s2/point (*  4.5 da) p2)
+                   j (s2/point (*  6.5 da) p2)
+                   k (s2/point (*  8.5 da) p2)
 
-                   l Point2S/MINUS_K}]
+                   l (s2/point 0.0 Math/PI)}]
     #_(rn/transform qr (TriangleMesh. cmplx embedding))
     (TriangleMesh. cmplx embedding)))
 

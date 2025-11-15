@@ -12,6 +12,7 @@
 
   (:require
    [mop.cmplx.complex :as cmplx]
+   [mop.commons.debug :as debug]
    [mop.geom.icosahedron :as icosahedron]
    [mop.geom.rn :as rn]
    [mop.geom.s2 :as s2]
@@ -20,6 +21,7 @@
 
   (:import
    [java.awt.image WritableRaster]
+   [mop.cmplx.complex OneSimplex]
    [mop.geom.mesh Mesh]
    [org.apache.commons.geometry.spherical.twod Point2S]))
 
@@ -50,13 +52,13 @@
 
 (def ^Mesh icosahedron
   ((comp
-    cmplx/subdivide-4
-    cmplx/subdivide-4
-    cmplx/subdivide-4
-    cmplx/subdivide-4
-    cmplx/subdivide-4
+    ;cmplx/subdivide-4
+    ;cmplx/subdivide-4
+    ;cmplx/subdivide-4
+    ;cmplx/subdivide-4
+    ;cmplx/subdivide-4
     )
-     (icosahedron/s2-icosahedron)))
+   (icosahedron/s2-icosahedron)))
 
 ;;----------------------------------------------------
 ;; TODO: smarter shader construction in order to not depend on
@@ -68,17 +70,30 @@
       xyz (update-vals s2 (fn [^Point2S p] (rn/multiply (s2/s2-to-r3 p) radius)))
       rgba (update-vals s2 s2/s2-to-rgba)
       ;; unit vectors pointing out
-      dual (update-vals s2 s2/s2-to-r3)]
+      dual (update-vals s2 s2/s2-to-r3)
+      pairs (sort-by first (sort-by second (cmplx/vertex-pairs (.cmplx icosahedron))))
+      edges (map #(apply cmplx/simplex %) pairs)
+      ]
+  (doseq [^OneSimplex e edges]
+    (let [a (s2 (.z0 e))
+          b (s2 (.z1 e))
+          i (s2/dateline-crossing a b)]
+      (println (.toString e))
+      (when i
+        (println (debug/simple-string a) "->" (debug/simple-string b))
+        (println (debug/simple-string i)))))
+
   (glfw/arcball-loop
-   {:title           "icosamoon"
-    :cmplx         (.cmplx icosahedron)
-    :vertex-shader   "src/scripts/clojure/mop/icosamoon/icosamoon-vertex.glsl"
-    :fragment-shader "src/scripts/clojure/mop/icosamoon/icosamoon-fragment.glsl"
-    :txt-embedding  txt
-    :s2-embedding   s2
-    :xyz-embedding  xyz
-    :dual-embedding  dual
-    :rgba-embedding  rgba
-    :radius          radius
-    :color-image     color-image
-    :elevation-image elevation-image}))
+     {:title           "icosamoon"
+      :cmplx         (.cmplx icosahedron)
+      :vertex-shader   "src/scripts/clojure/mop/icosamoon/icosamoon-vertex.glsl"
+      :fragment-shader "src/scripts/clojure/mop/icosamoon/icosamoon-fragment.glsl"
+      :txt-embedding  txt
+      :s2-embedding   s2
+      :xyz-embedding  xyz
+      :dual-embedding  dual
+      :rgba-embedding  rgba
+      :radius          radius
+      :color-image     color-image
+      :elevation-image elevation-image})
+  )
