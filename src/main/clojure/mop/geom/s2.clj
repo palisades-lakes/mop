@@ -81,7 +81,7 @@
           ;  (debug/echo (.dot candidate from-normal))
           ;  (debug/echo (.dot candidate to-normal))
           ;  (println)
-            nil)
+          nil)
         )))
 
   (defn ^Point2S dateline-crossing [^Point2S from ^Point2S to]
@@ -92,29 +92,32 @@
           to-azimuth (.getAzimuth to)
           from-polar (.getPolar from)
           to-polar (.getPolar to)]
-      (if (or ;; exclude polar edges
-           (.eq precision from-polar 0.0)
-           (.eq precision to-polar 0.0)
-           ;; longitudinal arc, can't cross dateline
-           (.eq precision from-azimuth to-azimuth)
-           (.eq from to precision) ;; zero length arc
-           ;; endpoint on dateline, only want interior crossings (?)
-           (.eq precision from-azimuth 0.0)
-           (.eq precision to-azimuth 0.0)
-           (.eq precision from-azimuth TWO_PI)
-           (.eq precision to-azimuth TWO_PI))
-        (do
-          ;(println (debug/simple-string from) "->" (debug/simple-string to))
-          ;(println "endpoint on dateline")
-          nil)
-        (let [from-r3 (s2-to-r3 from)
-              to-r3 (s2-to-r3 to)
-              normal (.cross from-r3 to-r3)
-              from-normal (.cross normal from-r3)
-              to-normal  (.cross normal to-r3)
-              candidate (.normalize (.cross normal (s2-to-r3 Point2S/PLUS_J)))]
-          (or (check-candidate candidate from-normal to-normal)
-              (check-candidate (.multiply candidate -1) from-normal to-normal)))))))
+      (cond (or
+             ;; exclude polar edges
+             (.eq precision from-polar 0.0)
+             (.eq precision to-polar 0.0)
+             (.eq precision from-polar Math/PI)
+             (.eq precision to-polar Math/PI)
+             ;; longitudinal arc, can't cross dateline
+             (.eq precision from-azimuth to-azimuth)
+             ;; zero length arc
+             (.eq from to precision)
+             )
+            nil
+            ;; endpoint on dateline
+            (or (.eq precision from-azimuth 0.0) (.eq precision from-azimuth TWO_PI))
+            from
+            (or (.eq precision to-azimuth 0.0)  (.eq precision to-azimuth TWO_PI))
+            to
+            :else
+            (let [from-r3 (s2-to-r3 from)
+                  to-r3 (s2-to-r3 to)
+                  normal (.cross from-r3 to-r3)
+                  from-normal (.cross normal from-r3)
+                  to-normal  (.cross normal to-r3)
+                  candidate (.normalize (.cross normal (s2-to-r3 Point2S/PLUS_J)))]
+              (or (check-candidate candidate from-normal to-normal)
+                  (check-candidate (.multiply candidate -1) from-normal to-normal)))))))
 
 ;;----------------------------------------------------------------
 

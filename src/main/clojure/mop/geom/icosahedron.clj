@@ -62,17 +62,17 @@
                     ))
         embedding {a (s2/point 0.0 0.0)
 
-                   b (s2/point (* -0.5 da) p1)
-                   c (s2/point (*  1.5 da) p1)
-                   d (s2/point (*  3.5 da) p1)
-                   e (s2/point (*  5.5 da) p1)
-                   f (s2/point (*  7.5 da) p1)
+                   b (s2/point (* -1 da) p1)
+                   c (s2/point (*  1 da) p1)
+                   d (s2/point (*  3 da) p1)
+                   e (s2/point (*  5 da) p1)
+                   f (s2/point (*  7 da) p1)
 
-                   g (s2/point (*  0.5 da) p2)
-                   h (s2/point (*  2.5 da) p2)
-                   i (s2/point (*  4.5 da) p2)
-                   j (s2/point (*  6.5 da) p2)
-                   k (s2/point (*  8.5 da) p2)
+                   g (s2/point (*  0 da) p2)
+                   h (s2/point (*  2 da) p2)
+                   i (s2/point (*  4 da) p2)
+                   j (s2/point (*  6 da) p2)
+                   k (s2/point (*  8 da) p2)
 
                    l (s2/point 0.0 Math/PI)}]
     #_(rn/transform qr (TriangleMesh. cmplx embedding))

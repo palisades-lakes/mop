@@ -56,7 +56,7 @@
     ;cmplx/subdivide-4
     ;cmplx/subdivide-4
     ;cmplx/subdivide-4
-    ;cmplx/subdivide-4
+    cmplx/subdivide-4
     )
    (icosahedron/s2-icosahedron)))
 
