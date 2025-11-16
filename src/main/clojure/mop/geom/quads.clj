@@ -101,10 +101,10 @@
 
 (defmethod cmplx/vertex-pairs Quad [^Quad q]
   (let [a (.z0 q) b (.z1 q) c (.z2 q) d (.z3 q)]
-    #{(sort [a b]) (sort [b c]) (sort [c d]) (sort [d a])}))
-
-(defmethod cmplx/vertex-pairs QuadComplex [^QuadComplex sc]
-  (reduce set/union (map cmplx/vertex-pairs (.faces sc))))
+    #{(cmplx/vertex-pair a b)
+      (cmplx/vertex-pair b c)
+      (cmplx/vertex-pair c d)
+      (cmplx/vertex-pair d a)}))
 
 ;;---------------------------------------------------------------
 

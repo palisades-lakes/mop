@@ -4,7 +4,7 @@
 (ns mop.cmplx.complex
   {:doc     "(Abstract) simplicial and cell complexes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-13"}
+   :version "2025-11-15"}
   (:require [clojure.set :as set]
             [mop.commons.debug :as debug])
   (:import [java.util List]))
@@ -153,17 +153,6 @@
 
 ;;---------------------------------------------------------------
 
-(defmulti vertex-pairs "Unoriented vertex pairs" class)
-
-(defmethod vertex-pairs TwoSimplex [^TwoSimplex ts]
-  (let [a (.z0 ts) b (.z1 ts) c (.z2 ts)]
-    #{(sort [a b]) (sort [b c]) (sort [c a])}))
-
-(defmethod vertex-pairs SimplicialComplex2D [^SimplicialComplex2D sc]
-  (reduce set/union (map vertex-pairs (.faces sc))))
-
-;;---------------------------------------------------------------
-
 (defmethod debug/simple-string SimplicialComplex2D [^SimplicialComplex2D this]
   (str "SimplicialCmplx2D["
        (apply print-str
@@ -209,6 +198,62 @@
            [f l g] [g m h] [h n i] [i o j] [j p k]
            [g l m] [h m n] [i n o] [j o p] [k p q]
            [l r m] [m s n] [n t o] [o u p] [p v q]]))))
+
+;;---------------------------------------------------------------
+;; Not a simplex. No independent identity.
+;; Used as a key in temp maps during subdivision and other
+;; micro-topological operations on a complex.
+
+(deftype VertexPair
+  ;; require (.compareTo z0 z1) < 0
+  [^ZeroSimplex z0
+   ^ZeroSimplex z1]
+
+  ;; TODO: Implement ISeq or something like that?
+
+  Comparable
+  (compareTo [_ that]
+    (assert (instance? VertexPair that))
+    (let [that ^VertexPair that
+          c (.compareTo z0  (.z0 that))]
+      (if (zero? c)
+        (.compareTo z1 (.z1 that))
+        c)))
+
+  Object
+  (equals [this that]
+    (cond
+      (identical? this that) true
+      (not (instance? VertexPair that)) false
+      :else (let [that ^VertexPair that]
+              (and (identical? (.z0 this) (.z0 that))
+                   (identical? (.z1 this) (.z1 that))))))
+  (hashCode [_]
+    (let [h (int 17)
+          h (unchecked-multiply-int h (int 31))
+          h (unchecked-add-int h (.hashCode z0 ))
+          h (unchecked-multiply-int h (int 31))
+          h (unchecked-add-int h (.hashCode z1))]
+      h))
+  (toString [_] (str z0 "->" z1)))
+
+
+(defn ^VertexPair vertex-pair [^ZeroSimplex z0 ^ZeroSimplex z1]
+  (assert (not (.equals z0 z1)))
+  (if (< (.compareTo z0 z1) 0)
+    (VertexPair. z0 z1)
+    (VertexPair. z1 z0)))
+
+;;---------------------------------------------------------------
+
+(defmulti vertex-pairs "Unoriented vertex pairs" class)
+
+(defmethod vertex-pairs TwoSimplex [^TwoSimplex ts]
+  (let [a (.z0 ts) b (.z1 ts) c (.z2 ts)]
+    #{(vertex-pair a b) (vertex-pair b c) (vertex-pair c a)}))
+
+(defmethod vertex-pairs CellComplex [^CellComplex sc]
+  (reduce set/union (map vertex-pairs (.faces sc))))
 
 ;;---------------------------------------------------------------
 ;; TODO: Incorporate alternate subdivision rules,

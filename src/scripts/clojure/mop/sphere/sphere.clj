@@ -20,7 +20,7 @@
    [mop.lwjgl.glfw.util :as glfw])
 
   (:import
-   [mop.cmplx.complex OneSimplex]
+   [mop.cmplx.complex VertexPair]
    [mop.geom.mesh Mesh]
    [org.apache.commons.geometry.euclidean.threed Vector3D]))
 
@@ -44,10 +44,9 @@
       rgba (update-vals s2 s2/s2-to-rgba)
       ;; unit vectors pointing out
       dual (update-vals s2 s2/s2-to-r3)
-      pairs (sort-by first (sort-by second (cmplx/vertex-pairs (.cmplx mesh-r3))))
-      edges (map #(apply cmplx/simplex %) pairs)
+      pairs (sort (cmplx/vertex-pairs (.cmplx mesh-r3)))
       ]
-  (doseq [^OneSimplex e edges]
+  (doseq [^VertexPair e pairs]
     (let [a (s2 (.z0 e))
           b (s2 (.z1 e))
           i (s2/dateline-crossing a b)]
