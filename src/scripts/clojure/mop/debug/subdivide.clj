@@ -11,6 +11,7 @@
   (:require
    [mop.commons.debug :as debug]
    [mop.geom.mesh :as mesh]
+   [mop.geom.quads :as quads]
    [mop.geom.rn :as rn]
    [mop.geom.s2 :as s2])
   (:import [org.apache.commons.geometry.euclidean.threed Vector3D]))
@@ -29,7 +30,7 @@
       ;q1452 (cmplx/quad z1 z4 z5 z2)
       ;pair (cmplx/quad-complex [q0321 q1452])
       ;{child :child parent :parent} (cmplx/subdivide-4 pair)
-      mesh (mesh/standard-quad-sphere)
+      mesh (quads/standard-quad-sphere)
       embedding-ll (s2/equirectangular-embedding 360 180)
       embedding-r3 (s2/r3-embedding (Vector3D/of 0 0 0) 100)
       mesh-ll (rn/transform embedding-ll mesh)

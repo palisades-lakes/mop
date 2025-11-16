@@ -8,89 +8,73 @@
   Start with spherical quad mesh, subdivide, and transform to R^3.
   Started with https://clojurecivitas.github.io/opengl_visualization/main.html"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-11-05"}
+   :version "2025-11-15"}
 
   (:require
    [mop.cmplx.complex :as cmplx]
-   [mop.geom.arcball :as arcball]
-   [mop.geom.mesh :as mesh]
+   [mop.commons.debug :as debug]
+   [mop.geom.quads :as quads]
    [mop.geom.rn :as rn]
    [mop.geom.s2 :as s2]
    [mop.image.util :as image]
-   [mop.lwjgl.glfw.util :as glfw]
-   [mop.lwjgl.util :as lwjgl])
+   [mop.lwjgl.glfw.util :as glfw])
 
   (:import
-   [java.awt.image WritableRaster]
-   [mop.geom.mesh QuadMesh]
-   [org.apache.commons.geometry.euclidean.threed Vector3D]
-   [org.lwjgl.glfw GLFW]))
-
-;;-------------------------------------------------------------
-;; UI state
-
-(def mouse-button (atom false))
-(def arcball (atom (arcball/ball -1 -1)))
-(def window (glfw/start-window "sphere" mouse-button arcball))
+   [mop.cmplx.complex OneSimplex]
+   [mop.geom.mesh Mesh]
+   [org.apache.commons.geometry.euclidean.threed Vector3D]))
 
 ;;-------------------------------------------------------------
 
-(def ^WritableRaster color-image
-  (image/get-writeable-raster
-   "images/lroc_color_poles_2k.tif"
-   "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_poles_2k.tif"))
-
-;; elevation image relative to ?
-
-(def ^WritableRaster elevation-image
-  (image/get-writeable-raster
-   "images/ldem_4.tif"
-   "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/ldem_4.tif"))
-
-;;----------------------------------------------------------------------
-;; base geometry
-;;----------------------------------------------------------------------
-;; km
-(def radius 1737.4)
-
-(def ^QuadMesh mesh-r3
-  ;; transform to R3
-  (rn/transform
-   (s2/r3-embedding Vector3D/ZERO radius)
-   ;; S2 initial embedding
-   (cmplx/subdivide-4
-    (cmplx/subdivide-4
-     (cmplx/subdivide-4
-      (cmplx/subdivide-4
+(let [radius 1737.4
+      ^Mesh mesh-r3
+      ;; transform to R3
+      (rn/transform
+       (s2/r3-embedding Vector3D/ZERO radius)
+       ;; S2 initial embedding
        (cmplx/subdivide-4
-        (mesh/standard-quad-sphere))))))))
+        (cmplx/subdivide-4
+         (cmplx/subdivide-4
+          (cmplx/subdivide-4
+           (cmplx/subdivide-4
+            (quads/standard-quad-sphere)))))))
+      xyz (.embedding mesh-r3)
+      s2 (update-vals xyz s2/r3-to-s2)
+      txt (update-vals s2 s2/s2-to-txt)
+      rgba (update-vals s2 s2/s2-to-rgba)
+      ;; unit vectors pointing out
+      dual (update-vals s2 s2/s2-to-r3)
+      pairs (sort-by first (sort-by second (cmplx/vertex-pairs (.cmplx mesh-r3))))
+      edges (map #(apply cmplx/simplex %) pairs)
+      ]
+  (doseq [^OneSimplex e edges]
+    (let [a (s2 (.z0 e))
+          b (s2 (.z1 e))
+          i (s2/dateline-crossing a b)]
+      (println (.toString e))
+      (when i
+        (println (debug/simple-string a) "->" (debug/simple-string b))
+        (println (debug/simple-string i)))))
+
+  (glfw/arcball-loop
+   {:title           "icosamoon"
+    :cmplx         (.cmplx mesh-r3)
+    :vertex-shader   "src/scripts/clojure/mop/icosamoon/icosamoon-vertex.glsl"
+    :fragment-shader "src/scripts/clojure/mop/icosamoon/icosamoon-fragment.glsl"
+    :txt-embedding  txt
+    :s2-embedding   s2
+    :xyz-embedding  xyz
+    :dual-embedding  dual
+    :rgba-embedding  rgba
+    :radius          radius
+    :color-image
+    (image/get-writeable-raster
+     "images/lroc_color_poles_2k.tif"
+     "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_poles_2k.tif")
+    :elevation-image
+    (image/get-writeable-raster
+     "images/ldem_4.tif"
+     "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/ldem_4.tif")})
+  )
 
 ;;----------------------------------------------------
-;; TODO: smarter shader construction in order to not depend on
-;; shared names btwn clojure and glsl code,
-;; and to reuse common functions
-
-(def sphere
-  (lwjgl/setup {:vertex-shader "src/scripts/clojure/mop/sphere/sphere-vertex.glsl"
-                :fragment-shader "src/scripts/clojure/mop/sphere/sphere-fragment.glsl"
-                :mesh-r3 mesh-r3
-                :radius radius
-                :color-image color-image
-                :elevation-image elevation-image
-                }))
-
-;;----------------------------------------------------
-
-(lwjgl/uniform (:program sphere) "quaternion" (:q-origin @arcball))
-
-;; TODO: call on window resize
-(lwjgl/uniform (:program sphere)  "aspect" (rn/aspect (glfw/window-wh window)))
-
-(while (not (GLFW/glfwWindowShouldClose window))
-  (glfw/draw-faces window (:nindices sphere))
-  (GLFW/glfwPollEvents)
-  (when @mouse-button
-    (lwjgl/uniform (:program sphere) "quaternion"
-                   (arcball/current-q @arcball (glfw/cursor-xy window)))))
-
-(glfw/clean-up window sphere)

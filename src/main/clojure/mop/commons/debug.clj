@@ -3,7 +3,7 @@
 ;;----------------------------------------------------------------
 (ns mop.commons.debug
 
-  "Things that ought to be in clojure.core, and don't have an
+  "Things that ought to be in <code>clojure.core</code>, and don't have an
   obvious place elsewhere in Mop."
 
   {:author  "palisades dot lakes at gmail dot com"

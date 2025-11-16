@@ -6,6 +6,7 @@ import org.apache.commons.geometry.core.Point;
 import org.apache.commons.geometry.core.internal.SimpleTupleFormat;
 import org.apache.commons.geometry.euclidean.threed.Vector3D;
 import org.apache.commons.geometry.spherical.twod.Point2S;
+import org.jetbrains.annotations.NotNull;
 
 //----------------------------------------------------------------------
 
@@ -22,6 +23,7 @@ import org.apache.commons.geometry.spherical.twod.Point2S;
  */
 
 
+@SuppressWarnings("PatternVariableCanBeUsed")
 public record Point2U (double _u, double _v)
 
   implements Point<Point2U> {
@@ -57,13 +59,14 @@ public record Point2U (double _u, double _v)
   //--------------------------------------------------------------------
 
   @Override
-  public final String toString () {
+  public final @NotNull String toString () {
     return SimpleTupleFormat.getDefault().format(getU(), getV()); }
 
   @Override
   public final boolean equals (final Object other) {
     if (this == other) { return true; }
     if (!(other instanceof Point2U)) { return false; }
+    //noinspection PatternVariableCanBeUsed
     final Point2U rhs = (Point2U) other;
     if (rhs.isNaN()) { return this.isNaN(); }
     return
@@ -92,16 +95,13 @@ public record Point2U (double _u, double _v)
   public static final Point2U of (final Point2S p) {
     return of(p.getAzimuth(), p.getPolar()); }
 
+  @SuppressWarnings("unused")
   public static final Point2U of (final Vector3D v) {
     return of(Point2S.from(v)); }
 
   //--------------------------------------------------------------------
 
-  //  public static final Point2U MINUS_I = of(Point2S.MINUS_I);
-//  public static final Point2U MINUS_J = of(Point2S.MINUS_J);
   public static final Point2U MINUS_K = of(Point2S.MINUS_K);
-  //  public static final Point2U PLUS_I = of(Point2S.PLUS_I);
-//  public static final Point2U PLUS_J = of(Point2S.PLUS_J);
   public static final Point2U PLUS_K = of(Point2S.PLUS_K);
 
   //--------------------------------------------------------------------

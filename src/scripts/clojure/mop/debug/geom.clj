@@ -6,11 +6,11 @@
 (ns mop.debug.geom
   {:doc     "check subdivision"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-12"}
+   :version "2025-11-15"}
   (:require
    [mop.commons.debug :as debug]
-   [mop.geom.mesh :as mesh]
-   [mop.geom.s2 :as s2])
+   [mop.geom.s2 :as s2]
+   [mop.geom.space :as space])
   (:import [org.apache.commons.geometry.euclidean.twod Vector2D]))
 ;;-------------------------------------------------------------
 
@@ -19,9 +19,9 @@
   `(do
      (debug/echo ~v)
      (debug/echo (s2/txt-to-s2 ~v))
-     (debug/echo (s2/s2-to-txt (s2/txt-to-s2 ~v)))
-     (debug/echo (s2/s2-to-r3 (s2/txt-to-s2 ~v)))
-     (debug/echo (s2/r3-to-s2 (s2/s2-to-r3 (s2/txt-to-s2 ~v))))
+     (debug/echo (space/midpoint (s2/txt-to-s2 ~v)))
+     (debug/echo (space/midpoint (s2/txt-to-s2 ~v)))
+     (debug/echo (s2/r3-to-s2 (space/midpoint (s2/txt-to-s2 ~v))))
      (println)
      )
   )
@@ -32,10 +32,10 @@
     `(let [~s0 (s2/txt-to-s2 ~t0)
            ~s1 (s2/txt-to-s2 ~t1)]
        (debug/echo ~t0 ~t1)
-       (debug/echo (mesh/midpoint ~t0 ~t1))
+       (debug/echo (space/midpoint ~t0 ~t1))
        (debug/echo ~s0 ~s1)
-       (debug/echo (s2/txt-to-s2 (mesh/midpoint ~t0 ~t1)))
-       (debug/echo (mesh/midpoint ~s0 ~s1))
+       (debug/echo (s2/txt-to-s2 (space/midpoint ~t0 ~t1)))
+       (debug/echo (space/midpoint ~s0 ~s1))
        (println))))
 
 ;;-------------------------------------------------------------

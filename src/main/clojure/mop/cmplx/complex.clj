@@ -211,111 +211,6 @@
            [l r m] [m s n] [n t o] [o u p] [p v q]]))))
 
 ;;---------------------------------------------------------------
-;; Abstract quadrilateral cell.
-;; Not a simplex, so maybe should be elsewhere.
-;; An ordered quadruple of zero simplexes.
-
-(deftype Quad
-  [^long counter
-   ^ZeroSimplex z0
-   ^ZeroSimplex z1
-   ^ZeroSimplex z2
-   ^ZeroSimplex z3]
-  :load-ns true
-
-  Object
-  (toString [_] (str "Q[" counter ";"  z0 "," z1 "," z2 "," z3 ")"))
-  (hashCode [_] counter)
-
-  Comparable
-  (compareTo [_ that] (- counter (.counter ^Quad that)))
-
-  Cell
-  (vertices [_] [z0 z1 z2 z3]) )
-
-;;---------------------------------------------------------------
-
-(let [counter (atom -1)]
-  (defn quad ^Quad [^ZeroSimplex z0
-                    ^ZeroSimplex z1
-                    ^ZeroSimplex z2
-                    ^ZeroSimplex z3]
-    (assert (not= z0 z1))
-    (assert (not= z0 z2))
-    (assert (not= z0 z3))
-    (assert (not= z1 z2))
-    (assert (not= z1 z3))
-    (assert (not= z2 z3))
-    (Quad. (swap! counter inc) z0 z1 z2 z3)))
-
-;;---------------------------------------------------------------
-;; Abstract 2d quadrilateral cell complex.
-;; <code>deftype</code over <code>defrecord</code> to avoid
-;; clojure generated equals and hashCode --- want identity
-;; based equality and corresponding hash codes.
-;; TODO: check whether this is really necessary
-;; TODO: immutable internal collections
-
-(deftype QuadComplex
-  [^List _vertices
-   ^List _faces]
-  :load-ns true
-
-  #_Object
-  #_(toString [_]
-              (str "Quad(" counter "; "
-                   (.counter z0) ","
-                   (.counter z1) ","
-                   (.counter z2) ","
-                   (.counter z3) ")"))
-  #_(hashCode [this] (System/identityHashCode this))
-  #_(equals [this that] (identical? this that))
-
-  CellComplex
-  (vertices [this] (._vertices this))
-  (faces [this] (._faces this))
-  )
-
-;;---------------------------------------------------------------
-
-(defmethod debug/simple-string QuadComplex [^QuadComplex this]
-  (str "QCmplx["
-       (apply print-str
-              (map #(str \newline " " (debug/simple-string %))
-                   (.faces this)))
-       "]"))
-
-;;---------------------------------------------------------------
-;; TODO: enforce orientedness?
-
-(defn quad-complex ^QuadComplex [faces]
-  "Accumulate the vertices from the faces, and sort."
-  (let [vertices (sort (into #{} (flatten (map #(.vertices ^Cell %) faces))))]
-    (QuadComplex. vertices faces)))
-
-;;---------------------------------------------------------------
-;; TODO: how to ensure that embeddings don't turn the cube inside out?
-
-(defn ^QuadComplex quad-cube []
-  "Return an oriented quad complex with 6 faces, topologically
-  equivalent to a sphere or cube surface."
-  (let [z0 (simplex"a")
-        z1 (simplex"b")
-        z2 (simplex"c")
-        z3 (simplex"d")
-        z4 (simplex"e")
-        z5 (simplex"f")
-        z6 (simplex"g")
-        z7 (simplex"h")
-        q0321 (quad z0 z3 z2 z1)
-        q4567 (quad z4 z5 z6 z7)
-        q0473 (quad z0 z4 z7 z3)
-        q5126 (quad z5 z1 z2 z6)
-        q2376 (quad z2 z3 z7 z6)
-        q0154 (quad z0 z1 z5 z4)]
-    (quad-complex [q0321 q4567 q0473 q5126 q2376 q0154])))
-
-;;---------------------------------------------------------------
 ;; TODO: Incorporate alternate subdivision rules,
 ;; especially with regards to inherited embedding
 ;; TODO: Should all vertices in the child be new, or should
@@ -332,7 +227,7 @@
           Returned value looks like
           <code>
           {:child new-complex
-           :parents {v0 edge0 ... vi facei ... vj vj ...}}"
+           :parents {v_0 edge_0 ... v_i face_i ... v_j v_j ...}}"
           class)
 
 ;;---------------------------------------------------------------
@@ -362,44 +257,11 @@
         (recur
          (rest faces)
          ;; overflow with concat instead of conj
-         (conj child-faces (simplex a ab ca) (simplex b bc ab) (simplex c ca bc) (simplex ab bc ca))
+         (conj child-faces
+               (simplex a ab ca)
+               (simplex b bc ab)
+               (simplex c ca bc)
+               (simplex ab bc ca))
          (merge children {a a, b b, c c, eab ab, ebc bc, eca ca}))))))
-
-;;---------------------------------------------------------------
-
-(defmethod subdivide-4 QuadComplex [^QuadComplex qc]
-  (loop [faces (.faces qc)
-         child-faces []
-         children {}]
-    (if (empty? faces)
-      {:child (quad-complex child-faces)
-       :parent (set/map-invert children)}
-      ;; else
-      (let [^Quad face (first faces)
-            ^ZeroSimplex z0 (.z0 face)
-            ^ZeroSimplex z1 (.z1 face)
-            ^ZeroSimplex z2 (.z2 face)
-            ^ZeroSimplex z3 (.z3 face)
-            ;; TODO: what about multiple edges connecting same vertices?
-            e01 (sort [z0 z1])
-            e12 (sort [z1 z2])
-            e23 (sort [z2 z3])
-            e30 (sort [z3 z0])
-            ^ZeroSimplex z01 (or (children e01) (simplex"ab"))
-            ^ZeroSimplex z12 (or (children e12) (simplex"bc"))
-            ^ZeroSimplex z23 (or (children e23) (simplex"cd"))
-            ^ZeroSimplex z30 (or (children e30) (simplex"da"))
-            ^ZeroSimplex z0123 (simplex"abcd")]
-        (recur
-         (rest faces)
-         (concat child-faces
-                 [(quad z30 z0 z01 z0123)
-                  (quad z01 z1 z12 z0123)
-                  (quad z12 z2 z23 z0123)
-                  (quad z23 z3 z30 z0123)])
-         (merge children
-                {z0 z0 z1 z1 z2 z2 z3 z3
-                 e01 z01 e12 z12 e23 z23 e30 z30
-                 face z0123}))))))
 
 ;;---------------------------------------------------------------

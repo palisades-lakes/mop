@@ -9,7 +9,8 @@
    :version "2025-11-13"}
 
   (:require [mop.commons.debug :as debug]
-            [mop.geom.rn :as rn])
+            [mop.geom.rn :as rn]
+            [mop.geom.space :as space])
   (:import
    [clojure.lang IFn]
    [mop.geom.rn Vector4D]
@@ -143,6 +144,86 @@
   [R3Embedding Point2S]
   [^R3Embedding s ^Point2S p]
   (.add ^Vector (.center s) (.radius s) (s2-to-r3 p)))
+
+;----------------------------------------------------------------
+
+(defn- ^Point2S s2-midpoint
+  ([^Point2S p0 ^Point2S p1]
+   ;; midpoint of geodesic arc from p0 to p1
+   (assert (> (.distance p0 p1) 1.0e-7)
+           (str "distance=" (.distance p0 p1)))
+   (.getMidPoint
+    (GreatCircles/arcFromPoints
+     p0 p1 (Precision/doubleEquivalenceOfEpsilon 1e-12))))
+
+  ([^Point2S p0 ^Point2S p1 ^Point2S p2 ^Point2S p3]
+   "As far as I know, this isn't exactly any common centroid definition."
+   (let [m01 (s2-midpoint p0 p1)
+         m23 (s2-midpoint p2 p3)
+         m12 (s2-midpoint p1 p2)
+         m30 (s2-midpoint p3 p0)
+         ^Point2S m0123 (s2-midpoint m01 m23)
+         ^Point2S m1230 (s2-midpoint m12 m30)]
+     ;; should these be equal, ie, a singular arc?
+     (if (<= (.distance m0123 m1230) 1.0e-6)
+       m0123
+       (s2-midpoint m0123 m1230))))
+  )
+
+(defmethod space/midpoint Point2S [^Point2S p0 & points]
+  (case (count points)
+    0 p0
+    1 (s2-midpoint p0 (first points))
+    3 (let [[^Point2S p1 ^Point2S p2 ^Point2S p3] points]
+        (s2-midpoint p0 p1 p2 p3))
+    ;; else
+    (throw
+     (UnsupportedOperationException.
+      (str "Can't compute spherical-midpoint of "
+           (count points) " points.")))))
+
+;;---------------------------------------------------------------
+
+(defn- ^Point2U u2-midpoint
+  ([^Point2U uv0 ^Point2U uv1]
+   ;; midpoint of geodesic arc from uv0 to uv1
+   ;; rotate about polar axis to avoid singularity
+   (let [u0 (.getU uv0)
+         u1 (.getU uv1)
+         u (Math/min u0 u1)
+         p0 (Point2S/of (- u0 u) (.getV uv0))
+         p1 (Point2S/of (- u1 u) (.getV uv1))
+         mid (.getMidPoint
+              (GreatCircles/arcFromPoints
+               p0 p1 (Precision/doubleEquivalenceOfEpsilon 1e-12)))]
+     (Point2U/of (+ u (.getAzimuth mid)) (.getPolar mid))))
+
+  ([^Point2U p0 ^Point2U p1 ^Point2U p2 ^Point2U p3]
+   "As far as I know, this isn't exactly any common centroid definition."
+   (let [m01 (u2-midpoint p0 p1)
+         m23 (u2-midpoint p2 p3)
+         m12 (u2-midpoint p1 p2)
+         m30 (u2-midpoint p3 p0)
+         ^Point2U m0123 (u2-midpoint m01 m23)
+         ^Point2U m1230 (u2-midpoint m12 m30)]
+     ;; should these be equal, ie, a singular arc?
+     (if (<= (.distance m0123 m1230) 1.0e-6)
+       m0123
+       (u2-midpoint m0123 m1230))))
+  )
+
+;;---------------------------------------------------------------
+
+(defmethod space/midpoint Point2U [^Point2U p0 & points]
+  (case (count points)
+    0 p0
+    1 (u2-midpoint p0 (first points))
+    3 (let [[^Point2S p1 ^Point2S p2 ^Point2S p3] points]
+        (u2-midpoint p0 p1 p2 p3))
+    ;; else
+    (throw
+     (UnsupportedOperationException.
+      (str "Can't compute u2-midpoint of " (count points) " points.")))))
 
 ;;----------------------------------------------------------------
 ;; For mapping to eg texture image coordinates.

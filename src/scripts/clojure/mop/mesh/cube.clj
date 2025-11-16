@@ -2,8 +2,11 @@
 ;; clj src\scripts\clojure\mop\mesh\cube.clj
 ;;----------------------------------------------------------------
 (ns mop.mesh.cube
+  {:author "palisades dot lakes at gmail dot com"
+   :version "2025-11-15"}
   (:require
    [mop.commons.debug :as debug]
+   [mop.geom.quads :as quads]
    [mop.geom.rn :as rn]
    [mop.cmplx.complex :as cmplx]
    [mop.geom.mesh :as mesh]
@@ -17,13 +20,13 @@
       z5 (cmplx/simplex"f")
       z6 (cmplx/simplex"g")
       z7 (cmplx/simplex"h")
-      q0321 (cmplx/quad z0 z3 z2 z1)
-      q4567 (cmplx/quad z4 z5 z6 z7)
-      q0473 (cmplx/quad z0 z4 z7 z3)
-      q5126 (cmplx/quad z5 z1 z2 z6)
-      q2376 (cmplx/quad z2 z3 z7 z6)
-      q0154 (cmplx/quad z0 z1 z5 z4)
-      qcmplx (cmplx/quad-complex
+      q0321 (quads/quad z0 z3 z2 z1)
+      q4567 (quads/quad z4 z5 z6 z7)
+      q0473 (quads/quad z0 z4 z7 z3)
+      q5126 (quads/quad z5 z1 z2 z6)
+      q2376 (quads/quad z2 z3 z7 z6)
+      q0154 (quads/quad z0 z1 z5 z4)
+      qcmplx (quads/quad-complex
               [q0321 q4567 q0473 q5126 q2376 q0154])
       p0 (rn/vector -1.0 -1.0 -1.0)
       p1 (rn/vector 1.0 -1.0 -1.0)
@@ -41,7 +44,7 @@
                  z5 p5
                  z6 p6
                  z7 p7}
-      mesh (mesh/quad-mesh qcmplx embedding)
+      mesh (quads/quad-mesh qcmplx embedding)
       ]
   (debug/echo
    ;;z0 z1 (identical? z0 z1)
@@ -50,6 +53,6 @@
    ;;
    ;; qcmplx
    mesh)
-   (mesh/coordinates-and-elements mesh)
+  (mesh/coordinates-and-elements mesh)
   )
 

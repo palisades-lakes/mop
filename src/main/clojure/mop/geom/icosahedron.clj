@@ -33,7 +33,7 @@
                        ;; interpolation ok
                        [a b c] [a c f] [a f e] [b h c] [c i f] [c h i]
                        [d e j] [d j g] [e f k] [e k j] [f i k] [g j l] [k l j]]))
-          ;; put a at top
+          ;; put 'a' at top
           ;;qr (QuaternionRotation/createVectorRotation (rn/vector -1  r  0) (rn/vector 0 0 1))
           embedding {a (rn/vector -1  r  0) b (rn/vector  1  r  0)
                      c (rn/vector  0  1 -r) d (rn/vector  0  1  r)

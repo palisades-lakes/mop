@@ -3,19 +3,20 @@
 ;;----------------------------------------------------------------
 (ns mop.geom.rn
 
-  {:doc "Geometry utilities for Rn, especially R2 abd R3.
+  {:doc     "Geometry utilities for Rn, especially R2 abd R3.
   Hide 3rd party library is used, if any."
-   :author "palisades dot lakes at gmail dot com"
+   :author  "palisades dot lakes at gmail dot com"
    :version "2025-11-01"}
 
   (:refer-clojure :exclude [vector])
 
+  (:require [mop.geom.space :as space])
   (:import
    [java.util List]
    [org.apache.commons.geometry.core Vector]
-   [org.apache.commons.geometry.euclidean.threed Vector3D Vector3D$Unit]
+   [org.apache.commons.geometry.euclidean.threed Vector3D Vector3D$Sum Vector3D$Unit]
    [org.apache.commons.geometry.euclidean.threed.rotation QuaternionRotation]
-   [org.apache.commons.geometry.euclidean.twod Vector2D Vector2D$Unit]
+   [org.apache.commons.geometry.euclidean.twod Vector2D Vector2D$Sum Vector2D$Unit]
    [org.apache.commons.numbers.quaternion Quaternion]))
 
 ;;----------------------------------------------------------------
@@ -49,6 +50,18 @@
 (deftype Vector4D
   [^Vector3D xyz
    ^double w])
+
+;;----------------------------------------------------------------
+
+(defmethod space/midpoint Vector2D [^Vector2D p0 & points]
+  (let [sum (Vector2D$Sum/of p0)]
+    (dorun (map #(.add sum %) points))
+    (multiply (.get sum) (/ 1.0 (inc (count points))))))
+
+(defmethod space/midpoint Vector3D [^Vector3D p0 & points]
+  (let [sum (Vector3D$Sum/of p0)]
+    (dorun (map #(.add sum %) points))
+    (multiply (.get sum) (/ 1.0 (inc (count points))))))
 
 ;;----------------------------------------------------------------
 
