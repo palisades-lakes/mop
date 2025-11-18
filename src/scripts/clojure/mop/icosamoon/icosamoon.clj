@@ -31,11 +31,11 @@
 (let [radius 1737.4
       ^Mesh icosahedron
       ((comp
-        cmplx/subdivide-4
-        cmplx/subdivide-4
-        cmplx/subdivide-4
-        cmplx/subdivide-4
-        cmplx/subdivide-4
+        ;cmplx/midpoint-subdivide-4
+        ;cmplx/midpoint-subdivide-4
+        ;cmplx/midpoint-subdivide-4
+        ;cmplx/midpoint-subdivide-4
+        cmplx/midpoint-subdivide-4
         )
        (icosahedron/u2-cut-icosahedron))
       u2 (.embedding icosahedron)

@@ -85,6 +85,11 @@
       <version>1.0</version>
     </dependency>
     <dependency>
+      <groupId>org.clojure</groupId>
+      <artifactId>math.combinatorics</artifactId>
+      <version>0.3.0</version>
+    </dependency>
+    <dependency>
       <groupId>jonase</groupId>
       <artifactId>eastwood</artifactId>
       <version>1.4.3</version>

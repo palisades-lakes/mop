@@ -30,7 +30,7 @@
 (let [radius 1737.4
       s2-mesh
       ((comp
-        cmplx/subdivide-4
+        cmplx/midpoint-subdivide-4
         ;;cmplx/subdivide-4
         ;;cmplx/subdivide-4
         ;;cmplx/subdivide-4

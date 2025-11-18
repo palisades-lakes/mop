@@ -4,7 +4,7 @@
 (ns mop.cmplx.complex
   {:doc     "(Abstract) simplicial and cell complexes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-15"}
+   :version "2025-11-16"}
   (:require [clojure.set :as set]
             [mop.commons.debug :as debug])
   (:import [java.util List]))
@@ -151,6 +151,8 @@
   (faces [this] (._faces this))
   )
 
+(defn vertices [^CellComplex complex] (.vertices complex))
+(defn faces [^CellComplex complex] (.faces complex))
 ;;---------------------------------------------------------------
 
 (defmethod debug/simple-string SimplicialComplex2D [^SimplicialComplex2D this]
@@ -171,7 +173,7 @@
 ;;---------------------------------------------------------------
 ;; icosahedral 2d simplicial complex with spherical topology
 
-(defn ^SimplicialComplex2D icosahedron []
+#_(defn ^SimplicialComplex2D icosahedron []
   (let [a (simplex "a") b (simplex"b") c (simplex"c") d (simplex"d")
         e (simplex"e") f (simplex"f") g (simplex"g") h (simplex"h")
         i (simplex"i") j (simplex"j") k (simplex"k") l (simplex"l")]
@@ -185,7 +187,7 @@
 ;; Cut icosahedron to simplify texture mapping and other
 ;; 2d projections.
 
-(defn ^SimplicialComplex2D cut-icosahedron []
+#_(defn ^SimplicialComplex2D cut-icosahedron []
   (let [a (simplex "a") b (simplex"b") c (simplex"c") d (simplex"d")
         e (simplex"e") f (simplex"f") g (simplex"g") h (simplex"h")
         i (simplex"i") j (simplex"j") k (simplex"k") l (simplex"l")
@@ -262,7 +264,7 @@
 ;; the existing vertices be reused? Currently reusing,
 ;; so the vertices of the parent complex appear in the child.
 
-(defmulti subdivide-4
+(defmulti midpoint-subdivide-4
           "Return a child cell complex with each face of the parent
           subdivided into 4, splitting faces and edges evenly.
           Also return a map from the new vertices to their parent edge or face,
@@ -281,7 +283,7 @@
 ;; TODO: prone to stack overflow, not clear why,
 ;; not so easy to use transients, maybe switch to local mutable java collections
 
-(defmethod subdivide-4 SimplicialComplex2D [^SimplicialComplex2D c]
+(defmethod midpoint-subdivide-4 SimplicialComplex2D [^SimplicialComplex2D c]
   (loop [faces (.faces c)
          child-faces []
          children {}]
@@ -293,12 +295,18 @@
             ^ZeroSimplex a (.z0 face)
             ^ZeroSimplex b (.z1 face)
             ^ZeroSimplex c (.z2 face)
-            eab (sort [a b])
-            ebc (sort [b c])
-            eca (sort [c a])
-            ^ZeroSimplex ab (or (children eab) (simplex"ab"))
-            ^ZeroSimplex bc (or (children ebc) (simplex"bc"))
-            ^ZeroSimplex ca (or (children eca) (simplex"ca"))]
+            eab (vertex-pair a b)
+            ebc (vertex-pair b c)
+            eca (vertex-pair c a)
+            ^ZeroSimplex ab (or (children eab)
+                                (simplex (str (.toString (.z0 eab))
+                                              (.toString (.z1 eab)))))
+            ^ZeroSimplex bc (or (children ebc)
+                                (simplex (str (.toString (.z0 ebc))
+                                              (.toString (.z1 ebc)))))
+            ^ZeroSimplex ca (or (children eca)
+                                (simplex (str (.toString (.z0 eca))
+                                              (.toString (.z1 eca)))))]
         (recur
          (rest faces)
          ;; overflow with concat instead of conj

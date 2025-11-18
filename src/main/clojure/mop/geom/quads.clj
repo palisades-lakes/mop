@@ -108,7 +108,7 @@
 
 ;;---------------------------------------------------------------
 
-(defmethod cmplx/subdivide-4 QuadComplex [^QuadComplex qc]
+(defmethod cmplx/midpoint-subdivide-4 QuadComplex [^QuadComplex qc]
   (loop [faces (.faces qc)
          child-faces []
          children {}]
@@ -276,9 +276,9 @@
 
 ;;---------------------------------------------------------------
 
-(defmethod cmplx/subdivide-4 QuadMesh [^QuadMesh qm]
+(defmethod cmplx/midpoint-subdivide-4 QuadMesh [^QuadMesh qm]
   (let [{^CellComplex child :child
-         parent             :parent} (cmplx/subdivide-4 (.cmplx qm))
+         parent             :parent} (cmplx/midpoint-subdivide-4 (.cmplx qm))
         embedding (.embedding qm) ]
     (mesh/mesh
      child

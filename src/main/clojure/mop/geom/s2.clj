@@ -4,9 +4,14 @@
 (ns mop.geom.s2
 
   {:doc "Geometry utilities for the 2-dimensional sphere, S_2.
-  Hide 3rd party library is used, if any."
+
+  Hide 3rd party library is used, if any.
+
+  NOTE: commons geometry seems to de-dupe instances of
+  <code>Point2S</code>, a possible performance hit."
+
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-13"}
+   :version "2025-11-17"}
 
   (:require [mop.commons.debug :as debug]
             [mop.geom.rn :as rn]
@@ -20,6 +25,7 @@
    [org.apache.commons.geometry.euclidean.twod Vector2D]
    [org.apache.commons.geometry.spherical.twod GreatArc GreatCircles Point2S]
    [org.apache.commons.numbers.core Precision]))
+
 ;;----------------------------------------------------------------
 
 (defmethod debug/simple-string Point2S [^Point2S p]
@@ -37,9 +43,10 @@
 
 (defn ^Point2S u2-to-s2 [^Point2U uv] (.toPoint2S uv))
 
+(defn ^Point2U s2-to-u2 [^Point2S uv] (Point2U/of uv))
 
-#_(defn ^Vector3D u2-to-r3 [^Point2U uv]
-    (s2-to-r3 (u2-to-s2 uv)))
+(defn ^Vector3D u2-to-r3 [^Point2U uv]
+  (s2-to-r3 (u2-to-s2 uv)))
 
 (let [TWO_PI (double (* 2.0 Math/PI))
       precision (Precision/doubleEquivalenceOfEpsilon 1.0e-12)]
@@ -102,8 +109,7 @@
              ;; longitudinal arc, can't cross dateline
              (.eq precision from-azimuth to-azimuth)
              ;; zero length arc
-             (.eq from to precision)
-             )
+             (.eq from to precision))
             nil
             ;; endpoint on dateline
             (or (.eq precision from-azimuth 0.0) (.eq precision from-azimuth TWO_PI))
@@ -118,7 +124,9 @@
                   to-normal  (.cross normal to-r3)
                   candidate (.normalize (.cross normal (s2-to-r3 Point2S/PLUS_J)))]
               (or (check-candidate candidate from-normal to-normal)
-                  (check-candidate (.multiply candidate -1) from-normal to-normal)))))))
+                  (check-candidate (.multiply candidate -1)
+                                   from-normal
+                                   to-normal)))))))
 
 ;;----------------------------------------------------------------
 
@@ -128,8 +136,30 @@
 (defn ^Point2S point
   ([^Vector3D v] (Point2S/from v))
   ([^double azimuth ^double polar]
-   (Point2S/of azimuth polar)))
+   (Point2S/of azimuth polar)
+   ;; force azimuth to zero if polar is...
+   ;; TODO: is this a good idea?
+   #_(cond (zero? polar) Point2S/PLUS_K
+           (== Math/PI polar) Point2S/MINUS_K
+           :else (Point2S/of azimuth polar)))
+  )
 
+(defn ^double polar [^Point2S p] (.getPolar p))
+(defn ^double azimuth [^Point2S p] (.getAzimuth p))
+
+;;----------------------------------------------------------------
+;; TODO: defmulti in geom.space?
+
+(defn signed-area [^Point2S a ^Point2S b ^Point2S c]
+  "https://www.johndcook.com/blog/2021/11/29/area-of-spherical-triangle/"
+
+  (let [^Vector3D$Unit a (s2-to-r3 a)
+        ^Vector3D$Unit b (s2-to-r3 b)
+        ^Vector3D$Unit c (s2-to-r3 c)]
+    (* 2
+       (Math/atan
+        (/ (.dot a (.cross b c))
+           (+ 1 (.dot a b) (.dot b c) (.dot a c)))))))
 ;;----------------------------------------------------------------
 
 (deftype R3Embedding
@@ -251,6 +281,13 @@
 
 (defn ^Vector4D s2-to-rgba [^Point2S p]
   (let [^Vector3D v (s2-to-r3 p)]
+    (rn/vector (abs (.getX v))
+               (abs (.getY v))
+               (abs (.getZ v))
+               1.0)))
+
+(defn ^Vector4D u2-to-rgba [^Point2U p]
+  (let [^Vector3D v (u2-to-r3 p)]
     (rn/vector (abs (.getX v))
                (abs (.getY v))
                (abs (.getZ v))

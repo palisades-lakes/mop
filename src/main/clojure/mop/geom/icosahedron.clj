@@ -3,16 +3,15 @@
 ;;----------------------------------------------------------------
 (ns mop.geom.icosahedron
 
-  {:doc     "Embedded cell complexes."
+  {:doc     "Icosahedra with various embeddings"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-13"}
+   :version "2025-11-17"}
   (:require [mop.cmplx.complex :as cmplx]
             [mop.geom.mesh :as mesh]
             [mop.geom.rn :as rn]
             [mop.geom.s2 :as s2])
   (:import [mop.geom.mesh TriangleMesh]
            [mop.java.geom Point2U]
-           [org.apache.commons.geometry.euclidean.twod Vector2D]
            [org.apache.commons.geometry.spherical.twod Point2S]))
 
 ;;---------------------------------------------------------------
@@ -53,9 +52,11 @@
         i (cmplx/simplex "i") j (cmplx/simplex "j") k (cmplx/simplex "k") l (cmplx/simplex "l")
         cmplx (cmplx/simplicial-complex-2d
                (map #(apply cmplx/simplex %)
-                    [[a b c]
+                    [
+                     [a b c]
                      [a c d] [a d e] [a e f] [a f b]
-                     [b g c] [c h d] [d i e] [e j f] [f k b]
+                     [b g c]
+                     [c h d] [d i e] [e j f] [f k b]
                      [c g h] [d h i] [e i j] [f j k] [b k g]
                      [l h g] [l i h] [l j i] [l k j] [l g k]
                     ]
@@ -83,65 +84,6 @@
 ;; 2d projections. Return unwrapped txt coordinate embedding.
 ;; TODO: automate the cut. Key question: what to do when it's not spherical?
 ;; TODO: check if this is a regular icosahedron
-
-(let [dx (double 0.1)
-      y1 (double (/ 1.0 3))
-      y2 (double (/ 2.0 3))]
-  (defn ^TriangleMesh txt-cut-icosahedron []
-    (let [a (cmplx/simplex "a")
-          b (cmplx/simplex "b")
-          c (cmplx/simplex "c")
-          d (cmplx/simplex "d")
-          e (cmplx/simplex "e")
-          f (cmplx/simplex "f") g (cmplx/simplex"g") h (cmplx/simplex"h") i (cmplx/simplex"i") j (cmplx/simplex"j")
-          k (cmplx/simplex "k")
-          l (cmplx/simplex"l") m (cmplx/simplex"m") n (cmplx/simplex"n") o (cmplx/simplex"o")
-          p (cmplx/simplex"p") q (cmplx/simplex"q") r (cmplx/simplex"r") s (cmplx/simplex"s") t (cmplx/simplex"t")
-          u (cmplx/simplex"u") v (cmplx/simplex"v") w (cmplx/simplex"w") x (cmplx/simplex"x")
-          txt-embedding {a (Vector2D/of (* 0 dx) 1)
-                         b (Vector2D/of (* 2 dx) 1)
-                         c (Vector2D/of (* 4 dx) 1)
-                         d (Vector2D/of (* 6 dx) 1)
-                         e (Vector2D/of (* 8 dx) 1)
-
-                         f (Vector2D/of (* -1 dx) y2)
-                         g (Vector2D/of (*  1 dx) y2)
-                         h (Vector2D/of (*  3 dx) y2)
-                         i (Vector2D/of (*  5 dx) y2)
-                         j (Vector2D/of (*  7 dx) y2)
-                         k (Vector2D/of (*  9 dx) y2)
-
-                         l (Vector2D/of (*  0 dx) y1)
-                         m (Vector2D/of (*  2 dx) y1)
-                         n (Vector2D/of (*  4 dx) y1)
-                         o (Vector2D/of (*  6 dx) y1)
-                         p (Vector2D/of (*  8 dx) y1)
-                         q (Vector2D/of (* 10 dx) y1)
-
-                         r (Vector2D/of (* 1 dx) 0)
-                         s (Vector2D/of (* 3 dx) 0)
-                         t (Vector2D/of (* 5 dx) 0)
-                         u (Vector2D/of (* 7 dx) 0)
-                         v (Vector2D/of (* 9 dx) 0)
-
-                         w (Vector2D/of (* 10 dx) 1)
-                         x (Vector2D/of (* -1 dx) 0)}
-          cmplx (cmplx/simplicial-complex-2d
-                 (map #(apply cmplx/simplex %)
-                      [[a f g] [b g h] [c h i] [d i j] [e j k]
-                       [a g b]
-                       [b h c]
-                       [c i d]
-                       [d j e]
-                       [f l g] [g m h] [h n i] [i o j] [j p k]
-                       [g l m] [h m n] [i n o] [j o p] [k p q]
-                       [l r m] [m s n] [n t o] [o u p] [p v q]
-                       [r s m] [s t n] [t u o] [u v p]
-                       [e k w] [l x r]
-                       ]))
-          ]
-      (mesh/triangle-mesh cmplx txt-embedding)
-      )))
 
 ;;------------------------------------------------------------------------------
 ;; Cut icosahedron to simplify texture mapping and other

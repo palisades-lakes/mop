@@ -32,11 +32,11 @@
       (rn/transform
        (s2/r3-embedding Vector3D/ZERO radius)
        ;; S2 initial embedding
-       (cmplx/subdivide-4
-        (cmplx/subdivide-4
-         (cmplx/subdivide-4
-          (cmplx/subdivide-4
-           (cmplx/subdivide-4
+       (cmplx/midpoint-subdivide-4
+        (cmplx/midpoint-subdivide-4
+         (cmplx/midpoint-subdivide-4
+          (cmplx/midpoint-subdivide-4
+           (cmplx/midpoint-subdivide-4
             (quads/standard-quad-sphere)))))))
       xyz (.embedding mesh-r3)
       s2 (update-vals xyz s2/r3-to-s2)
