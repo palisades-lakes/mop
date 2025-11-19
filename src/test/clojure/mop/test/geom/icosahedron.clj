@@ -4,7 +4,7 @@
 
 (ns ^{:author "palisades dot lakes at gmail dot com"
       :date   "2025-11-17"
-      :doc    "Tests for mop.geom.icoshedron."}
+      :doc    "Tests for mop.geom.icosahedron."}
 
   mop.test.geom.icosahedron
 

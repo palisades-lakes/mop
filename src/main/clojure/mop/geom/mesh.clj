@@ -4,7 +4,7 @@
 (ns mop.geom.mesh
   {:doc     "Embedded cell complexes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-16"}
+   :version "2025-11-18"}
   (:require [mop.cmplx.complex :as cmplx]
             [mop.commons.debug :as debug]
             [mop.geom.rn :as rn]
@@ -12,8 +12,9 @@
             [mop.geom.space :as space])
   (:import [clojure.lang IFn]
            [java.util List]
-           [mop.cmplx.complex Cell CellComplex OneSimplex SimplicialComplex2D
-                              TwoSimplex VertexPair ZeroSimplex]
+           [mop.cmplx.complex CellComplex SimplicialComplex2D
+                              VertexPair]
+           [mop.java.cmplx Cell]
            [mop.java.geom Point2U]
            [org.apache.commons.geometry.spherical.twod GreatArc Point2S]))
 

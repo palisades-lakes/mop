@@ -1,7 +1,7 @@
 (ns mop.geom.quads
   {:doc     "Quadrilateral meshes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-15"}
+   :version "2025-11-18"}
   (:require [clojure.set :as set]
             [mop.cmplx.complex :as cmplx]
             [mop.commons.debug :as debug]
@@ -11,8 +11,9 @@
             [mop.geom.space :as space])
   (:import [clojure.lang IFn]
            [java.util List]
-           [mop.cmplx.complex Cell CellComplex ZeroSimplex]
-           [mop.geom.mesh Mesh]))
+           [mop.cmplx.complex CellComplex]
+           [mop.geom.mesh Mesh]
+           [mop.java.cmplx Cell]))
 
 ;;---------------------------------------------------------------
 ;; Abstract quadrilateral cell.

@@ -7,15 +7,11 @@
    :version "2025-11-16"}
   (:require [clojure.set :as set]
             [mop.commons.debug :as debug])
-  (:import [java.util List]))
+  (:import [java.util List]
+           [mop.java.cmplx Cell]))
 ;;---------------------------------------------------------------
 ;; TODO: move these to Java to get better control over construction?
 ;;---------------------------------------------------------------
-;; TODO: order matters for orientation, but also want to avoid
-;; singularities: what class should <code>zeros</code> be?
-
-(definterface Cell (vertices []))
-
 ;;---------------------------------------------------------------
 ;; AKA '(Abstract) Vertex'.
 ;; The basic unit of identity used to build
@@ -42,9 +38,11 @@
   ;; will be used to identify which point goes with which zero simplex
   ;; in embeddings.
   Comparable
-  (compareTo [_ that] (- counter (.counter ^ZeroSimplex that)))
+  (compareTo [_ that]
+    (- counter (.counter ^ZeroSimplex that)))
 
   Cell
+  ;(isOriented [_] true) ;; could also be false...
   (vertices [this] [this]))
 
 ;;---------------------------------------------------------------
@@ -70,6 +68,7 @@
   (compareTo [_ that] (- counter (.counter ^OneSimplex that)))
 
   Cell
+  ;(isOriented [_] true)
   (vertices [_] [z0 z1])
   )
 
@@ -97,24 +96,43 @@
   (compareTo [_ that] (- counter (.counter ^TwoSimplex that)))
 
   Cell
+  ;(isOriented [_] true)
   (vertices [_] [z0 z1 z2]))
 
 ;;---------------------------------------------------------------
 
 (let [counter (atom -1)]
   (defn simplex
-    (^ZeroSimplex [^String name] (ZeroSimplex. (swap! counter inc) name))
+
+    (^ZeroSimplex [^String name]
+     (ZeroSimplex. (swap! counter inc) name))
+
     (^OneSimplex [^ZeroSimplex z0
                   ^ZeroSimplex z1]
      (assert (not= z0 z1))
      (OneSimplex. (swap! counter inc) z0 z1))
+
     (^TwoSimplex [^ZeroSimplex z0
                   ^ZeroSimplex z1
                   ^ZeroSimplex z2]
      (assert (not= z0 z1))
      (assert (not= z0 z2))
      (assert (not= z1 z2))
-     (TwoSimplex. (swap! counter inc) z0 z1 z2))))
+     ;; enforce consistent choice of circular permutation
+     ;; of vertices
+     (let [n (swap! counter inc)]
+       (cond (and (< (.compareTo z0 z1) 0) (< (.compareTo z0 z2) 0))
+             (TwoSimplex. n z0 z1 z2)
+             (< (.compareTo z1 z2) 0) (TwoSimplex. n z1 z2 z0)
+             :else (TwoSimplex. n z2 z0 z1))))))
+
+;;---------------------------------------------------------------
+
+(defn equal-vertices [^TwoSimplex c0 ^TwoSimplex c1]
+  "Do the 2 faces have the same vertices in the same order?"
+  (and (identical? (.z0 c0) (.z0 c1))
+       (identical? (.z1 c0) (.z1 c1))
+       (identical? (.z2 c0) (.z2 c1))))
 
 ;;---------------------------------------------------------------
 
@@ -174,32 +192,32 @@
 ;; icosahedral 2d simplicial complex with spherical topology
 
 #_(defn ^SimplicialComplex2D icosahedron []
-  (let [a (simplex "a") b (simplex"b") c (simplex"c") d (simplex"d")
-        e (simplex"e") f (simplex"f") g (simplex"g") h (simplex"h")
-        i (simplex"i") j (simplex"j") k (simplex"k") l (simplex"l")]
-    (simplicial-complex-2d
-     (map #(apply simplex %)
-          [[a b c] [a d b] [a c f] [a e d] [a f e]
-           [b d g] [b g h] [b h c] [c i f] [c h i]
-           [d e j] [d j g] [e f k] [e k j] [f i k]
-           [g j l] [g l h] [h l i] [k i l] [k l j]]))))
+    (let [a (simplex "a") b (simplex"b") c (simplex"c") d (simplex"d")
+          e (simplex"e") f (simplex"f") g (simplex"g") h (simplex"h")
+          i (simplex"i") j (simplex"j") k (simplex"k") l (simplex"l")]
+      (simplicial-complex-2d
+       (map #(apply simplex %)
+            [[a b c] [a d b] [a c f] [a e d] [a f e]
+             [b d g] [b g h] [b h c] [c i f] [c h i]
+             [d e j] [d j g] [e f k] [e k j] [f i k]
+             [g j l] [g l h] [h l i] [k i l] [k l j]]))))
 
 ;; Cut icosahedron to simplify texture mapping and other
 ;; 2d projections.
 
 #_(defn ^SimplicialComplex2D cut-icosahedron []
-  (let [a (simplex "a") b (simplex"b") c (simplex"c") d (simplex"d")
-        e (simplex"e") f (simplex"f") g (simplex"g") h (simplex"h")
-        i (simplex"i") j (simplex"j") k (simplex"k") l (simplex"l")
-        m (simplex"m") n (simplex"n") o (simplex"o")
-        p (simplex"p") q (simplex"q") r (simplex"r") s (simplex"s") t (simplex"t")
-        u (simplex"u") v (simplex"v")]
-    (simplicial-complex-2d
-     (map #(apply simplex %)
-          [[a f g] [b g h] [c h i] [d i j] [e j k]
-           [f l g] [g m h] [h n i] [i o j] [j p k]
-           [g l m] [h m n] [i n o] [j o p] [k p q]
-           [l r m] [m s n] [n t o] [o u p] [p v q]]))))
+    (let [a (simplex "a") b (simplex"b") c (simplex"c") d (simplex"d")
+          e (simplex"e") f (simplex"f") g (simplex"g") h (simplex"h")
+          i (simplex"i") j (simplex"j") k (simplex"k") l (simplex"l")
+          m (simplex"m") n (simplex"n") o (simplex"o")
+          p (simplex"p") q (simplex"q") r (simplex"r") s (simplex"s") t (simplex"t")
+          u (simplex"u") v (simplex"v")]
+      (simplicial-complex-2d
+       (map #(apply simplex %)
+            [[a f g] [b g h] [c h i] [d i j] [e j k]
+             [f l g] [g m h] [h n i] [i o j] [j p k]
+             [g l m] [h m n] [i n o] [j o p] [k p q]
+             [l r m] [m s n] [n t o] [o u p] [p v q]]))))
 
 ;;---------------------------------------------------------------
 ;; Not a simplex. No independent identity.
@@ -217,7 +235,7 @@
   (compareTo [_ that]
     (assert (instance? VertexPair that))
     (let [that ^VertexPair that
-          c (.compareTo z0  (.z0 that))]
+          c (.compareTo z0 (.z0 that))]
       (if (zero? c)
         (.compareTo z1 (.z1 that))
         c)))

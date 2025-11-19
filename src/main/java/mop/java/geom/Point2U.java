@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
  * @version 2025-11-13
  */
 
-
 @SuppressWarnings("PatternVariableCanBeUsed")
 public record Point2U (double _u, double _v)
 
