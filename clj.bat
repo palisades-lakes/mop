@@ -10,9 +10,9 @@ set TRACE=
 
 set UNWARN=--enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow
 
-set XMX=
+;;set XMX=
 ::set XMX=-Xms29g -Xmx29g -Xmn11g 
-;;set XMX=-Xms12g -Xmx12g -Xmn5g 
+set XMX=-Xms48g -Xmx48g -Xmn16g
 
 set OPENS=--add-opens java.base/java.lang=ALL-UNNAMED
 

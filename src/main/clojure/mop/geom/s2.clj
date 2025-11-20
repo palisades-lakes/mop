@@ -66,7 +66,7 @@
 
   (defn ^Vector2D u2-to-txt [^Point2U uv]
     (Vector2D/of (/ (.getU uv) TWO_PI)
-                 (- 1.0 (/ (.getV uv) Math/PI))))
+                 (/ (.getV uv) Math/PI)))
 
   (defn- ^Point2S check-candidate [^Vector3D candidate
                                    ^Vector3D from-normal

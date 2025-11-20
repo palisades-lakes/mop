@@ -199,6 +199,7 @@
 (defn- setup-elevation-texture [^WritableRaster image]
   (let [[^floats pixels ^int pw ^int ph] (image/pixels-as-floats image)
         texture-name (GL46/glGenTextures)]
+    (println pw "x" ph)
     (GL46/glBindTexture GL46/GL_TEXTURE_2D texture-name)
     (check-error)
     (GL46/glTexImage2D GL46/GL_TEXTURE_2D 0 GL46/GL_R32F pw ph 0 GL46/GL_RED GL46/GL_FLOAT pixels)
@@ -380,7 +381,7 @@
     (setup-lighting settings)
     (setup-view settings)
 
-    (GL46/glClearColor 0.0 0.0 0.0 1.0)
+    (GL46/glClearColor 0.2 0.2 0.2 1.0)
 
     ;; TODO: depth buffer rather than backface culling
     ;; Do I need to set fragment depth in shader?

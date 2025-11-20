@@ -11,7 +11,7 @@
             [mop.geom.space :as space])
   (:import [clojure.lang IFn]
            [java.util List]
-           [mop.cmplx.complex CellComplex]
+           [mop.cmplx.complex CellComplex ZeroSimplex]
            [mop.geom.mesh Mesh]
            [mop.java.cmplx Cell]))
 

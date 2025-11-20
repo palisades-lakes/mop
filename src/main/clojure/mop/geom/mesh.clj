@@ -12,8 +12,8 @@
             [mop.geom.space :as space])
   (:import [clojure.lang IFn]
            [java.util List]
-           [mop.cmplx.complex CellComplex SimplicialComplex2D
-                              VertexPair]
+           [mop.cmplx.complex CellComplex OneSimplex SimplicialComplex2D
+                              TwoSimplex VertexPair ZeroSimplex]
            [mop.java.cmplx Cell]
            [mop.java.geom Point2U]
            [org.apache.commons.geometry.spherical.twod GreatArc Point2S]))
