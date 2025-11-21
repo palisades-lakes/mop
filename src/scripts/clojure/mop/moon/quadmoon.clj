@@ -1,9 +1,9 @@
 (set! *warn-on-reflection* true)
 ;;(set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-;; clj src\scripts\clojure\mop\moon\moon.clj
+;; clj src\scripts\clojure\mop\moon\quadmoon.clj
 ;;----------------------------------------------------------------
-(ns mop.moon.moon
+(ns mop.moon.quadmoon
   {:doc "Mesh Viewer demo using lwjgl and glfw.
   Start with spherical quad mesh, subdivide, and transform to R^3.
   Started with https://clojurecivitas.github.io/opengl_visualization/main.html"
@@ -57,8 +57,8 @@
   (glfw/arcball-loop
    {:title           "icosamoon"
     :cmplx         (.cmplx s2-mesh)
-    :vertex-shader   "src/scripts/clojure/mop/icosamoon/icosamoon-vertex.glsl"
-    :fragment-shader "src/scripts/clojure/mop/icosamoon/icosamoon-fragment.glsl"
+    :vertex-shader   "src/main/glsl/planet/vertex.glsl"
+    :fragment-shader "src/main/glsl/planet/fragment.glsl"
     :txt-embedding  txt
     :s2-embedding   s2
     :xyz-embedding  xyz

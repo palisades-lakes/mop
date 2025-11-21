@@ -1,21 +1,22 @@
 (set! *warn-on-reflection* true)
-(set! *unchecked-math* :warn-on-boxed)
+;;(set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-;; clj src\scripts\clojure\mop\tetramoon\tetramoon.clj
+;; clj src\scripts\clojure\mop\icosamoon\icosamoonu2.clj
 ;;----------------------------------------------------------------
-(ns mop.tetramoon.tetramoon
+(ns mop.moon.icosamoonu2
   {:doc "Mesh Viewer demo using lwjgl and glfw.
   Start with spherical quad mesh, subdivide, and transform to R^3.
   Started with https://clojurecivitas.github.io/opengl_visualization/main.html"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-11-20"}
+   :version "2025-11-16"}
 
   (:require
    [mop.cmplx.complex :as cmplx]
    [mop.commons.debug :as debug]
+   [mop.geom.icosahedron :as icosahedron]
+   [mop.geom.mesh :as mesh]
    [mop.geom.rn :as rn]
    [mop.geom.s2 :as s2]
-   [mop.geom.tetrahedron :as tetrahedron]
    [mop.image.util :as image]
    [mop.lwjgl.glfw.util :as glfw])
 
@@ -29,26 +30,29 @@
 (println "LWJGL: " (org.lwjgl.Version/getVersion))
 
 (let [radius 1737.4
-      ^Mesh mesh
-      #_(tetrahedron/s2-up-forwards)
-      (tetrahedron/s2-up-backwards)
-      #_((comp
-        cmplx/midpoint-subdivide-4
-        cmplx/midpoint-subdivide-4
-        cmplx/midpoint-subdivide-4
-        cmplx/midpoint-subdivide-4
-        cmplx/midpoint-subdivide-4
-        )
-       (tetrahedron/s2-up-forwards))
-      s2 (.embedding mesh)
-      u2 (update-vals s2 s2/s2-to-u2)
+      ^Mesh initial (icosahedron/s2-icosahedron)
+      ^Mesh icosahedron-s2 ((comp
+                          ;cmplx/subdivide-4
+                          ;cmplx/subdivide-4
+                          ;cmplx/subdivide-4
+                          ;cmplx/subdivide-4
+                          ;cmplx/midpoint-subdivide-4
+                          )
+                         initial)
+      ^Mesh icosahedron-u2 (mesh/dateline-cut icosahedron-s2)
+      u2 (.embedding icosahedron-u2)
+      s2 (update-vals u2 s2/u2-to-s2)
       txt (update-vals u2 s2/u2-to-txt)
-      xyz (update-vals s2 (fn [^Point2S p] (rn/multiply (s2/s2-to-r3 p) radius)))
-      rgba (update-vals s2 s2/s2-to-rgba)
+      xyz (update-vals u2 (fn [^Point2S p] (rn/multiply (s2/u2-to-r3 p) radius)))
+      rgba (update-vals u2 s2/u2-to-rgba)
       ;; unit vectors pointing out
-      dual (update-vals s2 s2/s2-to-r3)
-      pairs (sort (cmplx/vertex-pairs (.cmplx mesh)))
+      dual (update-vals u2 s2/u2-to-r3)
+      pairs (cmplx/vertex-pairs (.cmplx icosahedron-s2))
       ]
+  (debug/echo (count (.vertices (.cmplx initial))))
+  (debug/echo (count (.faces (.cmplx initial))))
+  (debug/echo (count (.vertices (.cmplx icosahedron-u2))))
+  (debug/echo (count (.faces (.cmplx icosahedron-u2))))
   (doseq [^VertexPair e pairs]
     (let [a (s2 (.z0 e))
           b (s2 (.z1 e))
@@ -59,10 +63,10 @@
         (println (debug/simple-string i)))))
 
   (glfw/arcball-loop
-   {:title           "tetramoon"
-    :cmplx         (.cmplx mesh)
-    :vertex-shader   "src/scripts/clojure/mop/tetramoon/tetramoon-vertex.glsl"
-    :fragment-shader "src/scripts/clojure/mop/tetramoon/tetramoon-fragment.glsl"
+   {:title           "icosamoon"
+    :cmplx         (.cmplx icosahedron-u2)
+    :vertex-shader   "src/main/glsl/planet/vertex.glsl"
+    :fragment-shader "src/main/glsl/planet/fragment.glsl"
     :txt-embedding  txt
     :s2-embedding   s2
     :xyz-embedding  xyz

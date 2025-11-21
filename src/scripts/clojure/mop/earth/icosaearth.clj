@@ -1,13 +1,13 @@
 (set! *warn-on-reflection* true)
 ;;(set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-;; clj src\scripts\clojure\mop\icosaearth\icosaearth.clj
+;; clj src\scripts\clojure\mop\earth\icosaearth.clj
 ;;----------------------------------------------------------------
-(ns mop.icosaearth.icosaearth
+(ns mop.earth.icosaearth
   {:doc "Mesh Viewer demo using lwjgl and glfw.
   Started with https://clojurecivitas.github.io/opengl_visualization/main.html"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-11-20"}
+   :version "2025-11-21"}
 
   (:require
    [mop.cmplx.complex :as cmplx]
@@ -44,8 +44,8 @@
   (glfw/arcball-loop
    {:title "earth"
     :cmplx (.cmplx icosahedron)
-    :vertex-shader   "src/scripts/clojure/mop/icosaearth/icosaearth-vertex.glsl"
-    :fragment-shader "src/scripts/clojure/mop/icosaearth/icosaearth-fragment.glsl"
+    :vertex-shader   "src/main/glsl/planet/vertex.glsl"
+    :fragment-shader "src/main/glsl/planet/fragment.glsl"
     :txt-embedding txt
     :s2-embedding s2
     :xyz-embedding xyz

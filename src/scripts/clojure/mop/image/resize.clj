@@ -9,7 +9,7 @@
   Goal to get textures images small enough for
   <code>GL_MAX_TEXTURE_SIZE</code>"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-11-20"}
+   :version "2025-11-21"}
 
   (:require
    [clojure.java.io :as io]
@@ -22,10 +22,20 @@
 
 ;;-------------------------------------------------------------
 
+(defn ^BufferedImage get-image
+  ([path]
+   (let [image (ImageIO/read (io/file path))]
+     (pp/pprint path)
+     (pp/pprint image)
+     image))
+  )
+
+ ;;-------------------------------------------------------------
+
 (defn resize-tif [^String filename]
   (let [folder "images/earth/"
         filetype "tif"
-        ^BufferedImage image (image/get-image (str folder filename "." filetype))
+        ^BufferedImage image (get-image (str folder filename "." filetype))
         w (.getWidth image)
         h (.getHeight image)
         s (/ 16384 (Math/max w h))
@@ -43,22 +53,22 @@
 
 (resize-tif "ETOPO_2022_v1_60s_N90W180_bed")
 
-;(defn resize-png [^String filename]
-;  (let [folder "images/earth/"
-;        filetype "png"
-;        ^BufferedImage image (image/get-image (str folder filename "." filetype))
-;        w (.getWidth image)
-;        h (.getHeight image)
-;        s (/ 16384 (Math/max w h))
-;        sw (* s w)
-;        sh (* s h)
-;        resized (image/resize image sw sh)]
-;    (assert (<= sw w))
-;    (assert (<= sh h))
-;    (debug/echo image w h (.getType image))
-;    (debug/echo s sw sh)
-;    (image/write-png resized (io/file folder (str filename "-" sw "x" sh ".png")))
-;    ))
+(defn resize-png [^String filename]
+  (let [folder "images/earth/"
+        filetype "png"
+        ^BufferedImage image (image/get-image (str folder filename "." filetype))
+        w (.getWidth image)
+        h (.getHeight image)
+        s (/ 16384 (Math/max w h))
+        sw (* s w)
+        sh (* s h)
+        resized (image/resize image sw sh)]
+    (assert (<= sw w))
+    (assert (<= sh h))
+    (debug/echo image w h (.getType image))
+    (debug/echo s sw sh)
+    (image/write-png resized (io/file folder (str filename "-" sw "x" sh ".png")))
+    ))
 ;
 ;(resize-png "world.topo.bathy.200412.3x21600x10800")
 ;(resize-png "gebco_08_rev_elev_21600x10800")

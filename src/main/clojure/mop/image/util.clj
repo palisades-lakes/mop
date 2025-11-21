@@ -1,3 +1,4 @@
+
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
@@ -5,18 +6,19 @@
 
   {:doc     "Image utilities."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-20"}
+   :version "2025-11-21"}
 
-  (:require [clojure.java.io :as io])
+  (:require [clojure.java.io :as io]
+            [clojure.pprint :as pp])
   (:import [java.awt Image]
-           [java.awt.image BufferedImage DataBufferByte WritableRaster]
+           [java.awt.image BufferedImage DataBufferByte]
            [java.io File]
            [java.nio ByteBuffer FloatBuffer IntBuffer]
            [javax.imageio ImageIO]
            [org.lwjgl BufferUtils]))
 ;;---------------------------------------------------------------
 
-(defn download [url target]
+(defn- download [url target]
   (with-open [in (io/input-stream url)
               out (io/output-stream target)]
     (print "Downloading" target "... ")
@@ -25,18 +27,17 @@
     (println "done")))
 
 (defn ^BufferedImage get-image
+
   ([path]
-   (ImageIO/read (io/file path)))
+   (let [image (ImageIO/read (io/file path))]
+   (pp/pprint path)
+   (pp/pprint image)
+   image))
+
   ([path remote-url]
    (when (not (.exists (io/file path)))
      (download remote-url path))
    (get-image path)))
-
-#_(defn ^WritableRaster get-writeable-raster [local-path remote-url]
-    (when (not (.exists (io/file local-path)))
-      (download remote-url local-path))
-    (let [^BufferedImage image (ImageIO/read (io/file local-path)) ]
-      (.getRaster image)))
 
 ;;-------------------------------------------------------------
 ;; TODO: some way to avoid creating intermediate image?
