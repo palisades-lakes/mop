@@ -5,21 +5,21 @@
 
   {:doc     "LWJGL utilities"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-12"}
+   :version "2025-11-20"}
 
   (:require [clojure.math :as math]
             [clojure.pprint :as pp]
+            [mop.commons.debug :as debug]
             [mop.geom.mesh :as mesh]
             [mop.geom.rn :as rn]
             [mop.image.util :as image])
 
-  (:import [java.awt.image WritableRaster]
-           [java.nio ByteBuffer FloatBuffer IntBuffer]
+  (:import [java.awt.image BufferedImage]
+           [java.nio ByteBuffer FloatBuffer]
            [mop.cmplx.complex CellComplex SimplicialComplex2D]
            [org.apache.commons.geometry.euclidean.threed Vector3D]
            [org.apache.commons.geometry.euclidean.threed.rotation QuaternionRotation]
            [org.apache.commons.geometry.euclidean.twod Vector2D]
-           [org.lwjgl BufferUtils]
            [org.lwjgl.opengl GL46])  )
 
 ;;-------------------------------------------------------------------
@@ -136,26 +136,6 @@
 
 ;;-------------------------------------------------------------------
 
-(defn ^FloatBuffer float-buffer [^floats data]
-  (let [buffer (BufferUtils/createFloatBuffer (count data))]
-    (.put buffer data)
-    (.flip buffer)
-    buffer))
-
-(defn ^IntBuffer int-buffer [^ints data]
-  (let [buffer (BufferUtils/createIntBuffer (count data))]
-    (.put buffer data)
-    (.flip buffer)
-    buffer))
-
-(defn ^ByteBuffer byte-buffer [^bytes data]
-  (let [buffer (BufferUtils/createByteBuffer (count data))]
-    (.put buffer data)
-    (.flip buffer)
-    buffer))
-
-;;-------------------------------------------------------------------
-
 (defmulti texture-parameter
           "Set a GLSL uniform variable, dispatching on the value (usually by type)."
           (fn [_target _name value] (class value)))
@@ -173,6 +153,16 @@
   (check-error))
 
 ;;------------------------------------------------------------------
+
+(defn max-texture-buffer-size ^Integer []
+  (GL46/glGetInteger GL46/GL_MAX_TEXTURE_BUFFER_SIZE))
+
+(defn max-texture-size ^Integer []
+  (GL46/glGetInteger GL46/GL_MAX_TEXTURE_SIZE))
+
+(defn max-texture-coords ^Integer []
+  (GL46/glGetInteger GL46/GL_MAX_TEXTURE_COORDS))
+
 ;; TODO: probably not general enough
 
 (defn- setup-texture [texture-name]
@@ -187,17 +177,29 @@
   (GL46/glBindTexture GL46/GL_TEXTURE_2D 0)
   (check-error))
 
-(defn- setup-color-texture [^WritableRaster image]
-  (let [[^ints pixels ^int pw ^int ph] (image/pixels-as-ints image)
-        ^ByteBuffer bytes (byte-buffer (byte-array (map unchecked-byte pixels)))
-        texture-name (GL46/glGenTextures)]
+(defn- setup-color-texture [^BufferedImage image]
+  (let [[^ByteBuffer bytes ^int pw ^int ph] (image/pixels-as-bytes image)
+        nbytes (.limit bytes)
+        texture-name (GL46/glGenTextures)
+        max-dimension (int (max-texture-size))
+        max-buffer-size (int (max-texture-buffer-size))]
+    (when (or (> pw max-dimension)
+              (> ph max-dimension))
+      (throw (UnsupportedOperationException.
+              (str "Texture too large: " pw "x" ph " vs " max-dimension
+                   \newline
+                   (/ nbytes 3) " vs " max-buffer-size
+                   \newline
+                   (* pw ph) " vs " (* max-dimension max-dimension)))))
     (GL46/glBindTexture GL46/GL_TEXTURE_2D texture-name)
-    (GL46/glTexImage2D GL46/GL_TEXTURE_2D 0 GL46/GL_RGBA pw ph 0 GL46/GL_RGB GL46/GL_UNSIGNED_BYTE bytes)
+    (check-error)
+    (GL46/glTexImage2D GL46/GL_TEXTURE_2D 0 GL46/GL_RGBA pw ph 0 GL46/GL_BGR GL46/GL_UNSIGNED_BYTE bytes)
+    (check-error)
     (setup-texture texture-name)
     [texture-name pw ph]))
 
-(defn- setup-elevation-texture [^WritableRaster image]
-  (let [[^floats pixels ^int pw ^int ph] (image/pixels-as-floats image)
+(defn- setup-elevation-texture [^BufferedImage image]
+  (let [[^FloatBuffer pixels ^int pw ^int ph] (image/pixels-as-floats image)
         texture-name (GL46/glGenTextures)]
     (println pw "x" ph)
     (GL46/glBindTexture GL46/GL_TEXTURE_2D texture-name)
@@ -205,20 +207,23 @@
     (GL46/glTexImage2D GL46/GL_TEXTURE_2D 0 GL46/GL_R32F pw ph 0 GL46/GL_RED GL46/GL_FLOAT pixels)
     (check-error)
     (setup-texture texture-name)
-    [texture-name (math/sqrt (+ (* pw pw) (* ph ph)))]))
+    [texture-name (Math/sqrt (+ (* pw pw) (* ph ph)))]))
 
 (defn- setup-textures [{:keys
                         [^Integer program
-                         ^WritableRaster color-image
-                         ^WritableRaster elevation-image
+                         ^BufferedImage color-image
+                         ^BufferedImage elevation-image
                          ^Double radius]}]
+  (debug/echo (max-texture-buffer-size))
+  (debug/echo (max-texture-size))
+  (debug/echo (max-texture-coords))
   (let [[color-texture _ _] (setup-color-texture color-image)
         [elevation-texture ^Double r] (setup-elevation-texture elevation-image)
         resolution (/ (* (.doubleValue TwoPI) (.doubleValue radius))
                       (.doubleValue r))]
 
-    (println "color-texture: " color-texture)
-    (println "elevation-texture: " elevation-texture)
+    (debug/echo color-texture)
+    (debug/echo elevation-texture)
 
     (uniform program "colorTexture" 0)
 
@@ -281,7 +286,7 @@
 
   (let [[coordinates elements] (mesh/coordinates-and-elements input)
         coordinate-buffer (GL46/glGenBuffers)
-        coordinates (float-buffer (float-array coordinates))
+        coordinates (image/float-buffer (float-array coordinates))
         ;; TODO: get dimensions from embedding map codomains
         xyz-dimension (int 3)
         rgba-dimension (int 4)
@@ -289,7 +294,7 @@
         txt-dimension (int 2)
         vao (GL46/glGenVertexArrays)
         element-buffer (GL46/glGenBuffers)
-        element-indices (int-buffer (int-array elements))
+        element-indices (image/int-buffer (int-array elements))
         stride (int (* Float/BYTES
                        (+ xyz-dimension
                           rgba-dimension

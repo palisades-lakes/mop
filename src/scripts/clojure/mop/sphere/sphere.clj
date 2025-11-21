@@ -67,11 +67,11 @@
     :rgba-embedding  rgba
     :radius          radius
     :color-image
-    (image/get-writeable-raster
+    (image/get-image
      "images/lroc_color_poles_2k.tif"
      "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_poles_2k.tif")
     :elevation-image
-    (image/get-writeable-raster
+    (image/get-image
      "images/ldem_4.tif"
      "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/ldem_4.tif")})
   )

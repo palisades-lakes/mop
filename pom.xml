@@ -69,30 +69,48 @@
     </plugins>
   </build>
   <dependencies>
+    <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+      <version>${commons-lang3-version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-imaging</artifactId>
+      <version>${commons-imaging-version}</version>
+      <exclusions>
+        <!-- some versions have vulnerabilities -->
+        <exclusion>
+          <groupId>org.apache.commons</groupId>
+          <artifactId>commons-lang3</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-geometry-core</artifactId>
-      <version>1.0</version>
+      <version>${commons-geometry-version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-geometry-euclidean</artifactId>
-      <version>1.0</version>
+      <version>${commons-geometry-version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-geometry-spherical</artifactId>
-      <version>1.0</version>
+      <version>${commons-geometry-version}</version>
     </dependency>
     <dependency>
       <groupId>org.clojure</groupId>
       <artifactId>math.combinatorics</artifactId>
-      <version>0.3.0</version>
+      <version>${clojure-combinatorics-version}</version>
     </dependency>
     <dependency>
       <groupId>jonase</groupId>
       <artifactId>eastwood</artifactId>
-      <version>1.4.3</version>
+      <version>${eastwood-version}</version>
       <exclusions>
       <!-- early versions of clojure 1.12 have vulnerabilities -->
       <exclusion>

@@ -7,7 +7,7 @@
   {:doc "Mesh Viewer demo using lwjgl and glfw.
   Started with https://clojurecivitas.github.io/opengl_visualization/main.html"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-11-19"}
+   :version "2025-11-20"}
 
   (:require
    [mop.cmplx.complex :as cmplx]
@@ -42,32 +42,30 @@
       ]
   
   (glfw/arcball-loop
-   {:title           "earth"
-    :cmplx         (.cmplx icosahedron)
+   {:title "earth"
+    :cmplx (.cmplx icosahedron)
     :vertex-shader   "src/scripts/clojure/mop/icosaearth/icosaearth-vertex.glsl"
     :fragment-shader "src/scripts/clojure/mop/icosaearth/icosaearth-fragment.glsl"
-    :txt-embedding  txt
-    :s2-embedding   s2
-    :xyz-embedding  xyz
-    :dual-embedding  dual
-    :rgba-embedding  rgba
-    :radius          radius
+    :txt-embedding txt
+    :s2-embedding s2
+    :xyz-embedding xyz
+    :dual-embedding dual
+    :rgba-embedding rgba
+    :radius radius
     :color-image
-    (image/get-writeable-raster
+    #_(image/get-image
      "world.topo.bathy.200412.3x5400x2700.png"
      "https://eoimages.gsfc.nasa.gov/images/imagerecords/73000/73909/world.topo.bathy.200412.3x5400x2700.png")
-
-    #_(image/get-writeable-raster
-     "images/earth/world.200412.3x21600x10800.png"
-     "https://eoimages.gsfc.nasa.gov/images/imagerecords/74000/74218/world.200412.3x21600x10800.png")
-   #_ (image/get-writeable-raster
-     "images/earth/world.200412.3x5400x2700.png"
-     "https://eoimages.gsfc.nasa.gov/images/imagerecords/74000/74218/world.200412.3x5400x2700.png")
+    (image/get-image
+     "images/earth/world.topo.bathy.200412.3x21600x10800-16384x8192.png")
+    #_(image/get-image
+     "images/earth/world.topo.bathy.200412.3x21600x10800.png"
+     "https://eoimages.gsfc.nasa.gov/images/imagerecords/73000/73909/world.topo.bathy.200412.3x21600x10800.png")
     :elevation-image
-    (image/get-writeable-raster
+    (image/get-image
      "images/ldem_4.tif"
      "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/ldem_4.tif")
-    #_(image/get-writeable-raster
+    #_(image/get-image
      "images/earth/gebco_08_rev_elev_21600x10800.png"
      "https://eoimages.gsfc.nasa.gov/images/imagerecords/73000/73934/gebco_08_rev_elev_21600x10800.png")
     }))
