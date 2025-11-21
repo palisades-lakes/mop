@@ -1,14 +1,14 @@
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-;; clj src\scripts\clojure\mop\cube\cube.clj
+;; clj src\scripts\clojure\mop\moon\cubemoon.clj
 ;;----------------------------------------------------------------
-(ns mop.cube.cube
+(ns mop.moon.cubemoon
   {:doc "Mesh Viewer demo using lwjgl and glfw.
   Colored cube to help debugging.
   Started with https://clojurecivitas.github.io/opengl_visualization/main.html"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-11-15"}
+   :version "2025-11-21"}
 
   (:require
    [mop.cmplx.complex :as cmplx]
@@ -46,8 +46,8 @@
   (glfw/arcball-loop
    {:title           "icosamoon"
     :cmplx         (.cmplx cube-r3)
-    :vertex-shader   "src/scripts/clojure/mop/icosamoon/icosamoon-vertex.glsl"
-    :fragment-shader "src/scripts/clojure/mop/icosamoon/icosamoon-fragment.glsl"
+    :vertex-shader   "src/main/glsl/planet/vertex.glsl"
+    :fragment-shader "src/main/glsl/planet/fragment.glsl"
     :txt-embedding  txt
     :s2-embedding   s2
     :xyz-embedding  xyz

@@ -18,13 +18,14 @@
    [mop.image.util :as image])
   (:import [java.awt Image]
            [java.awt.image BufferedImage]
-           [javax.imageio ImageIO]))
+           [javax.imageio ImageIO]
+           [org.apache.commons.imaging Imaging]))
 
 ;;-------------------------------------------------------------
 
 (defn ^BufferedImage get-image
   ([path]
-   (let [image (ImageIO/read (io/file path))]
+   (let [image (Imaging/getBufferedImage (io/file path))]
      (pp/pprint path)
      (pp/pprint image)
      image))
