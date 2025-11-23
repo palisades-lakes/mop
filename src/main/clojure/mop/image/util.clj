@@ -6,38 +6,16 @@
 
   {:doc     "Image utilities."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-21"}
+   :version "2025-11-23"}
 
-  (:require [clojure.java.io :as io]
-            [clojure.pprint :as pp])
+  (:require [clojure.java.io :as io])
   (:import [java.awt Image]
-           [java.awt.image BufferedImage DataBufferByte]
+           [java.awt.image BufferedImage DataBufferByte RenderedImage]
            [java.io File]
            [java.nio ByteBuffer FloatBuffer IntBuffer]
            [javax.imageio ImageIO]
+           [org.apache.commons.imaging Imaging]
            [org.lwjgl BufferUtils]))
-;;---------------------------------------------------------------
-
-(defn- download [url target]
-  (with-open [in (io/input-stream url)
-              out (io/output-stream target)]
-    (print "Downloading" target "... ")
-    (flush)
-    (io/copy in out)
-    (println "done")))
-
-(defn ^BufferedImage get-image
-
-  ([path]
-   (let [image (ImageIO/read (io/file path))]
-   (pp/pprint path)
-   (pp/pprint image)
-   image))
-
-  ([path remote-url]
-   (when (not (.exists (io/file path)))
-     (download remote-url path))
-   (get-image path)))
 
 ;;-------------------------------------------------------------
 ;; TODO: some way to avoid creating intermediate image?
@@ -52,11 +30,42 @@
       (.dispose g)
       b)))
 
-;;-------------------------------------------------------------
+;;---------------------------------------------------------------
 
-(defn ^BufferedImage resize
+(defn- download [url target]
+  (with-open [in (io/input-stream url)
+              out (io/output-stream target)]
+    (print "Downloading" target "... ")
+    (flush)
+    (io/copy in out)
+    (println "done")))
+
+(defn ^BufferedImage get-image
+
+  ([path] (ImageIO/read (io/file path)))
+
+  #_([path] (Imaging/getBufferedImage (io/file path)))
+
+  ([path remote-url]
+   (when (not (.exists (io/file path)))
+     (download remote-url path))
+   (get-image path)))
+
+;;-----------------------------------------------------------------
+
+(defn- buffered-image-type [^BufferedImage image]
+  ;; BufferedImage constructor can't handle TYPE_CUSTOM=0
+  (let [type (.getType image)]
+    ;; HACKKKKKKKKKKKKKKKKKKKKKKKKK!!!
+    (if (== BufferedImage/TYPE_CUSTOM)
+      BufferedImage/TYPE_BYTE_GRAY
+      ;;else
+      type)))
+
+#_(defn ^BufferedImage resize
   ([^BufferedImage image ^long w ^long h ^long hints]
-   (to-buffered-image (.getScaledInstance image w h hints) (.getType image)))
+   (let [^RenderedImage resized (.getScaledInstance image w h hints)]
+     (to-buffered-image resized (buffered-image-type image))))
   ([^BufferedImage image ^long w ^long h]
    (resize image w h Image/SCALE_DEFAULT)))
 

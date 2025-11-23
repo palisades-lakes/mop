@@ -1,109 +1,150 @@
 (set! *warn-on-reflection* true)
-;;(set! *unchecked-math* :warn-on-boxed)
+(set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
 ;; clj src\scripts\clojure\mop\image\resize.clj
 ;;----------------------------------------------------------------
 (ns mop.image.resize
   {:doc
-  "Resize image and save.
-  Goal to get textures images small enough for
-  <code>GL_MAX_TEXTURE_SIZE</code>"
+   "Resize image and save.
+   Goal to get textures images small enough for
+   <code>GL_MAX_TEXTURE_SIZE</code>."
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-11-21"}
+   :version "2025-11-22"}
 
   (:require
    [clojure.java.io :as io]
    [clojure.pprint :as pp]
    [mop.commons.debug :as debug]
-   [mop.image.util :as image])
-  (:import [java.awt Image]
+   [mop.commons.io :as mci])
+  (:import [java.awt Graphics2D RenderingHints Transparency]
            [java.awt.image BufferedImage]
+           [java.io File]
            [javax.imageio ImageIO]
-           [org.apache.commons.imaging Imaging]))
+           [org.apache.commons.imaging ImageFormat Imaging]))
 
 ;;-------------------------------------------------------------
 
-(defn ^BufferedImage get-image
-  ([path]
-   (let [image (Imaging/getBufferedImage (io/file path))]
-     (pp/pprint path)
-     (pp/pprint image)
-     image))
+(defn ^BufferedImage read-image
+
+  ([^File file] (Imaging/getBufferedImage file))
+
+  #_([^File file] (ImageIO/read file))
   )
 
- ;;-------------------------------------------------------------
 
-(defn resize-tif [^String filename]
-  (let [folder "images/earth/"
-        filetype "tif"
-        ^BufferedImage image (get-image (str folder filename "." filetype))
-        w (.getWidth image)
-        h (.getHeight image)
-        s (/ 16384 (Math/max w h))
-        sw (* s w)
-        sh (* s h)
-        resized (image/resize image sw sh)]
-    (assert (<= sw w))
-    (assert (<= sh h))
-    (debug/echo image w h (.getType image))
-    (debug/echo s sw sh)
-    (image/write-tif resized (io/file folder (str filename "-" sw "x" sh ".tif")))
-    ))
-
-(pp/pprint (vec (ImageIO/getWriterFormatNames)))
-
-(resize-tif "ETOPO_2022_v1_60s_N90W180_bed")
-
-(defn resize-png [^String filename]
-  (let [folder "images/earth/"
-        filetype "png"
-        ^BufferedImage image (image/get-image (str folder filename "." filetype))
-        w (.getWidth image)
-        h (.getHeight image)
-        s (/ 16384 (Math/max w h))
-        sw (* s w)
-        sh (* s h)
-        resized (image/resize image sw sh)]
-    (assert (<= sw w))
-    (assert (<= sh h))
-    (debug/echo image w h (.getType image))
-    (debug/echo s sw sh)
-    (image/write-png resized (io/file folder (str filename "-" sw "x" sh ".png")))
-    ))
-;
-;(resize-png "world.topo.bathy.200412.3x21600x10800")
-;(resize-png "gebco_08_rev_elev_21600x10800")
-;(resize-png "gebco_08_rev_bath_21600x10800")
-
-
-#_(let [folder "images/earth/"
-      filename "world.topo.bathy.200412.3x21600x10800"
-      filetype "png"
-      ^BufferedImage image (image/get-image (str folder filename "." filetype))
-      w (.getWidth image)
-      h (.getHeight image)
-      s (/ 3840 (Math/max w h))
-      sw (* s w)
-      sh (* s h)
-      default (resize image sw sh Image/SCALE_DEFAULT)
-      average (resize image sw sh Image/SCALE_AREA_AVERAGING)
-      fast (resize image sw sh Image/SCALE_FAST)
-      replicate (resize image sw sh Image/SCALE_REPLICATE)
-      smooth (resize image sw sh Image/SCALE_SMOOTH)
-      ]
-  (assert (<= sw w))
-  (assert (<= sh h))
-  (debug/echo image w h (.getType image))
-  (debug/echo s sw sh)
-  ;(debug/echo default (.getWidth default) (.getHeight default) )
-  (write-png default (io/file folder (str filename "-" sw "x" sh "-default" ".png")))
-  (write-png average (io/file folder (str filename "-" sw "x" sh "-average" ".png")))
-  (write-png fast (io/file folder (str filename "-" sw "x" sh "-fast" ".png")))
-  (write-png replicate (io/file folder (str filename "-" sw "x" sh "-replicate" ".png")))
-  (write-png smooth (io/file folder (str filename "-" sw "x" sh "-smooth" ".png")))
-  ;(debug/echo average)
-  ;(debug/echo fast)
-  ;(debug/echo replicate)
-  ;(debug/echo smooth)
-
+(defn ^Boolean write-image [^BufferedImage image ^ImageFormat format ^File file]
+  (Imaging/writeImage image file format)
   )
+
+;;-------------------------------------------------------------
+;; see https://web.archive.org/web/20070515094604/https://today.java.net/pub/a/today/2007/04/03/perils-of-image-getscaledinstance.html
+
+(defn ^BufferedImage resize-image
+
+  "Resize <code>image</code>.
+  <dl>
+  <dt>targetWidth</dt><dd>resized width</dd>
+  <dt>targetHeight</dt><dd>resized height</dd>
+  <dt>hint</dt>\n<dd> value for RenderingHints.KEY_INTERPOLATION:\n<ul>
+  <li>RenderingHints/VALUE_INTERPOLATION_NEAREST_NEIGHBOR
+  <li>RenderingHints/VALUE_INTERPOLATION_BILINEAR
+  <li>RenderingHints/VALUE_INTERPOLATION_BICUBIC
+  </ul>
+  <dt>higherQuality<</dt>
+  <dd> if true, this method will use a multi-step
+  scaling technique that provides higher quality than the usual
+  one-step technique (only useful in downscaling cases, where
+  <code>w</code> or <code>h</code> is
+  smaller than the original dimensions, and generally only when
+  the BILINEAR hint is specified)
+  </dd>
+  </dl>
+  <br>
+  Return a resized version of the original image.
+  "
+
+  ([^BufferedImage image
+    ^Long targetWidth
+    ^Long targetHeight
+    ^Object hint
+    ^Boolean higherQuality]
+   (debug/echo image)
+   ;; TODO: get type from original image?
+   ;; TODO preserve aspect ratio?
+   (let [type (.getType image)
+         #_(if (== (.getTransparency image) Transparency/OPAQUE)
+             BufferedImage/TYPE_INT_RGB
+             BufferedImage/TYPE_INT_ARGB)
+         ]
+     (loop [^BufferedImage ret image
+            ;; TODO: is this really a good idea?
+            ;; If higherQuality
+            ;; Use multistep technique: start with original size, then
+            ;; scale down in multiple passes with drawImage()
+            ;; until the target size is reached
+            ;; else
+            ;; Use one-step technique: scale directly from original
+            ;; size to target size with a single drawImage() call
+             w (if higherQuality (.getWidth image) targetWidth)
+             h (if higherQuality (.getHeight image) targetHeight)]
+       (let [w (int w)
+             h (int h)
+             targetWidth (int targetWidth)
+             targetHeight (int targetHeight)
+             ^int w (when (and higherQuality (>  w targetWidth)) (quot w 2))
+             w (if (< w targetWidth) targetWidth w)
+             ^int h (when (and higherQuality (> h targetHeight)) (quot h 2))
+             h (if (< h targetHeight) targetHeight h)
+             ^BufferedImage tmp (BufferedImage. w h type)
+             ^Graphics2D g2 (.createGraphics tmp)]
+         (pp/pprint [w h])
+         (.setRenderingHint g2 RenderingHints/KEY_INTERPOLATION hint)
+         (.drawImage g2 ret 0 0 w h nil)
+         (.dispose g2)
+         (if (and (== w targetWidth) (== h targetHeight))
+           ret
+           (recur tmp w h))
+         ))))
+
+  ([^BufferedImage image ^long w ^long h ^Object hint]
+   (resize-image image w h hint true))
+
+  ([^BufferedImage image ^long w ^long h]
+   (resize-image image w h RenderingHints/VALUE_INTERPOLATION_BILINEAR)))
+
+(defn resize [source
+              ^Integer max-dimension]
+  (println)
+  (debug/echo source)
+  (let [file (io/file source)
+        folder (.getParentFile file)
+        filename (mci/prefix file)
+        extension (mci/extension file)
+        ^BufferedImage image (read-image file)
+        w (.getWidth image)
+        h (.getHeight image)
+        s (/ (double max-dimension) (Math/max w h))
+        sw (long (* s w))
+        sh (long (* s h))
+        resized (resize-image image sw sh)
+        outfile (io/file folder (str filename "-" sw "x" sh "." extension)) ]
+    (debug/echo image)
+    (debug/echo resized)
+    (assert (<= sw w))
+    (assert (<= sh h))
+    (write-image resized (Imaging/guessFormat file) outfile)
+    ))
+
+;;-------------------------------------------------------------
+(doall
+ (map #(resize % 16384)
+      [
+       ;"images/earth/eo_base_2020_clean_geo.tif"
+       ;"images/earth/ETOPO_2022_v1_60s_N90W180_bed.tif"
+       ;"images/earth/ETOPO_2022_v1_60s_N90W180_geoid.tif"
+       ;"images/earth/ETOPO_2022_v1_60s_N90W180_surface.tif"
+       "images/earth/gebco_08_rev_bath_21600x10800.png"
+       "images/earth/gebco_08_rev_elev_21600x10800.png"
+       ;"images/earth/world.topo.bathy.200412.3x21600x10800.png"
+       ;"images/earth/world.200412.3x21600x10800.png"
+       ]))

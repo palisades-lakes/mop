@@ -4,9 +4,8 @@
 (ns mop.geom.mesh
   {:doc     "Embedded cell complexes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-18"}
+   :version "2025-11-23"}
   (:require [mop.cmplx.complex :as cmplx]
-            [mop.commons.debug :as debug]
             [mop.geom.rn :as rn]
             [mop.geom.s2 :as s2]
             [mop.geom.space :as space])
@@ -203,9 +202,6 @@ most likely R^3 or S^2."
         ab (s2/dateline-crossing pa pb)
         bc (s2/dateline-crossing pb pc)
         ca (s2/dateline-crossing pc pa)]
-    (debug/echo ab)
-    (debug/echo bc)
-    (debug/echo ca)
     (cond
       ab
       (cond
@@ -267,8 +263,6 @@ most likely R^3 or S^2."
         (triangle-mesh (cmplx/simplicial-complex-2d faces) u2-embedding)
         (let [{:keys [u2 new-faces]}
               (dateline-cut-face s2-embedding (first faces))]
-          (debug/echo u2)
-          (debug/echo new-faces)
           (recur (concat new-faces faces)
                  (rest remaining)
                  (merge u2 u2-embedding)))))))

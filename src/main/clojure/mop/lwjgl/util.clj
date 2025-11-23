@@ -5,11 +5,10 @@
 
   {:doc     "LWJGL utilities"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-20"}
+   :version "2025-11-23"}
 
   (:require [clojure.math :as math]
             [clojure.pprint :as pp]
-            [mop.commons.debug :as debug]
             [mop.geom.mesh :as mesh]
             [mop.geom.rn :as rn]
             [mop.image.util :as image])
@@ -214,16 +213,10 @@
                          ^BufferedImage color-image
                          ^BufferedImage elevation-image
                          ^Double radius]}]
-  (debug/echo (max-texture-buffer-size))
-  (debug/echo (max-texture-size))
-  (debug/echo (max-texture-coords))
   (let [[color-texture _ _] (setup-color-texture color-image)
         [elevation-texture ^Double r] (setup-elevation-texture elevation-image)
         resolution (/ (* (.doubleValue TwoPI) (.doubleValue radius))
                       (.doubleValue r))]
-
-    (debug/echo color-texture)
-    (debug/echo elevation-texture)
 
     (uniform program "colorTexture" 0)
 

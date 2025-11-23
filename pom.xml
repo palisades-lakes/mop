@@ -5,13 +5,12 @@
 
   <!-- groupId>palisades-lakes</groupId -->
   <artifactId>mop</artifactId>
-  <description>meshes (mostly simplicial), their optimization,
-    and viewers</description>
+  <description>meshes (mostly simplicial), their optimization, and viewers</description>
   <version>0.0.1</version>
   <parent>
     <groupId>palisades-lakes</groupId>
     <artifactId>palisades-lakes-parent</artifactId>
-    <version>0.0.11-SNAPSHOT</version>
+    <version>0.0.11</version>
   </parent>
   <build>
     <plugins>
@@ -69,6 +68,44 @@
     </plugins>
   </build>
   <dependencies>
+    <!--
+    <dependency>
+      <groupId>clj-http</groupId>
+      <artifactId>clj-http</artifactId>
+      <version>${clj-http-version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+      <version>4.5.14</version>
+    </dependency>
+    -->
+    <dependency>
+      <groupId>com.drewnoakes</groupId>
+      <artifactId>metadata-extractor</artifactId>
+      <version>${metadata-extractor-version}</version>
+    </dependency>
+    <!--
+    <dependency>
+      <groupId>io.joshmiller</groupId>
+      <artifactId>exif-processor</artifactId>
+      <version>${exif-processor-version}</version>
+      <exclusions>
+        <exclusion>
+        <groupId>clj-http</groupId>
+        <artifactId>clj-http</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.drewnoakes</groupId>
+          <artifactId>metadata-extractor</artifactId>
+        </exclusion>
+        <exclusion>
+        <groupId>org.clojure</groupId>
+        <artifactId>clojure</artifactId>
+        </exclusion>
+    </exclusions>
+    </dependency>
+    -->
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
@@ -105,6 +142,13 @@
       <groupId>org.clojure</groupId>
       <artifactId>math.combinatorics</artifactId>
       <version>${clojure-combinatorics-version}</version>
+      <exclusions>
+        <!-- early versions of clojure 1.12 have vulnerabilities -->
+        <exclusion>
+          <groupId>org.clojure</groupId>
+          <artifactId>clojure</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>jonase</groupId>
@@ -140,7 +184,6 @@
       <classifier>${lwjgl.natives}</classifier>
       <version>${lwjgl.version}</version>
     </dependency>
-
     <dependency>
       <groupId>org.lwjgl</groupId>
       <artifactId>lwjgl-glfw</artifactId>
