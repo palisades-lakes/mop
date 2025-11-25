@@ -14,6 +14,7 @@
    :version "2025-11-17"}
 
   (:require [mop.commons.debug :as debug]
+            [mop.commons.string :as mcs]
             [mop.geom.rn :as rn]
             [mop.geom.space :as space])
   (:import
@@ -28,12 +29,12 @@
 
 ;;----------------------------------------------------------------
 
-(defmethod debug/simple-string Point2S [^Point2S p]
+(defmethod mcs/simple-string Point2S [^Point2S p]
   (str "s2[" (.getAzimuth p) "," (.getPolar p) "]"))
 
-(defmethod debug/simple-string GreatArc [^GreatArc a]
-  (str "arc[" (debug/simple-string (.getStartPoint a))
-       "->" (debug/simple-string (.getEndPoint a)) "]"))
+(defmethod mcs/simple-string GreatArc [^GreatArc a]
+  (str "arc[" (mcs/simple-string (.getStartPoint a))
+       "->" (mcs/simple-string (.getEndPoint a)) "]"))
 
 ;;----------------------------------------------------------------
 
@@ -83,7 +84,7 @@
                (< (.dot candidate to-normal) 0.0))
         candidate-s2
         (do
-          ;(debug/echo (debug/simple-string candidate-s2))
+          ;(debug/echo (mcs/simple-string candidate-s2))
           ;  (debug/echo (.eq precision candidate-azimuth 0.0))
           ;  (debug/echo (.eq precision candidate-azimuth TWO_PI))
           ;  (debug/echo (.dot candidate from-normal))

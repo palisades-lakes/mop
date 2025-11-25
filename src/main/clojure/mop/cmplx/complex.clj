@@ -4,14 +4,13 @@
 (ns mop.cmplx.complex
   {:doc     "(Abstract) simplicial and cell complexes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-16"}
+   :version "2025-11-23"}
   (:require [clojure.set :as set]
-            [mop.commons.debug :as debug])
+            [mop.commons.string :as mcs])
   (:import [java.util List]
            [mop.java.cmplx Cell]))
 ;;---------------------------------------------------------------
 ;; TODO: move these to Java to get better control over construction?
-;;---------------------------------------------------------------
 ;;---------------------------------------------------------------
 ;; AKA '(Abstract) Vertex'.
 ;; The basic unit of identity used to build
@@ -173,10 +172,10 @@
 (defn faces [^CellComplex complex] (.faces complex))
 ;;---------------------------------------------------------------
 
-(defmethod debug/simple-string SimplicialComplex2D [^SimplicialComplex2D this]
+(defmethod mcs/simple-string SimplicialComplex2D [^SimplicialComplex2D this]
   (str "SimplicialCmplx2D["
        (apply print-str
-              (map #(str \newline " " (debug/simple-string %))
+              (map #(str \newline " " (mcs/simple-string %))
                    (.faces this)))
        "]"))
 

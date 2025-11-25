@@ -7,9 +7,10 @@
   obvious place elsewhere in mop."
 
   {:author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-23"}
+   :version "2025-11-24"}
 
-  (:require [clojure.string :as s])
+  (:require [clojure.java.io :as io]
+            [clojure.string :as s])
   (:import [java.io File]))
 
 ;;----------------------------------------------------------------
@@ -21,6 +22,8 @@
       filename
       (subs filename 0 i))))
 
+;;----------------------------------------------------------------
+
 (defn extension ^String [^File f]
   (let [filename (.getName f)
         i (s/last-index-of filename ".")
@@ -29,3 +32,17 @@
                       (subs filename (inc (long i))))]
     (if (>= 5 (.length ext) 2) ext "")))
 
+;;-------------------------------------------------------------
+(defn ^File replace-extension [source new-extension]
+  (let [file (io/file source)
+        folder (.getParentFile file)
+        filename (prefix file)]
+    (io/file folder (str filename "." new-extension))))
+
+(defn ^File append-to-filename [source suffix]
+  (let [file (io/file source)
+        folder (.getParentFile file)
+        filename (prefix file)
+        extension (extension file)]
+    (io/file folder (str filename suffix "." extension))))
+;;----------------------------------------------------------------

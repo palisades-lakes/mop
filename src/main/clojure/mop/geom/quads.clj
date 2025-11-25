@@ -4,7 +4,7 @@
    :version "2025-11-18"}
   (:require [clojure.set :as set]
             [mop.cmplx.complex :as cmplx]
-            [mop.commons.debug :as debug]
+            [mop.commons.string :as mcs]
             [mop.geom.mesh :as mesh]
             [mop.geom.rn :as rn]
             [mop.geom.s2 :as s2]
@@ -83,10 +83,10 @@
 
 ;;---------------------------------------------------------------
 
-(defmethod debug/simple-string QuadComplex [^QuadComplex this]
+(defmethod mcs/simple-string QuadComplex [^QuadComplex this]
   (str "QCmplx["
        (apply print-str
-              (map #(str \newline " " (debug/simple-string %))
+              (map #(str \newline " " (mcs/simple-string %))
                    (.faces this)))
        "]"))
 
@@ -180,11 +180,11 @@
 
 ;;---------------------------------------------------------------
 
-(defmethod debug/simple-string QuadMesh [^QuadMesh this]
+(defmethod mcs/simple-string QuadMesh [^QuadMesh this]
   (str "QuadMesh[" \newline " "
-       (debug/simple-string (.cmplx this))
+       (mcs/simple-string (.cmplx this))
        \newline
-       (debug/simple-string (.embedding this))
+       (mcs/simple-string (.embedding this))
        "]"))
 
 ;;---------------------------------------------------------------

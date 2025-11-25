@@ -59,8 +59,8 @@
           i (s2/dateline-crossing a b)]
       (println (.toString e))
       (when i
-        (println (debug/simple-string a) "->" (debug/simple-string b))
-        (println (debug/simple-string i)))))
+        (println (mcs/simple-string a) "->" (mcs/simple-string b))
+        (println (mcs/simple-string i)))))
 
   (glfw/arcball-loop
    {:title           "icosamoon"

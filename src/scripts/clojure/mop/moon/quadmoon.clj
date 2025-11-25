@@ -8,11 +8,10 @@
   Start with spherical quad mesh, subdivide, and transform to R^3.
   Started with https://clojurecivitas.github.io/opengl_visualization/main.html"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-11-15"}
+   :version "2025-11-24"}
 
   (:require
    [mop.cmplx.complex :as cmplx]
-   [mop.commons.debug :as debug]
    [mop.geom.quads :as quads]
    [mop.geom.rn :as rn]
    [mop.geom.s2 :as s2]
@@ -51,8 +50,8 @@
           i (s2/dateline-crossing a b)]
       (println (.toString e))
       (when i
-        (println (debug/simple-string a) "->" (debug/simple-string b))
-        (println (debug/simple-string i)))))
+        (println (mcs/simple-string a) "->" (mcs/simple-string b))
+        (println (mcs/simple-string i)))))
 
   (glfw/arcball-loop
    {:title           "icosamoon"

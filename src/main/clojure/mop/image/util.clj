@@ -6,16 +6,141 @@
 
   {:doc     "Image utilities."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-23"}
+   :version "2025-11-24"}
 
-  (:require [clojure.java.io :as io])
-  (:import [java.awt Image]
+  (:require [clojure.java.io :as io]
+            [clojure.string :as s]
+            [mop.commons.debug :as debug]
+            [mop.commons.io :as mci]
+            [mop.commons.string :as mcs])
+  (:import [com.drew.imaging ImageMetadataReader]
+           [com.drew.metadata Directory Metadata Tag]
+           [com.drew.metadata.exif ExifIFD0Directory]
+           [com.drew.metadata.xmp XmpDirectory]
+           [java.awt Image]
            [java.awt.image BufferedImage DataBufferByte RenderedImage]
            [java.io File]
            [java.nio ByteBuffer FloatBuffer IntBuffer]
+           [java.util Map$Entry]
            [javax.imageio ImageIO]
            [org.apache.commons.imaging Imaging]
            [org.lwjgl BufferUtils]))
+
+;;----------------------------------------------------------------
+(def ^:private image-file-type?
+  #{"3fr"                                                   ;; Hasselblad
+    #_"3g2"
+    #_"3gp"
+    "ari"                                                   ;; Arri Alexa
+    "arw" "srf" "sr2"                                       ;; Sony
+    "bay"                                                   ;; Casio
+    "bmp"
+    "cri"                                                   ;; Cintel
+    "crw" "cr2"                                             ;; Canon
+    "cap" "iiq" "eip"                                       ;; Phase One
+    "dcs" "dcr" "drf" "k25" "kdc"                           ;; Kodak
+    "dng"                                                   ;; Adobe, Leica
+    "erf"                                                   ;; Epson
+    "fff"                                                   ;; Imacon/Hasselblad raw
+    #_"gif"
+    "ico"
+    "jpeg" "jpg"
+    "m4v"
+    "mef"                                                   ;; Mamiya
+    "mdc"                                                   ;; Minolta, Agfa
+    "mos"                                                   ;; Leaf
+    #_"mov"
+    #_"mp4"
+    "mrw"                                                   ;; Minolta, Konica Minolta
+    "nef" "nrw"                                             ;; Nikon
+    "orf"                                                   ;; Olympus
+    "pcx"
+    "pef" "ptx"                                             ;; Pentax
+    "png"
+    "psd"
+    "pxn"                                                   ;; Logitech
+    "r3d"                                                   ;; RED Digital Cinema
+    "raf"                                                   ;; Fuji
+    "raw"                                                   ;; Panasonic, Leica
+    "rw2"                                                   ;; Panasonic
+    "rwl"                                                   ;; Leica
+    "rwz"                                                   ;; Rawzor
+    "srw"                                                   ;; Samsung
+    "tif" "tiff"
+    "webp"
+    "x3f"                                                   ;; Sigma
+    })
+;;-------------------------------------------------------------
+(defn image-file? [^File f]
+  ;; filter out some odd hidden files in recycle bins, etc.
+  (and (not (s/starts-with? (.getName f) "$"))
+       (image-file-type? (mci/extension f))))
+;;----------------------------------------------------------------
+(defn image-file-seq
+
+  "Return a <code>seq</code> of all the files, in any folder under
+   <code>d</code>, that are accepted by
+   <code>image-file?</code>., which at present is just a set of
+   known image file endings."
+
+  [^File d]
+
+  (assert (.exists d) (.getPath d))
+  (filter image-file? (file-seq d)))
+
+;;-------------------------------------------------------------
+;; metadata
+;;-------------------------------------------------------------
+
+(defn ^Metadata read-metadata [source]
+  (ImageMetadataReader/readMetadata (io/file source)))
+
+;;-------------------------------------------------------------
+
+(defn write-metadata-markdown
+  ([source ^Metadata metadata destination]
+   (debug/echo destination)
+   ;; source might be a File or a String
+   (let [^File source-file (io/file source)
+         ^String fileName (.getName source-file)
+         ^String urlName (.toURL (.toURI (.getCanonicalFile source-file)))
+         ^ExifIFD0Directory exifIFD0Directory (.getFirstDirectoryOfType metadata ExifIFD0Directory)
+         ^String make (if (nil? exifIFD0Directory) "" (.getString exifIFD0Directory ExifIFD0Directory/TAG_MAKE))
+         ^String model (if (nil? exifIFD0Directory) "" (.getString exifIFD0Directory ExifIFD0Directory/TAG_MODEL))]
+     (with-open [w (io/writer destination)]
+       (binding [*out* w]
+         (println )
+         (println "---")
+         (println )
+         (printf "# %s - %s%n" make model)
+         (println )
+         (printf "<a href=\"%s\">%n", urlName)
+         (printf "<img src=\"%s\" width=\"300\"/><br/>%n", urlName)
+         (println fileName)
+         (println "</a>")
+         (println )
+         (println "|Directory | Tag Id | Tag Name | Extracted Value|")
+         (println "|:--------:|-------:|----------|----------------|")
+         (doseq [^Directory directory (.getDirectories metadata)]
+           (let [^String directoryName  (.getName directory)]
+             (doseq [^Tag tag (.getTags directory)]
+               (let [^String tagName (.getTagName tag)
+                     ^String description (mcs/truncate-string (.getDescription tag))]
+                 (printf "|%s|0x%s|%s|%s|%n" directoryName (Integer/toHexString (.getTagType tag))
+                         tagName description)
+                 (if (instance? XmpDirectory directory)
+                   (doseq [^Map$Entry property (.entrySet (.getXmpProperties ^XmpDirectory directory))]
+                     (let [^String key (.getKey property)
+                           ^String value (mcs/truncate-string (.getValue property))]
+                       (printf "|%s||%s|%s|%n" directoryName key value)))))))
+           (doseq [^String error (.getErrors directory)] (println "ERROR: " error)))))))
+
+  ([source]
+   (let [metadata (read-metadata source)
+         file (io/file source)
+         folder (.getParentFile file)
+         filename (mci/prefix file)]
+     (write-metadata-markdown source metadata (io/file folder (str filename ".md"))))))
 
 ;;-------------------------------------------------------------
 ;; TODO: some way to avoid creating intermediate image?
