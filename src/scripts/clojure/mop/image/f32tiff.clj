@@ -58,12 +58,13 @@
         height (int height)
         nRowsInBlock (int nRowsInBlock)
         nColsInBlock (int nColsInBlock)
-        nColsOfBlocks  (quot (+ width nColsInBlock -1) nColsInBlock)
-        nRowsOfBlocks (quot (+ height nRowsInBlock 1) nRowsInBlock)
+        nColsOfBlocks (quot (+ width nColsInBlock -1) nColsInBlock)
+        nRowsOfBlocks (quot (+ height nRowsInBlock -1) nRowsInBlock)
         bytesPerPixel 4
         nBlocks (* nRowsOfBlocks nColsOfBlocks)
         nBytesInBlock (* bytesPerPixel nRowsInBlock nColsInBlock)
         ^"[[B" blocks (make-array Byte/TYPE nBlocks nBytesInBlock)]
+    (debug/echo nRowsInBlock nColsInBlock nColsOfBlocks nRowsOfBlocks nBlocks)
     (dotimes [i height]
       (let [blockRow (quot i nRowsInBlock)
             rowInBlock (- i (* blockRow nRowsInBlock))
@@ -108,8 +109,9 @@
     (.add outDir TiffTagConstants/TIFF_TAG_PHOTOMETRIC_INTERPRETATION (short TiffTagConstants/PHOTOMETRIC_INTERPRETATION_VALUE_BLACK_IS_ZERO))
     (.add outDir TiffTagConstants/TIFF_TAG_COMPRESSION (short TiffTagConstants/COMPRESSION_VALUE_UNCOMPRESSED))
     (.add outDir TiffTagConstants/TIFF_TAG_PLANAR_CONFIGURATION (short TiffTagConstants/PLANAR_CONFIGURATION_VALUE_CHUNKY))
-    (.add outDir TiffTagConstants/TIFF_TAG_ROWS_PER_STRIP (int-array 1 2))
+    (.add outDir TiffTagConstants/TIFF_TAG_ROWS_PER_STRIP (int-array 1 1))
     (.add outDir TiffTagConstants/TIFF_TAG_STRIP_BYTE_COUNTS (int-array 1 nBytesInBlock))
+    (debug/echo (alength blocks))
     (dotimes [i (alength blocks)]
       (let [^bytes block-i (aget blocks i)]
         (aset imageData i (AbstractTiffImageData$Data. 0 (alength block-i) block-i))))
@@ -194,7 +196,8 @@
     (debug/echo (.getWidth fullRaster) (.getHeight fullRaster))
     (pp/pprint fullRaster)
     (image/write-metadata-markdown input)
-    (writeFileF32 (.getData fullRaster) w h nRowsInBlock nColsInBlock byteOrder output)))
+    (writeFileF32 (.getData fullRaster) w h nRowsInBlock nColsInBlock byteOrder output)
+    (image/write-metadata-markdown output)))
 ;;-------------------------------------------------------------
 
 #_(tiff-fp-read-write "images/usgs/USGS_13_n38w077_dir5.tiff" -2.0 62.0 -99999.0)
