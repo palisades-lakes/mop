@@ -98,6 +98,7 @@
                 value]
   (debug/echo value)
   (.removeField dir tag)
+  ;;noinspection
   (.add dir tag value))
 
 ;;-------------------------------------------------------------
@@ -115,8 +116,8 @@
         nBytesInBlock (* (int nRowsInBlock) (int nColsInBlock) (int 4))
         ^TiffOutputSet outputSet (.getOutputSet metadata)
         ^TiffOutputDirectory outDir (.getOrCreateRootDirectory outputSet)
-        ^objects imageData (make-array AbstractTiffElement$DataElement (alength blocks))
-        ^AbstractTiffImageData abstractTiffImageData (AbstractTiffImageData$Strips. imageData nRowsInBlock)]
+        ^objects imageElements (make-array AbstractTiffElement$DataElement (alength blocks))
+        ^AbstractTiffImageData imageData (AbstractTiffImageData$Strips. imageElements nRowsInBlock)]
     ;(set-tag outDir TiffTagConstants/TIFF_TAG_IMAGE_WIDTH (int-array 1 width))
     ;(set-tag outDir TiffTagConstants/TIFF_TAG_IMAGE_LENGTH (int-array 1  height))
     ;(set-tag outDir TiffTagConstants/TIFF_TAG_SAMPLE_FORMAT (short-array 1 (short TiffTagConstants/SAMPLE_FORMAT_VALUE_IEEE_FLOATING_POINT)))
@@ -128,13 +129,13 @@
     ;(set-tag outDir TiffTagConstants/TIFF_TAG_ROWS_PER_STRIP (int-array 1 1))
     (set-tag outDir TiffTagConstants/TIFF_TAG_STRIP_BYTE_COUNTS (int-array 1 nBytesInBlock))
 
-    (set-tag outDir TiffTagConstants/TIFF_TAG_DOCUMENT_NAME (into-array String [(str outputFile)]))
+    #_(set-tag outDir TiffTagConstants/TIFF_TAG_DOCUMENT_NAME (into-array String [(str outputFile)]))
 
     (debug/echo (alength blocks))
     (dotimes [i (alength blocks)]
       (let [^bytes block-i (aget blocks i)]
-        (aset imageData i (AbstractTiffImageData$Data. 0 (alength block-i) block-i))))
-    (.setTiffImageData outDir abstractTiffImageData)
+        (aset imageElements i (AbstractTiffImageData$Data. 0 (alength block-i) block-i))))
+    (.setTiffImageData outDir imageData)
     (with-open [os (BufferedOutputStream. (io/output-stream outputFile))]
       ;;TODO: lossless!?
       (let [^TiffImageWriterLossy writer (TiffImageWriterLossy. byteOrder)]
@@ -223,6 +224,6 @@
 
 #_(read-write-TiffF32 "images/usgs/USGS_13_n38w077_dir5.tiff")
 ;; TODO: what's the real range for this file?
-(read-write-read-TiffF32 "images/moon/ldem_4.tif")
-#_(read-write-TiffF32 "images/moon/ldem_4.tif")
+#_(read-write-read-TiffF32 "images/moon/ldem_4.tif")
+(read-write-TiffF32 "images/moon/ldem_4.tif")
 ;;(tiff-fp-read-write "images/earth/ETOPO_2022_v1_60s_N90W180_geoid.tif")
