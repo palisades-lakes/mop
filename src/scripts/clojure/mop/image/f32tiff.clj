@@ -7,7 +7,7 @@
   {:doc
    "Read and write 32bit Float grayscale TIFFs."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-25"}
+   :version "2025-11-26"}
 
   (:require
    [clojure.java.io :as io]
@@ -22,13 +22,15 @@
    [java.io BufferedOutputStream File]
    [java.nio ByteOrder]
    [java.util List]
-   [org.apache.commons.imaging FormatCompliance]
+   [org.apache.commons.imaging FormatCompliance Imaging]
    [org.apache.commons.imaging.bytesource ByteSource]
    [org.apache.commons.imaging.formats.tiff
-    AbstractTiffElement$DataElement AbstractTiffImageData AbstractTiffImageData$Data AbstractTiffImageData$Strips AbstractTiffRasterData TiffContents TiffDirectory TiffImagingParameters TiffReader]
+    AbstractTiffElement$DataElement AbstractTiffImageData AbstractTiffImageData$Data AbstractTiffImageData$Strips
+    AbstractTiffRasterData TiffContents TiffDirectory TiffImageMetadata TiffImagingParameters TiffReader]
    [org.apache.commons.imaging.formats.tiff.constants TiffTagConstants]
    [org.apache.commons.imaging.formats.tiff.photometricinterpreters.floatingpoint
     PaletteEntryForRange PaletteEntryForValue PhotometricInterpreterFloat]
+   [org.apache.commons.imaging.formats.tiff.taginfos TagInfo]
    [org.apache.commons.imaging.formats.tiff.write TiffImageWriterLossy TiffOutputDirectory TiffOutputSet]))
 ;;-------------------------------------------------------------
 ;; see
@@ -39,7 +41,7 @@
 ;; ^"[[B"
 
 (defn- getBytesForOutput32  [^floats f width height nRowsInBlock nColsInBlock
-                                    ^ByteOrder byteOrder]
+                             ^ByteOrder byteOrder]
   "Gets the bytes for output for a 32 bit floating point format.
   Note that this method operates over 'blocks' of data which may represent either TIFF Strips
   or Tiles. When processing strips, there is always one column of blocks
@@ -91,26 +93,44 @@
     blocks))
 
 ;;-------------------------------------------------------------
-;; NOTE: Tile format not supported by commons imaging as of 20o25-11-25
+
+(defn- set-tag [^TiffOutputDirectory dir
+                ^TagInfo tag
+                value]
+  (debug/echo value)
+  (.removeField dir tag)
+  (.add dir tag value))
+
+;;-------------------------------------------------------------
+;; NOTE: Tile format not supported by commons imaging as of 2025-11-25
+;; TODO: get nRowsInBLock nColsInBlock from input file, when not resizing
+
 (defn- writeFileF32 [^floats f width height nRowsInBlock nColsInBlock
                      ^ByteOrder byteOrder
+                     ^TiffImageMetadata metadata
                      ^File outputFile]
+  (debug/echo (class metadata) metadata)
+  (debug/echo (.getDirectories metadata))
+  (debug/echo (.getItems metadata))
   (let [^objects blocks (getBytesForOutput32 f width height nRowsInBlock nColsInBlock byteOrder)
         nBytesInBlock (* (int nRowsInBlock) (int nColsInBlock) (int 4))
-        ^TiffOutputSet outputSet (TiffOutputSet. byteOrder)
-        ^TiffOutputDirectory outDir (.addRootDirectory outputSet)
+        ^TiffOutputSet outputSet (.getOutputSet metadata)
+        ^TiffOutputDirectory outDir (.getOrCreateRootDirectory outputSet)
         ^objects imageData (make-array AbstractTiffElement$DataElement (alength blocks))
         ^AbstractTiffImageData abstractTiffImageData (AbstractTiffImageData$Strips. imageData nRowsInBlock)]
-    (.add outDir TiffTagConstants/TIFF_TAG_IMAGE_WIDTH (int-array 1 width))
-    (.add outDir TiffTagConstants/TIFF_TAG_IMAGE_LENGTH (int-array 1  height))
-    (.add outDir TiffTagConstants/TIFF_TAG_SAMPLE_FORMAT (short-array 1 (short TiffTagConstants/SAMPLE_FORMAT_VALUE_IEEE_FLOATING_POINT)))
-    (.add outDir TiffTagConstants/TIFF_TAG_SAMPLES_PER_PIXEL (short 1))
-    (.add outDir TiffTagConstants/TIFF_TAG_BITS_PER_SAMPLE (short-array 1 (short 32)))
-    (.add outDir TiffTagConstants/TIFF_TAG_PHOTOMETRIC_INTERPRETATION (short TiffTagConstants/PHOTOMETRIC_INTERPRETATION_VALUE_BLACK_IS_ZERO))
-    (.add outDir TiffTagConstants/TIFF_TAG_COMPRESSION (short TiffTagConstants/COMPRESSION_VALUE_UNCOMPRESSED))
-    (.add outDir TiffTagConstants/TIFF_TAG_PLANAR_CONFIGURATION (short TiffTagConstants/PLANAR_CONFIGURATION_VALUE_CHUNKY))
-    (.add outDir TiffTagConstants/TIFF_TAG_ROWS_PER_STRIP (int-array 1 1))
-    (.add outDir TiffTagConstants/TIFF_TAG_STRIP_BYTE_COUNTS (int-array 1 nBytesInBlock))
+    ;(set-tag outDir TiffTagConstants/TIFF_TAG_IMAGE_WIDTH (int-array 1 width))
+    ;(set-tag outDir TiffTagConstants/TIFF_TAG_IMAGE_LENGTH (int-array 1  height))
+    ;(set-tag outDir TiffTagConstants/TIFF_TAG_SAMPLE_FORMAT (short-array 1 (short TiffTagConstants/SAMPLE_FORMAT_VALUE_IEEE_FLOATING_POINT)))
+    ;(set-tag outDir TiffTagConstants/TIFF_TAG_SAMPLES_PER_PIXEL (short 1))
+    ;(set-tag outDir TiffTagConstants/TIFF_TAG_BITS_PER_SAMPLE (short-array 1 (short 32)))
+    ;(set-tag outDir TiffTagConstants/TIFF_TAG_PHOTOMETRIC_INTERPRETATION (short TiffTagConstants/PHOTOMETRIC_INTERPRETATION_VALUE_BLACK_IS_ZERO))
+    ;(set-tag outDir TiffTagConstants/TIFF_TAG_COMPRESSION (short TiffTagConstants/COMPRESSION_VALUE_UNCOMPRESSED))
+    ;(set-tag outDir TiffTagConstants/TIFF_TAG_PLANAR_CONFIGURATION (short TiffTagConstants/PLANAR_CONFIGURATION_VALUE_CHUNKY))
+    ;(set-tag outDir TiffTagConstants/TIFF_TAG_ROWS_PER_STRIP (int-array 1 1))
+    ;(set-tag outDir TiffTagConstants/TIFF_TAG_STRIP_BYTE_COUNTS (int-array 1 nBytesInBlock))
+
+    (set-tag outDir TiffTagConstants/TIFF_TAG_DOCUMENT_NAME (into-array String [(str outputFile)]))
+
     (debug/echo (alength blocks))
     (dotimes [i (alength blocks)]
       (let [^bytes block-i (aget blocks i)]
@@ -129,31 +149,27 @@
 ;; see
 ;; https://github.com/apache/commons-imaging/blob/master/src/test/java/org/apache/commons/imaging/formats/tiff/TiffFloatingPointReadTest.java
 
-(defn- ^PhotometricInterpreterFloat readAndInterpretTIFF [^File target ^double f0 ^double f1 ^double fNot]
-  "Reads a TIFF file using a PhotometricInterpreter with entries for the specified range of values and an arbitrary no-data value. If the image is
-   successfully read, the interpreter instance will be returned.
-
-   @param target the specified TIFF file
-   @param f0     the expected minimum bound or lower
-   @param f1     the expected maximum bound or higher
-   @param fNot   an arbitrary non-data value or NaN
-   @return if successful, a valid photometric interpreter.
-   @throws ImagingException in the event of an unsupported or malformed file data element.
-   @throws IOException      in the event of an I/O error
-  "
+(defn- ^PhotometricInterpreterFloat readAndInterpretTIFF [^File target]
   (let [^ByteSource byteSource (ByteSource/file target)
         ^TiffReader tiffReader (TiffReader. true)
         ^TiffContents contents (.readDirectories tiffReader byteSource true (FormatCompliance/getDefault))
         ^ByteOrder byteOrder (.getByteOrder tiffReader)
         ^TiffDirectory directory (directory-with-floating-point-raster contents)
-        ^List pList [(PaletteEntryForValue. fNot Color/red)
-                     (PaletteEntryForRange. f0 f1 Color/black Color/white)]
-        ^PhotometricInterpreterFloat pInterp (PhotometricInterpreterFloat. pList)
+        ^PhotometricInterpreterFloat pInterp (PhotometricInterpreterFloat.
+                                              [(PaletteEntryForValue. Float/NaN Color/red)
+                                               (PaletteEntryForRange. Float/NEGATIVE_INFINITY Float/POSITIVE_INFINITY
+                                                                      Color/black Color/white)]                                              )
         ^TiffImagingParameters params (ming/tiff-imaging-parameters pInterp)
         ;; reading the image data modifies params!!!
-        ^BufferedImage bImage (.getTiffImage directory byteOrder params)]
+        ^BufferedImage bImage (.getTiffImage directory byteOrder params)
+        minVal (.getMinFound pInterp)
+        maxVal (.getMaxFound pInterp)]
+    (debug/echo minVal maxVal)
     (assert (not (nil? bImage)))
-    {:photometricInterpreter pInterp :byteOrder byteOrder} ))
+    {:byteOrder byteOrder
+     :photometricInterpreter (PhotometricInterpreterFloat.
+                              [(PaletteEntryForValue. Float/NaN Color/red)
+                               (PaletteEntryForRange. minVal maxVal Color/black Color/white)])}  ))
 
 ;;-------------------------------------------------------------
 
@@ -177,29 +193,27 @@
   )
 
 ;;-------------------------------------------------------------
-(defn tiff-fp-read-write [input ^double pmin ^double pmax ^double pmissing]
+(defn tiff-fp-read-write [input]
   (let [input (io/file input)
         output (mci/append-to-filename input "-imaging")
         {:keys [^PhotometricInterpreterFloat _photometricInterpreter
-                ^ByteOrder byteOrder]} (readAndInterpretTIFF input pmin pmax pmissing)
-        ;minVal (.getMinFound photometricInterpreter)
-        ;maxVal (.getMaxFound photometricInterpreter)
+                ^ByteOrder byteOrder]} (readAndInterpretTIFF input)
         ^AbstractTiffRasterData fullRaster (readRasterFromTIFF input (ming/tiff-imaging-parameters))
         w (.getWidth fullRaster)
         h (.getHeight fullRaster)
         nRowsInBlock (int 1)
-        nColsInBlock w]
+        nColsInBlock w
+        metadata (Imaging/getMetadata input)]
     (println)
     (debug/echo input)
-    ;(debug/echo minVal maxVal)
-    ;(assert (<= pmin minVal maxVal pmax))
     (debug/echo (.getWidth fullRaster) (.getHeight fullRaster))
     (pp/pprint fullRaster)
     (image/write-metadata-markdown input)
-    (writeFileF32 (.getData fullRaster) w h nRowsInBlock nColsInBlock byteOrder output)
+    (writeFileF32 (.getData fullRaster) w h nRowsInBlock nColsInBlock byteOrder metadata output)
     (image/write-metadata-markdown output)))
 ;;-------------------------------------------------------------
 
-#_(tiff-fp-read-write "images/usgs/USGS_13_n38w077_dir5.tiff" -2.0 62.0 -99999.0)
+#_(tiff-fp-read-write "images/usgs/USGS_13_n38w077_dir5.tiff")
 ;; TODO: what's the real range for this file?
-(tiff-fp-read-write "images/moon/ldem_4.tif" -20.0 20.0 9999.0)
+(tiff-fp-read-write "images/moon/ldem_4.tif")
+;;(tiff-fp-read-write "images/earth/ETOPO_2022_v1_60s_N90W180_geoid.tif")
