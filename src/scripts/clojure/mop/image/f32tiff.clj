@@ -7,7 +7,7 @@
   {:doc
    "Read and write 32bit Float grayscale TIFFs."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-26"}
+   :version "2025-11-27"}
 
   (:require
    [clojure.java.io :as io]
@@ -21,7 +21,7 @@
    [java.awt.image BufferedImage]
    [java.io BufferedOutputStream File]
    [java.nio ByteOrder]
-   [java.util List]
+   [java.util Arrays]
    [org.apache.commons.imaging FormatCompliance Imaging]
    [org.apache.commons.imaging.bytesource ByteSource]
    [org.apache.commons.imaging.formats.tiff
@@ -93,7 +93,6 @@
     blocks))
 
 ;;-------------------------------------------------------------
-
 (defn- set-tag [^TiffOutputDirectory dir
                 ^TagInfo tag
                 value]
@@ -105,7 +104,7 @@
 ;; NOTE: Tile format not supported by commons imaging as of 2025-11-25
 ;; TODO: get nRowsInBLock nColsInBlock from input file, when not resizing
 
-(defn- writeFileF32 [^floats f width height nRowsInBlock nColsInBlock
+(defn- writeTiffF32 [^floats f width height nRowsInBlock nColsInBlock
                      ^ByteOrder byteOrder
                      ^TiffImageMetadata metadata
                      ^File outputFile]
@@ -127,7 +126,7 @@
     ;(set-tag outDir TiffTagConstants/TIFF_TAG_COMPRESSION (short TiffTagConstants/COMPRESSION_VALUE_UNCOMPRESSED))
     ;(set-tag outDir TiffTagConstants/TIFF_TAG_PLANAR_CONFIGURATION (short TiffTagConstants/PLANAR_CONFIGURATION_VALUE_CHUNKY))
     ;(set-tag outDir TiffTagConstants/TIFF_TAG_ROWS_PER_STRIP (int-array 1 1))
-    ;(set-tag outDir TiffTagConstants/TIFF_TAG_STRIP_BYTE_COUNTS (int-array 1 nBytesInBlock))
+    (set-tag outDir TiffTagConstants/TIFF_TAG_STRIP_BYTE_COUNTS (int-array 1 nBytesInBlock))
 
     (set-tag outDir TiffTagConstants/TIFF_TAG_DOCUMENT_NAME (into-array String [(str outputFile)]))
 
@@ -137,7 +136,7 @@
         (aset imageData i (AbstractTiffImageData$Data. 0 (alength block-i) block-i))))
     (.setTiffImageData outDir abstractTiffImageData)
     (with-open [os (BufferedOutputStream. (io/output-stream outputFile))]
-      ;;TODO: lossless!
+      ;;TODO: lossless!?
       (let [^TiffImageWriterLossy writer (TiffImageWriterLossy. byteOrder)]
         (.write writer os outputSet)))))
 ;;-------------------------------------------------------------
@@ -146,74 +145,84 @@
     (assert (.hasTiffFloatingPointRasterData directory))
     directory))
 ;;-------------------------------------------------------------
+(defn- ^PhotometricInterpreterFloat photometric-interpreter-grayscale-f32
+  ([^double min ^double max ^double missing]
+   (PhotometricInterpreterFloat.
+    [(PaletteEntryForValue. (float missing) Color/red)
+     (PaletteEntryForRange. (float min) (float max) Color/black Color/white)]))
+  ([]
+   ;; TODO: will infinities cause problems later?
+   (photometric-interpreter-grayscale-f32
+    Double/NEGATIVE_INFINITY Double/POSITIVE_INFINITY Double/NaN)))
+;;-------------------------------------------------------------
+(defn- imaging-parameters-grayscale-f32
+  ([^PhotometricInterpreterFloat pi] (ming/tiff-imaging-parameters pi))
+  ([] (imaging-parameters-grayscale-f32 (photometric-interpreter-grayscale-f32))))
+;;-------------------------------------------------------------
 ;; see
 ;; https://github.com/apache/commons-imaging/blob/master/src/test/java/org/apache/commons/imaging/formats/tiff/TiffFloatingPointReadTest.java
 
-(defn- ^PhotometricInterpreterFloat readAndInterpretTIFF [^File target]
+(defn- ^PhotometricInterpreterFloat readTiffF32 [^File target]
   (let [^ByteSource byteSource (ByteSource/file target)
         ^TiffReader tiffReader (TiffReader. true)
         ^TiffContents contents (.readDirectories tiffReader byteSource true (FormatCompliance/getDefault))
         ^ByteOrder byteOrder (.getByteOrder tiffReader)
         ^TiffDirectory directory (directory-with-floating-point-raster contents)
-        ^PhotometricInterpreterFloat pInterp (PhotometricInterpreterFloat.
-                                              [(PaletteEntryForValue. Float/NaN Color/red)
-                                               (PaletteEntryForRange. Float/NEGATIVE_INFINITY Float/POSITIVE_INFINITY
-                                                                      Color/black Color/white)]                                              )
-        ^TiffImagingParameters params (ming/tiff-imaging-parameters pInterp)
-        ;; reading the image data modifies params!!!
-        ^BufferedImage bImage (.getTiffImage directory byteOrder params)
-        minVal (.getMinFound pInterp)
-        maxVal (.getMaxFound pInterp)]
-    (debug/echo minVal maxVal)
-    (assert (not (nil? bImage)))
+        ^PhotometricInterpreterFloat pi (photometric-interpreter-grayscale-f32)
+        ^TiffImagingParameters params (imaging-parameters-grayscale-f32 pi)
+        ;; reading the image data modifies params, pi !!!
+        ^BufferedImage _image (.getTiffImage directory byteOrder params)
+        ]
+    (assert (not (nil? _image)))
+    ;;TODO: best way to return all data, metadata from tiff?
     {:byteOrder byteOrder
-     :photometricInterpreter (PhotometricInterpreterFloat.
-                              [(PaletteEntryForValue. Float/NaN Color/red)
-                               (PaletteEntryForRange. minVal maxVal Color/black Color/white)])}  ))
+     :raster (.getRasterData directory params)
+     :metadata (Imaging/getMetadata target) }  ))
 
 ;;-------------------------------------------------------------
-
-(defn- ^AbstractTiffRasterData readRasterFromTIFF
-  ([^File target ^TiffImagingParameters params]
-   "Reads the floating-point content from a TIFF file.
-
-  @param target the specified TIFF file
-  @param params an optional map of parameters for reading.
-  @return if successful, a valid raster data instance
-  @throws ImagingException in the event of an unsupported or malformed file data element.
-  @throws IOException      in the event of an I/O error
- "
-   (let [^ByteSource byteSource (ByteSource/file target)
-         ^TiffReader tiffReader (TiffReader. true)
-         ^TiffContents contents (.readDirectories tiffReader byteSource true (FormatCompliance/getDefault))
-         ^TiffDirectory directory (.get (.directories contents) 0)]
-     (.getRasterData directory params)))
-
-  ([target] (readRasterFromTIFF (io/file target)))
-  )
-
-;;-------------------------------------------------------------
-(defn tiff-fp-read-write [input]
+(defn read-write-TiffF32 [input]
   (let [input (io/file input)
         output (mci/append-to-filename input "-imaging")
-        {:keys [^PhotometricInterpreterFloat _photometricInterpreter
-                ^ByteOrder byteOrder]} (readAndInterpretTIFF input)
-        ^AbstractTiffRasterData fullRaster (readRasterFromTIFF input (ming/tiff-imaging-parameters))
-        w (.getWidth fullRaster)
-        h (.getHeight fullRaster)
+        {:keys [^AbstractTiffRasterData raster
+                ^ByteOrder byteOrder
+                ^TiffImageMetadata metadata]} (readTiffF32 input)
+        w (.getWidth raster)
+        h (.getHeight raster)
         nRowsInBlock (int 1)
-        nColsInBlock w
-        metadata (Imaging/getMetadata input)]
+        nColsInBlock w]
     (println)
     (debug/echo input)
-    (debug/echo (.getWidth fullRaster) (.getHeight fullRaster))
-    (pp/pprint fullRaster)
+    (debug/echo (.getWidth raster) (.getHeight raster))
+    (pp/pprint raster)
     (image/write-metadata-markdown input)
-    (writeFileF32 (.getData fullRaster) w h nRowsInBlock nColsInBlock byteOrder metadata output)
+    (writeTiffF32 (.getData raster) w h nRowsInBlock nColsInBlock byteOrder metadata output)
     (image/write-metadata-markdown output)))
 ;;-------------------------------------------------------------
+(defn read-write-read-TiffF32 [input]
+  (let [input (io/file input)
+        output (mci/append-to-filename input "-imaging")
+        {^AbstractTiffRasterData raster-in :raster
+         ^ByteOrder byteOrder-in :byteOrder
+         ^TiffImageMetadata metadata-in :metadata} (readTiffF32 input)
+        w (.getWidth raster-in)
+        h (.getHeight raster-in)
+        nRowsInBlock (int 1)
+        nColsInBlock w
+        ^floats pixels-in (.getData raster-in)]
+    (writeTiffF32 pixels-in w h nRowsInBlock nColsInBlock byteOrder-in metadata-in output)
+    (let [{^AbstractTiffRasterData raster-out :raster
+           ^ByteOrder byteOrder-out :byteOrder
+           ^TiffImageMetadata _metadata-out :metadata}
+          (readTiffF32 output)
+          ^floats pixels-out (.getData raster-out) ]
+      (assert (= byteOrder-in byteOrder-out))
+      (assert (Arrays/equals pixels-in pixels-out))
+      ;; TODO: test metadata consistency
+      )))
+;;-------------------------------------------------------------
 
-#_(tiff-fp-read-write "images/usgs/USGS_13_n38w077_dir5.tiff")
+#_(read-write-TiffF32 "images/usgs/USGS_13_n38w077_dir5.tiff")
 ;; TODO: what's the real range for this file?
-(tiff-fp-read-write "images/moon/ldem_4.tif")
+(read-write-read-TiffF32 "images/moon/ldem_4.tif")
+#_(read-write-TiffF32 "images/moon/ldem_4.tif")
 ;;(tiff-fp-read-write "images/earth/ETOPO_2022_v1_60s_N90W180_geoid.tif")
