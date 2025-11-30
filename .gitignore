@@ -42,3 +42,5 @@
 /.idea/
 /.eastwood
 /east.txt
+/src/test/resources/images/ldem_4.tif
+/src/test/resources/images/ldem_4-test.tif

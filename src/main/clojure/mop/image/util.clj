@@ -6,11 +6,10 @@
 
   {:doc     "Image utilities."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-24"}
+   :version "2025-11-29"}
 
   (:require [clojure.java.io :as io]
             [clojure.string :as s]
-            [mop.commons.debug :as debug]
             [mop.commons.io :as mci]
             [mop.commons.string :as mcs])
   (:import [com.drew.imaging ImageMetadataReader]
@@ -87,7 +86,6 @@
 
   (assert (.exists d) (.getPath d))
   (filter image-file? (file-seq d)))
-
 ;;-------------------------------------------------------------
 ;; metadata
 ;;-------------------------------------------------------------
@@ -99,7 +97,6 @@
 
 (defn write-metadata-markdown
   ([source ^Metadata metadata destination]
-   (debug/echo destination)
    ;; source might be a File or a String
    (let [^File source-file (io/file source)
          ^String fileName (.getName source-file)
@@ -194,10 +191,10 @@
   ([^BufferedImage image ^long w ^long h]
    (resize image w h Image/SCALE_DEFAULT)))
 
-(defn ^Boolean write-png [^BufferedImage image ^File file ]
+#_(defn ^Boolean write-png [^BufferedImage image ^File file ]
   (ImageIO/write image "png" file))
 
-(defn ^Boolean write-tif [^BufferedImage image ^File file]
+#_(defn ^Boolean write-tif [^BufferedImage image ^File file]
   (ImageIO/write image "tif" file))
 
 ;;-------------------------------------------------------------------
