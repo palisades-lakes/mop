@@ -5,7 +5,7 @@
 
   {:doc     "Image utilities related to Apache Commons Imaging."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-29"}
+   :version "2025-12-01"}
 
   (:require [clojure.java.io :as io]
             [mop.commons.debug :as debug])
@@ -30,21 +30,16 @@
            [org.apache.commons.imaging.formats.tiff.write TiffImageWriterLossy TiffOutputDirectory TiffOutputSet]))
 
 ;;-------------------------------------------------------------
-;; Tiff
+;; TIFF
 ;;-------------------------------------------------------------
-(defn ^TiffDirectory force-tiff-directory-with-image-data [^TiffContents contents ^long index]
-  (let [^TiffDirectory directory (.get (.directories contents) index)]
-    (assert (.hasTiffImageData directory))
-    directory))
-
 (defn tiff-imaging-parameters
   ([^PhotometricInterpreterFloat pi]
    (let [^TiffImagingParameters params (TiffImagingParameters.)]
      (.setCustomPhotometricInterpreter params pi)
      params))
   ([] (TiffImagingParameters.)))
-
-(defn ^TiffDirectory directory-with-floating-point-raster [^TiffContents contents]
+;;-------------------------------------------------------------
+(defn- ^TiffDirectory directory-with-floating-point-raster [^TiffContents contents]
   (let [ ^TiffDirectory directory (.get (.directories contents) 0)]
     (assert (.hasTiffFloatingPointRasterData directory))
     directory))
@@ -57,7 +52,9 @@
   ([]
    ;; TODO: will infinities cause problems later?
    (photometric-interpreter-grayscale-f32
-    Double/NEGATIVE_INFINITY Double/POSITIVE_INFINITY Double/NaN)))
+    -1.0 1.0 Double/NaN
+    ;Double/NEGATIVE_INFINITY Double/POSITIVE_INFINITY Double/NaN
+    )))
 ;;-------------------------------------------------------------
 (defn imaging-parameters-grayscale-f32
   ([^PhotometricInterpreterFloat pi] (tiff-imaging-parameters pi))
@@ -97,35 +94,43 @@
   ([^GenericImageMetadata a ^GenericImageMetadata b ignore]
    (let [^Map a (to-hash a)
          ^Map b (to-hash b)]
-     (every? (fn [^String k] (or (ignore k) (= (get a k)  (get b k))))
+     (every? (fn [^String k]
+               (let [val (or (ignore k) (= (get a k) (get b k)))]
+                 (when-not val (println k " differs:" \newline (get a k) \newline (get b k)))
+                 val))
              (into #{} (concat (keys a) (keys b))))))
   ([^GenericImageMetadata a ^GenericImageMetadata b]
-   ;; "PreviewImageStart" should be "StripOffsets", fixed in future commons imaging relese
-   ;; "StripOffsets" depends on the order (meta)data items are written to the file,
-   ;; not consistent across libraries.
-   ;; "DocumentName", "DateTime", etc., are expected to be different.
    (equal-ImageMetadata?
     a b
-    #{"PreviewImageStart" "StripOffsets"
-      "DocumentName" "DateTime"
-      "Software"})))
+    ;; "PreviewImageStart" should be "StripOffsets", fixed in future commons imaging release
+    ;; "StripOffsets" depends on the order (meta)data items are written to the file,
+    ;; not consistent across libraries.
+    ;; "DocumentName", "DateTime", etc., are expected to be different.
+    ;; TODO: chose ignore fields depending on context, ie strips->strips vs tiles->strips vs tiles->tiles,
+    ;; as well as other image formats...
+    #{"Compression" "Predictor"
+      "DateTime"
+      "DocumentName"
+      "Software"
+      "PreviewImageLength" "PreviewImageStart"
+      "RowsPerStrip"
+      "StripOffsets"
+      ;; assuming write strips only
+      "TileByteCounts" "TileOffsets" "TileLength" "TileWidth"
+      })))
 ;;-------------------------------------------------------------
 ;; see
 ;; https://github.com/apache/commons-blob/master/src/test/java/org/apache/commons/formats/tiff/TiffFloatingPointReadTest.java
+;; TODO: best way to return all data, metadata from tiff?
 
-(defn ^PhotometricInterpreterFloat readTiffF32 [^File target]
+(defn ^PhotometricInterpreterFloat read-tiff-f32 [^File target]
   (let [^ByteSource byteSource (ByteSource/file target)
         ^TiffReader tiffReader (TiffReader. true)
-        ^TiffContents contents (.readDirectories tiffReader byteSource true
-                                                 (FormatCompliance/getDefault))
+        ^TiffImagingParameters params (imaging-parameters-grayscale-f32)
+        ^FormatCompliance compliance (FormatCompliance/getDefault)
+        ^TiffContents contents (.readContents tiffReader byteSource params compliance)
         ^ByteOrder byteOrder (.getByteOrder tiffReader)
-        ^TiffDirectory directory (directory-with-floating-point-raster contents)
-        ^PhotometricInterpreterFloat pi (photometric-interpreter-grayscale-f32)
-        ^TiffImagingParameters params (imaging-parameters-grayscale-f32 pi)
-        ;; reading the image data modifies params, pi !!!
-        ^BufferedImage _image (.getTiffImage directory byteOrder params)]
-    (assert (not (nil? _image)))
-    ;;TODO: best way to return all data, metadata from tiff?
+        ^TiffDirectory directory (directory-with-floating-point-raster contents)]
     {:byteOrder byteOrder
      :raster (.getRasterData directory params)
      :metadata (Imaging/getMetadata target)}))
@@ -136,8 +141,8 @@
 ;;
 ;; (.getName (class (make-array Byte/TYPE 0 0))) -> "[[B"
 
-(defn- getBytesForOutput32  [^floats f width height nRowsInBlock nColsInBlock
-                             ^ByteOrder byteOrder]
+(defn- output-bytes-f32-strips  [^floats f width height nRowsInBlock nColsInBlock
+                                 ^ByteOrder byteOrder]
   "Gets the bytes for output for a 32 bit floating point format.
   Note that this method operates over 'blocks' of data which may represent either TIFF Strips
   or Tiles. When processing strips, there is always one column of blocks
@@ -196,42 +201,46 @@
   (.add dir tag value))
 (set! *warn-on-reflection* true)
 ;;-------------------------------------------------------------
-;; NOTE: Tile format not supported by commons imaging as of 2025-11-25
-;; TODO: get nRowsInBLock nColsInBlock from input file, when not resizing
+;; Whole image width strips, one pixel high
 
-(defn writeTiffF32 [^floats f width height nRowsInBlock nColsInBlock
-                    ^ByteOrder byteOrder
-                    ^TiffImageMetadata metadata
-                    ^File outputFile]
-  (let [^objects blocks (getBytesForOutput32 f width height nRowsInBlock nColsInBlock byteOrder)
-        nBytesInBlock (* (int nRowsInBlock) (int nColsInBlock) (int 4))
+(defn write-tiff-f32-strips [^floats f
+                             width height
+                             ^ByteOrder byteOrder
+                             ^TiffImageMetadata metadata
+                             ^File outputFile]
+  (let [^objects blocks (output-bytes-f32-strips f width height 1 width byteOrder)
+        nBytesInBlock (* (int width) (int 4))
         ^TiffOutputSet outputSet (.getOutputSet metadata)
         ^TiffOutputDirectory outDir (.getOrCreateRootDirectory outputSet)
         ^objects imageElements (make-array AbstractTiffElement$DataElement (alength blocks))
-        ^AbstractTiffImageData imageData (AbstractTiffImageData$Strips. imageElements nRowsInBlock)]
+        ^AbstractTiffImageData imageData (AbstractTiffImageData$Strips. imageElements 1)]
     (dotimes [i (alength blocks)]
       (let [^bytes block-i (aget blocks i)]
         (aset imageElements i (AbstractTiffImageData$Data. 0 (alength block-i) block-i))))
     (.setTiffImageData outDir imageData)
     (set-tag outDir TiffTagConstants/TIFF_TAG_IMAGE_WIDTH (int-array 1 width))
     (set-tag outDir TiffTagConstants/TIFF_TAG_IMAGE_LENGTH (int-array 1  height))
+    (.removeField outDir TiffTagConstants/TIFF_TAG_TILE_WIDTH)
+    (.removeField outDir TiffTagConstants/TIFF_TAG_TILE_LENGTH)
+    (.removeField outDir TiffTagConstants/TIFF_TAG_TILE_OFFSETS)
+    (.removeField outDir TiffTagConstants/TIFF_TAG_TILE_BYTE_COUNTS)
+    (set-tag outDir TiffTagConstants/TIFF_TAG_PREDICTOR (short TiffTagConstants/PREDICTOR_VALUE_NONE))
+    (set-tag outDir TiffTagConstants/TIFF_TAG_ROWS_PER_STRIP (int-array 1 1))
+    (set-tag outDir TiffTagConstants/TIFF_TAG_STRIP_BYTE_COUNTS (int-array 1 nBytesInBlock))
     (set-tag outDir TiffTagConstants/TIFF_TAG_SAMPLE_FORMAT (short-array 1 (short TiffTagConstants/SAMPLE_FORMAT_VALUE_IEEE_FLOATING_POINT)))
     (set-tag outDir TiffTagConstants/TIFF_TAG_SAMPLES_PER_PIXEL (short 1))
     (set-tag outDir TiffTagConstants/TIFF_TAG_BITS_PER_SAMPLE (short-array 1 (short 32)))
     (set-tag outDir TiffTagConstants/TIFF_TAG_PHOTOMETRIC_INTERPRETATION (short TiffTagConstants/PHOTOMETRIC_INTERPRETATION_VALUE_BLACK_IS_ZERO))
     (set-tag outDir TiffTagConstants/TIFF_TAG_COMPRESSION (short TiffTagConstants/COMPRESSION_VALUE_UNCOMPRESSED))
     (set-tag outDir TiffTagConstants/TIFF_TAG_PLANAR_CONFIGURATION (short TiffTagConstants/PLANAR_CONFIGURATION_VALUE_CHUNKY))
-    (set-tag outDir TiffTagConstants/TIFF_TAG_ROWS_PER_STRIP (int-array 1 1))
-    (set-tag outDir TiffTagConstants/TIFF_TAG_STRIP_BYTE_COUNTS (int-array 1 nBytesInBlock))
     ;; TODO: read maven group/artifact ids properties from jar file?
     (set-tag outDir TiffTagConstants/TIFF_TAG_SOFTWARE (into-array String ["palisades-lakes mop"]))
     (set-tag outDir TiffTagConstants/TIFF_TAG_DOCUMENT_NAME (into-array String [(str outputFile)]))
     (let [formatter (DateTimeFormatter/ofPattern "yyyy:MM:dd HH:mm:ss")]
       (set-tag outDir TiffTagConstants/TIFF_TAG_DATE_TIME
                (into-array String [(.format formatter (LocalDateTime/now))])))
-    #_(debug/echo outDir)
     (with-open [os (BufferedOutputStream. (io/output-stream outputFile))]
-      ;;TODO: lossless!?
+      ;;TODO: TiffImageWriterLossless!?
       (let [^TiffImageWriterLossy writer (TiffImageWriterLossy. byteOrder)]
         (.write writer os outputSet)))))
 ;;-------------------------------------------------------------------

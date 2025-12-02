@@ -1,13 +1,13 @@
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-;; clj src\scripts\clojure\mop\image\roundtrip.clj
+;; clj src\scripts\clojure\mop\image\readWrite.clj
 ;;----------------------------------------------------------------
-(ns mop.image.roundtrip
+(ns mop.image.readWrite
   {:doc
    "Work out idempotent image read-write roundtrips, for at least NASA and NOAA tiffs and pngs."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-24"}
+   :version "2025-11-30"}
 
   (:require
    [clojure.java.io :as io]
@@ -26,6 +26,11 @@
            [org.apache.commons.imaging.formats.tiff.photometricinterpreters.floatingpoint
             PhotometricInterpreterFloat]))
 ;;-------------------------------------------------------------
+(defn- ^TiffDirectory force-tiff-directory-with-image-data [^TiffContents contents ^long index]
+  (let [^TiffDirectory directory (.get (.directories contents) index)]
+    (assert (.hasTiffImageData directory))
+    directory))
+;;-------------------------------------------------------------
 ;; see https://commons.apache.org/proper/commons-imaging/xref-test/org/apache/commons/imaging/examples/tiff/ReadAndRenderFloatingPoint.html#ReadAndRenderFloatingPoint
 ;; doesn't preserve float32 grayscale format!
 (defn roundtrip-tiff-float32 [target]
@@ -34,7 +39,7 @@
         ^ByteSource byteSource (ByteSource/file input)
         ^TiffReader tiffReader (TiffReader. true)
         ^TiffContents contents (.readDirectories tiffReader byteSource true (FormatCompliance/getDefault))
-        ^TiffDirectory directory (ming/force-tiff-directory-with-image-data contents 0)
+        ^TiffDirectory directory (force-tiff-directory-with-image-data contents 0)
         ^shorts sampleFormat (.getFieldValue directory TiffTagConstants/TIFF_TAG_SAMPLE_FORMAT true)
         samplesPerPixel (.getFieldValue directory TiffTagConstants/TIFF_TAG_SAMPLES_PER_PIXEL)
         ^shorts bitsPerPixel (.getFieldValue directory TiffTagConstants/TIFF_TAG_BITS_PER_SAMPLE true)]

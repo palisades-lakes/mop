@@ -46,7 +46,7 @@
 
 (defn triangle-mesh ^TriangleMesh [^SimplicialComplex2D cmplx
                                    ^IFn embedding]
-  (doall
+  (dorun
    (map #(assert (not (nil? (embedding %)))
                  (println %))
         (.vertices cmplx)))

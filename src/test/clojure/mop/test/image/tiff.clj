@@ -20,18 +20,18 @@
         output (mci/append-to-filename input "-test")
         {^AbstractTiffRasterData raster-in :raster
          ^ByteOrder byteOrder-in           :byteOrder
-         ^TiffImageMetadata metadata-in    :metadata} (imaging/readTiffF32 input)
+         ^TiffImageMetadata metadata-in    :metadata} (imaging/read-tiff-f32 input)
         w (.getWidth raster-in)
         h (.getHeight raster-in)
-        nRowsInBlock (int 1)
-        nColsInBlock w
+        ;nRowsInBlock (int 1)
+        ;nColsInBlock w
         ^floats pixels-in (.getData raster-in)
         ^ImageInfo info-in (Imaging/getImageInfo input)]
-    (imaging/writeTiffF32 pixels-in w h nRowsInBlock nColsInBlock byteOrder-in metadata-in output)
+    (imaging/write-tiff-f32-strips pixels-in w h byteOrder-in metadata-in output)
     (let [{^AbstractTiffRasterData raster-out :raster
            ^ByteOrder byteOrder-out           :byteOrder
            ^TiffImageMetadata metadata-out    :metadata}
-          (imaging/readTiffF32 output)
+          (imaging/read-tiff-f32 output)
           ^floats pixels-out (.getData raster-out)
           ^ImageInfo info-out (Imaging/getImageInfo output)]
       (t/is (= byteOrder-in byteOrder-out))

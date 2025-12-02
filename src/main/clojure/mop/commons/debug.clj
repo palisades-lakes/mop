@@ -36,7 +36,7 @@
                            (mcs/simple-string ~v)))
                     [~@ppe]
                     [~@exps])]
-       (doall (map println ~s))
+       (dorun (map println ~s))
        (flush))))
 
 ;;----------------------------------------------------------------

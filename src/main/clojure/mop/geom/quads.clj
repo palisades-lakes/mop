@@ -191,7 +191,7 @@
 
 (defn- quad-mesh ^QuadMesh [^QuadComplex cmplx
                             ^IFn embedding]
-  (doall
+  (dorun
    (map #(assert (not (nil? (embedding %))))
         (.vertices cmplx)))
   (QuadMesh. cmplx embedding))
