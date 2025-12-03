@@ -5,7 +5,7 @@
 
   {:doc     "Image utilities related to Apache Commons Imaging."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-12-01"}
+   :version "2025-12-02"}
 
   (:require [clojure.java.io :as io]
             [mop.commons.debug :as debug])
@@ -90,6 +90,37 @@
                   [(.getKeyword item) (.getText item)])
                 (.getItems meta))))
 ;;-------------------------------------------------------------
+;; "PreviewImageStart" should be "StripOffsets", fixed in future commons imaging release
+;; "StripOffsets" depends on the order (meta)data items are written to the file,
+;; not consistent across libraries.
+;; "DocumentName", "DateTime", etc., are expected to be different.
+;; TODO: chose ignore fields depending on context, ie strips->strips vs tiles->strips vs tiles->tiles,
+;; as well as other image formats...
+(def strips-ignore #{
+                     "Compression" "Predictor"
+                     "DateTime"
+                     "DocumentName"
+                     "Software"
+                     "PreviewImageLength" "PreviewImageStart"
+                     "RowsPerStrip"
+                     "StripByteCounts"
+                     "StripOffsets"
+                     ;; assuming write strips only
+                     "TileByteCounts" "TileOffsets" "TileLength" "TileWidth"
+                     })
+
+(def tiles-ignore #{
+                    ;;"Compression" "Predictor"
+                    "DateTime"
+                    "DocumentName"
+                    "Software"
+                    "PreviewImageLength" "PreviewImageStart"
+                    "RowsPerStrip"
+                    "StripByteCounts"
+                    "StripOffsets"
+                    })
+
+;;-------------------------------------------------------------
 (defn equal-ImageMetadata?
   ([^GenericImageMetadata a ^GenericImageMetadata b ignore]
    (let [^Map a (to-hash a)
@@ -100,24 +131,7 @@
                  val))
              (into #{} (concat (keys a) (keys b))))))
   ([^GenericImageMetadata a ^GenericImageMetadata b]
-   (equal-ImageMetadata?
-    a b
-    ;; "PreviewImageStart" should be "StripOffsets", fixed in future commons imaging release
-    ;; "StripOffsets" depends on the order (meta)data items are written to the file,
-    ;; not consistent across libraries.
-    ;; "DocumentName", "DateTime", etc., are expected to be different.
-    ;; TODO: chose ignore fields depending on context, ie strips->strips vs tiles->strips vs tiles->tiles,
-    ;; as well as other image formats...
-    #{"Compression" "Predictor"
-      "DateTime"
-      "DocumentName"
-      "Software"
-      "PreviewImageLength" "PreviewImageStart"
-      "RowsPerStrip"
-      "StripOffsets"
-      ;; assuming write strips only
-      "TileByteCounts" "TileOffsets" "TileLength" "TileWidth"
-      })))
+   (equal-ImageMetadata? a b strips-ignore)))
 ;;-------------------------------------------------------------
 ;; see
 ;; https://github.com/apache/commons-blob/master/src/test/java/org/apache/commons/formats/tiff/TiffFloatingPointReadTest.java
@@ -203,46 +217,54 @@
 ;;-------------------------------------------------------------
 ;; Whole image width strips, one pixel high
 
-(defn write-tiff-f32-strips [^floats f
-                             width height
-                             ^ByteOrder byteOrder
-                             ^TiffImageMetadata metadata
-                             ^File outputFile]
-  (let [^objects blocks (output-bytes-f32-strips f width height 1 width byteOrder)
-        nBytesInBlock (* (int width) (int 4))
-        ^TiffOutputSet outputSet (.getOutputSet metadata)
-        ^TiffOutputDirectory outDir (.getOrCreateRootDirectory outputSet)
-        ^objects imageElements (make-array AbstractTiffElement$DataElement (alength blocks))
-        ^AbstractTiffImageData imageData (AbstractTiffImageData$Strips. imageElements 1)]
-    (dotimes [i (alength blocks)]
-      (let [^bytes block-i (aget blocks i)]
-        (aset imageElements i (AbstractTiffImageData$Data. 0 (alength block-i) block-i))))
-    (.setTiffImageData outDir imageData)
-    (set-tag outDir TiffTagConstants/TIFF_TAG_IMAGE_WIDTH (int-array 1 width))
-    (set-tag outDir TiffTagConstants/TIFF_TAG_IMAGE_LENGTH (int-array 1  height))
-    (.removeField outDir TiffTagConstants/TIFF_TAG_TILE_WIDTH)
-    (.removeField outDir TiffTagConstants/TIFF_TAG_TILE_LENGTH)
-    (.removeField outDir TiffTagConstants/TIFF_TAG_TILE_OFFSETS)
-    (.removeField outDir TiffTagConstants/TIFF_TAG_TILE_BYTE_COUNTS)
-    (set-tag outDir TiffTagConstants/TIFF_TAG_PREDICTOR (short TiffTagConstants/PREDICTOR_VALUE_NONE))
-    (set-tag outDir TiffTagConstants/TIFF_TAG_ROWS_PER_STRIP (int-array 1 1))
-    (set-tag outDir TiffTagConstants/TIFF_TAG_STRIP_BYTE_COUNTS (int-array 1 nBytesInBlock))
-    (set-tag outDir TiffTagConstants/TIFF_TAG_SAMPLE_FORMAT (short-array 1 (short TiffTagConstants/SAMPLE_FORMAT_VALUE_IEEE_FLOATING_POINT)))
-    (set-tag outDir TiffTagConstants/TIFF_TAG_SAMPLES_PER_PIXEL (short 1))
-    (set-tag outDir TiffTagConstants/TIFF_TAG_BITS_PER_SAMPLE (short-array 1 (short 32)))
-    (set-tag outDir TiffTagConstants/TIFF_TAG_PHOTOMETRIC_INTERPRETATION (short TiffTagConstants/PHOTOMETRIC_INTERPRETATION_VALUE_BLACK_IS_ZERO))
-    (set-tag outDir TiffTagConstants/TIFF_TAG_COMPRESSION (short TiffTagConstants/COMPRESSION_VALUE_UNCOMPRESSED))
-    (set-tag outDir TiffTagConstants/TIFF_TAG_PLANAR_CONFIGURATION (short TiffTagConstants/PLANAR_CONFIGURATION_VALUE_CHUNKY))
-    ;; TODO: read maven group/artifact ids properties from jar file?
-    (set-tag outDir TiffTagConstants/TIFF_TAG_SOFTWARE (into-array String ["palisades-lakes mop"]))
-    (set-tag outDir TiffTagConstants/TIFF_TAG_DOCUMENT_NAME (into-array String [(str outputFile)]))
-    (let [formatter (DateTimeFormatter/ofPattern "yyyy:MM:dd HH:mm:ss")]
-      (set-tag outDir TiffTagConstants/TIFF_TAG_DATE_TIME
-               (into-array String [(.format formatter (LocalDateTime/now))])))
-    (with-open [os (BufferedOutputStream. (io/output-stream outputFile))]
-      ;;TODO: TiffImageWriterLossless!?
-      (let [^TiffImageWriterLossy writer (TiffImageWriterLossy. byteOrder)]
-        (.write writer os outputSet)))))
+(defn write-tiff-f32-strips
+  ([^floats f
+    width height
+    compression
+    ^ByteOrder byteOrder
+    ^TiffImageMetadata metadata
+    ^File outputFile]
+   (let [^objects blocks (output-bytes-f32-strips f width height 1 width byteOrder)
+         nBytesInBlock (* (int width) (int 4))
+         ^TiffOutputSet outputSet (.getOutputSet metadata)
+         ^TiffOutputDirectory outDir (.getOrCreateRootDirectory outputSet)
+         ^objects imageElements (make-array AbstractTiffElement$DataElement (alength blocks))
+         ^AbstractTiffImageData imageData (AbstractTiffImageData$Strips. imageElements 1)]
+     (dotimes [i (alength blocks)]
+       (let [^bytes block-i (aget blocks i)]
+         (aset imageElements i (AbstractTiffImageData$Data. 0 (alength block-i) block-i))))
+     (.setTiffImageData outDir imageData)
+     (set-tag outDir TiffTagConstants/TIFF_TAG_IMAGE_WIDTH (int-array 1 width))
+     (set-tag outDir TiffTagConstants/TIFF_TAG_IMAGE_LENGTH (int-array 1  height))
+     (.removeField outDir TiffTagConstants/TIFF_TAG_TILE_WIDTH)
+     (.removeField outDir TiffTagConstants/TIFF_TAG_TILE_LENGTH)
+     (.removeField outDir TiffTagConstants/TIFF_TAG_TILE_OFFSETS)
+     (.removeField outDir TiffTagConstants/TIFF_TAG_TILE_BYTE_COUNTS)
+     (when (= compression TiffTagConstants/COMPRESSION_VALUE_UNCOMPRESSED)
+       (set-tag outDir TiffTagConstants/TIFF_TAG_COMPRESSION (short TiffTagConstants/COMPRESSION_VALUE_UNCOMPRESSED))
+       (set-tag outDir TiffTagConstants/TIFF_TAG_PREDICTOR (short TiffTagConstants/PREDICTOR_VALUE_NONE)))
+     (set-tag outDir TiffTagConstants/TIFF_TAG_ROWS_PER_STRIP (int-array 1 1))
+     (set-tag outDir TiffTagConstants/TIFF_TAG_STRIP_BYTE_COUNTS (int-array 1 nBytesInBlock))
+     (set-tag outDir TiffTagConstants/TIFF_TAG_SAMPLE_FORMAT (short-array 1 (short TiffTagConstants/SAMPLE_FORMAT_VALUE_IEEE_FLOATING_POINT)))
+     (set-tag outDir TiffTagConstants/TIFF_TAG_SAMPLES_PER_PIXEL (short 1))
+     (set-tag outDir TiffTagConstants/TIFF_TAG_BITS_PER_SAMPLE (short-array 1 (short 32)))
+     (set-tag outDir TiffTagConstants/TIFF_TAG_PHOTOMETRIC_INTERPRETATION (short TiffTagConstants/PHOTOMETRIC_INTERPRETATION_VALUE_BLACK_IS_ZERO))
+     (set-tag outDir TiffTagConstants/TIFF_TAG_PLANAR_CONFIGURATION (short TiffTagConstants/PLANAR_CONFIGURATION_VALUE_CHUNKY))
+     ;; TODO: read maven group/artifact ids properties from jar file?
+     (set-tag outDir TiffTagConstants/TIFF_TAG_SOFTWARE (into-array String ["palisades-lakes mop"]))
+     (set-tag outDir TiffTagConstants/TIFF_TAG_DOCUMENT_NAME (into-array String [(str outputFile)]))
+     (let [formatter (DateTimeFormatter/ofPattern "yyyy:MM:dd HH:mm:ss")]
+       (set-tag outDir TiffTagConstants/TIFF_TAG_DATE_TIME
+                (into-array String [(.format formatter (LocalDateTime/now))])))
+     (debug/echo (.description outDir))
+     (with-open [os (BufferedOutputStream. (io/output-stream outputFile))]
+       ;;TODO: TiffImageWriterLossless!?
+       (let [^TiffImageWriterLossy writer (TiffImageWriterLossy. byteOrder)]
+         (.write writer os outputSet)))))
+
+  ([^floats f width height ^ByteOrder byteOrder ^TiffImageMetadata metadata ^File outputFile]
+   (write-tiff-f32-strips f width height TiffTagConstants/COMPRESSION_VALUE_UNCOMPRESSED
+                          byteOrder metadata outputFile)))
 ;;-------------------------------------------------------------------
 
 (defn ^ImageFormat guess-format [source]
