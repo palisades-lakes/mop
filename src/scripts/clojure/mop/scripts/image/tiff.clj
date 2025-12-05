@@ -3,11 +3,11 @@
 ;;----------------------------------------------------------------
 ;; clj src\scripts\clojure\mop\image\tiff.clj
 ;;----------------------------------------------------------------
-(ns mop.scripts.image.imaging.tiff.tiff
+(ns mop.scripts.image.tiff
   {:doc
    "Experiment with tiffs."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-12-02"}
+   :version "2025-12-03"}
 
   (:require
    [clojure.java.io :as io]

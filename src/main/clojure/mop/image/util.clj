@@ -17,7 +17,7 @@
            [com.drew.metadata.exif ExifIFD0Directory]
            [com.drew.metadata.xmp XmpDirectory]
            [java.awt Image]
-           [java.awt.image BufferedImage DataBufferByte RenderedImage]
+           [java.awt.image BufferedImage DataBuffer DataBufferByte Raster RenderedImage SampleModel]
            [java.io File]
            [java.nio ByteBuffer FloatBuffer IntBuffer]
            [java.util Map$Entry]
@@ -175,6 +175,43 @@
 
 ;;-----------------------------------------------------------------
 
+(defn ^String sample-model-type-name [^SampleModel sample-model]
+  (let [type (int (.getDataType sample-model))]
+    (cond
+      (== type DataBuffer/TYPE_BYTE) "BYTE"
+      (== type DataBuffer/TYPE_DOUBLE) "DOUBLE"
+      (== type DataBuffer/TYPE_FLOAT) "FLOAT"
+      (== type DataBuffer/TYPE_INT) "INT"
+      (== type DataBuffer/TYPE_SHORT) "SHORT"
+      (== type DataBuffer/TYPE_UNDEFINED) "UNDEFINED"
+      (== type DataBuffer/TYPE_USHORT) "USHORT"
+      :else (str type))))
+
+(defn ^String raster-data-type-name [^Raster raster]
+  (sample-model-type-name (.getSampleModel raster)))
+
+;;-----------------------------------------------------------------
+
+(defn ^String buffered-image-type-name [^BufferedImage image]
+  (let [type (int (.getType image))]
+    (cond
+      (== type BufferedImage/TYPE_3BYTE_BGR) "3BYTE_BGR"
+      (== type BufferedImage/TYPE_4BYTE_ABGR) "4BYTE_ABGR"
+      (== type BufferedImage/TYPE_4BYTE_ABGR_PRE) "4BYTE_ABGR_PRE"
+      (== type BufferedImage/TYPE_BYTE_BINARY) "BYTE_BINARY"
+      (== type BufferedImage/TYPE_BYTE_GRAY) "BYTE_GRAY"
+      (== type BufferedImage/TYPE_BYTE_INDEXED) "BYTE_INDEXED"
+      (== type BufferedImage/TYPE_CUSTOM) "CUSTOM"
+      (== type BufferedImage/TYPE_INT_ARGB) "INT_ARGB"
+      (== type BufferedImage/TYPE_INT_ARGB_PRE) "INT_ARGB_PRE"
+      (== type BufferedImage/TYPE_INT_BGR) "INT_BGR"
+      (== type BufferedImage/TYPE_INT_RGB) "INT_RGB"
+      (== type BufferedImage/TYPE_USHORT_555_RGB) "USHORT_555_RGB"
+      (== type BufferedImage/TYPE_USHORT_565_RGB) "USHORT_565_RGB"
+      (== type BufferedImage/TYPE_USHORT_GRAY) "USHORT_GRAY"
+      :else (str type))))
+
+;;-----------------------------------------------------------------
 (defn- buffered-image-type [^BufferedImage image]
   ;; BufferedImage constructor can't handle TYPE_CUSTOM=0
   (let [type (.getType image)]
@@ -185,17 +222,17 @@
       type)))
 
 #_(defn ^BufferedImage resize
-  ([^BufferedImage image ^long w ^long h ^long hints]
-   (let [^RenderedImage resized (.getScaledInstance image w h hints)]
-     (to-buffered-image resized (buffered-image-type image))))
-  ([^BufferedImage image ^long w ^long h]
-   (resize image w h Image/SCALE_DEFAULT)))
+    ([^BufferedImage image ^long w ^long h ^long hints]
+     (let [^RenderedImage resized (.getScaledInstance image w h hints)]
+       (to-buffered-image resized (buffered-image-type image))))
+    ([^BufferedImage image ^long w ^long h]
+     (resize image w h Image/SCALE_DEFAULT)))
 
 #_(defn ^Boolean write-png [^BufferedImage image ^File file ]
-  (ImageIO/write image "png" file))
+    (ImageIO/write image "png" file))
 
 #_(defn ^Boolean write-tif [^BufferedImage image ^File file]
-  (ImageIO/write image "tif" file))
+    (ImageIO/write image "tif" file))
 
 ;;-------------------------------------------------------------------
 
@@ -224,11 +261,16 @@
    (let [w (.getWidth image)
          h (.getHeight image)
          pixels (.getData ^DataBufferByte (.getDataBuffer (.getRaster image)))]
+     [pixels w h] )))
+
+(defn pixels-as-byte-buffer
+  ([^BufferedImage image]
+   (let [[pixels w h] (pixels-as-bytes image)]
      [(byte-buffer pixels) w h] ))
   ([^String local-path ^String remote-url]
-   (pixels-as-bytes (get-image local-path remote-url))))
+   (pixels-as-byte-buffer (get-image local-path remote-url))))
 
-(defn pixels-as-ints
+(defn pixels-as-int-buffer
   ([^BufferedImage image]
    (let [w (.getWidth image)
          h (.getHeight image)
@@ -237,15 +279,21 @@
      (.getPixels (.getRaster image) 0 0 w h pixels)
      [(int-buffer pixels) w h] ))
   ([^String local-path ^String remote-url]
-   (pixels-as-ints (get-image local-path remote-url))))
+   (pixels-as-int-buffer (get-image local-path remote-url))))
 
-;; TODO: assuming only one band?
 (defn pixels-as-floats
   ([^BufferedImage image]
    (let [w (.getWidth image)
          h (.getHeight image)
          pixels (float-array (* w h))]
      (.getPixels (.getRaster image) 0 0 w h pixels)
+     [pixels w h] )))
+
+;; TODO: assuming only one band?
+(defn pixels-as-float-buffer
+  ([^BufferedImage image]
+   (let [[pixels w h] (pixels-as-floats image)]
      [(float-buffer pixels) w h] ))
   ([^String local-path ^String remote-url]
-   (pixels-as-floats (get-image local-path remote-url))))
+   (pixels-as-float-buffer (get-image local-path remote-url))))
+

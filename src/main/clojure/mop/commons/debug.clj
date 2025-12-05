@@ -7,11 +7,10 @@
   obvious place elsewhere in Mop."
 
   {:author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-29"}
+   :version "2025-12-04"}
 
   (:require [mop.commons.string :as mcs]))
-
-;;----------------------------------------------------------------
+;;---------------------------------------------------------------------
 (defmacro equal-values? [p q f]
   `(= (~f ~p) (~f ~q)))
 
@@ -20,9 +19,7 @@
            (str ~f " differ:" \newline
                 (~f ~p) \newline
                 (~f ~q))))
-;;----------------------------------------------------------------
-
-
+;;---------------------------------------------------------------------
 (defmacro echo
   "Print the expressions followed by their values.
    Useful for quick logging."
@@ -38,5 +35,4 @@
                     [~@exps])]
        (dorun (map println ~s))
        (flush))))
-
-;;----------------------------------------------------------------
+;;---------------------------------------------------------------------

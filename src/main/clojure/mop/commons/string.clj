@@ -7,10 +7,11 @@
   obvious place elsewhere in Mop."
 
   {:author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-24"}
+   :version "2025-12-05"}
 
   (:import [clojure.lang MapEntry]
-           [java.util Map]))
+           [java.util Map]
+           [mop.java Description]))
 
 ;;----------------------------------------------------------------
 
@@ -24,8 +25,8 @@
 ;;----------------------------------------------------------------
 
 #_(defn starts-with? [^String s ^String prefix]
-  "null safe."
-  (when (and s prefix) (.startsWith s prefix)))
+    "null safe."
+    (when (and s prefix) (.startsWith s prefix)))
 
 ;;----------------------------------------------------------------
 ;; TODO: formatting like pprint
@@ -58,5 +59,43 @@
        " "
        (simple-string (val this))
        "]" \newline))
+;;---------------------------------------------------------------------
 
-;;----------------------------------------------------------------
+(defn ^String description [x] (Description/description x))
+
+;(defmulti ^String description
+;          "Return a useful (multiline) string, for debugging."
+;          class)
+;
+;(defmethod description nil [_]
+;  "nil")
+;
+;(let [c (class (byte-array 0))]
+;  (defmethod description c [this]
+;    (Arrays/toString ^bytes this)))
+;
+;(defmethod description Object [this]
+;  (if (.isArray (class this))
+;    (Arrays/toString this)
+;    (.toString this)))
+;
+;(defmethod description Iterable [^Iterable this]
+;  (str (.getSimpleName (class this)) "["
+;       (apply str (map description (sequence this)))
+;       "]"))
+;
+;(defmethod description Map [^Map this]
+;  (str "{"
+;       (apply str (map description (sequence this)))
+;       "}"))
+;
+;(prefer-method description Map Iterable)
+;
+;(defmethod description MapEntry [^MapEntry this]
+;  (str " ["
+;       (description (key this))
+;       " "
+;       (description (val this))
+;       "]" \newline))
+;
+;;---------------------------------------------------------------------

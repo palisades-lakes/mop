@@ -177,7 +177,7 @@
   (check-error))
 
 (defn- setup-color-texture [^BufferedImage image]
-  (let [[^ByteBuffer bytes ^int pw ^int ph] (image/pixels-as-bytes image)
+  (let [[^ByteBuffer bytes ^int pw ^int ph] (image/pixels-as-byte-buffer image)
         nbytes (.limit bytes)
         texture-name (GL46/glGenTextures)
         max-dimension (int (max-texture-size))
@@ -198,7 +198,7 @@
     [texture-name pw ph]))
 
 (defn- setup-elevation-texture [^BufferedImage image]
-  (let [[^FloatBuffer pixels ^int pw ^int ph] (image/pixels-as-floats image)
+  (let [[^FloatBuffer pixels ^int pw ^int ph] (image/pixels-as-float-buffer image)
         texture-name (GL46/glGenTextures)]
     (println pw "x" ph)
     (GL46/glBindTexture GL46/GL_TEXTURE_2D texture-name)
