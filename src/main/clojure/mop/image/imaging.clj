@@ -256,7 +256,6 @@
      (let [formatter (DateTimeFormatter/ofPattern "yyyy:MM:dd HH:mm:ss")]
        (set-tag outDir TiffTagConstants/TIFF_TAG_DATE_TIME
                 (into-array String [(.format formatter (LocalDateTime/now))])))
-     (debug/echo (.description outDir))
      (with-open [os (BufferedOutputStream. (io/output-stream outputFile))]
        ;;TODO: TiffImageWriterLossless!?
        (let [^TiffImageWriterLossy writer (TiffImageWriterLossy. byteOrder)]

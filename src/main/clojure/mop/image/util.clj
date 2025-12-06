@@ -6,10 +6,11 @@
 
   {:doc     "Image utilities."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-29"}
+   :version "2025-12-05"}
 
   (:require [clojure.java.io :as io]
             [clojure.string :as s]
+            [mop.commons.arrays :as mca]
             [mop.commons.io :as mci]
             [mop.commons.string :as mcs])
   (:import [com.drew.imaging ImageMetadataReader]
@@ -17,10 +18,10 @@
            [com.drew.metadata.exif ExifIFD0Directory]
            [com.drew.metadata.xmp XmpDirectory]
            [java.awt Image]
-           [java.awt.image BufferedImage DataBuffer DataBufferByte Raster RenderedImage SampleModel]
+           [java.awt.image BufferedImage DataBuffer DataBufferByte DataBufferDouble DataBufferFloat DataBufferInt DataBufferShort DataBufferUShort Raster RenderedImage SampleModel]
            [java.io File]
            [java.nio ByteBuffer FloatBuffer IntBuffer]
-           [java.util Map$Entry]
+           [java.util Arrays Map$Entry]
            [javax.imageio ImageIO]
            [org.apache.commons.imaging Imaging]
            [org.lwjgl BufferUtils]))
@@ -86,6 +87,47 @@
 
   (assert (.exists d) (.getPath d))
   (filter image-file? (file-seq d)))
+;;---------------------------------------------------------------------
+;; predicates and debugging
+;;---------------------------------------------------------------------
+;; TODO: defmulti? reflection?
+(defn get-data [^DataBuffer a]
+  (cond (instance? DataBufferByte a) (.getData ^DataBufferByte a)
+        (instance? DataBufferFloat a) (.getData ^DataBufferFloat a)
+        (instance? DataBufferInt a) (.getData ^DataBufferInt a)
+        (instance? DataBufferShort a) (.getData ^DataBufferShort a)
+        (instance? DataBufferUShort a) (.getData ^DataBufferUShort a)
+        (instance? DataBufferDouble a) (.getData ^DataBufferDouble a)))
+;;---------------------------------------------------------------------
+;; TODO: move to more generic location?
+(defmulti equals?
+          "Custom equality predicate."
+          (fn [a b] [(class a) (class b)]))
+
+(defmethod equals? [Object Object] [a b] (identical? a b))
+(defmethod equals? [mca/BooleanArray mca/BooleanArray] [^booleans a ^booleans b] (Arrays/equals a b))
+(defmethod equals? [mca/ByteArray mca/ByteArray] [^bytes a ^bytes b] (Arrays/equals a b))
+(defmethod equals? [mca/CharArray mca/CharArray] [^bytes a ^bytes b] (Arrays/equals a b))
+(defmethod equals? [mca/ShortArray mca/ShortArray] [^shorts a ^shorts b] (Arrays/equals a b))
+(defmethod equals? [mca/IntArray mca/IntArray] [^ints a ^ints b] (Arrays/equals a b))
+(defmethod equals? [mca/LongArray mca/LongArray] [^longs a ^longs b] (Arrays/equals a b))
+(defmethod equals? [mca/FloatArray mca/FloatArray] [^floats a ^floats b] (Arrays/equals a b))
+(defmethod equals? [mca/DoubleArray mca/DoubleArray] [^doubles a ^doubles b] (Arrays/equals a b))
+
+(defmethod equals? [DataBuffer DataBuffer] [^DataBuffer a ^DataBuffer b]
+  (equals? (get-data a) (get-data b)))
+
+(defmethod equals? [Raster Raster] [^Raster a ^Raster b]
+  (and  (== (.getWidth a) (.getWidth b))
+        (== (.getHeight a) (.getHeight b))
+        (equals? (.getDataBuffer a) (.getDataBuffer b))))
+
+(defmethod equals? [RenderedImage RenderedImage] [^RenderedImage a ^RenderedImage b]
+  ;; TODO: compare more properties, SampleModel, tiles, etc.
+  (and  (== (.getWidth a) (.getWidth b))
+        (== (.getHeight a) (.getHeight b))
+        (equals? (.getData a) (.getData b))))
+
 ;;-------------------------------------------------------------
 ;; metadata
 ;;-------------------------------------------------------------
