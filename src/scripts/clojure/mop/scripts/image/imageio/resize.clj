@@ -16,19 +16,19 @@
    [mop.image.imageio :as imageio]
    [mop.image.util :as image])
   (:import
-   [javax.imageio IIOImage]))
+   [javax.imageio IIOImage ImageReader]))
 ;;---------------------------------------------------------------------
-;; TODO: check metadata
 (defn resize [input]
   (println)
   (debug/echo input)
-  (let [[reader ^IIOImage image] (imageio/read input)
+  (let [[^ImageReader reader ^IIOImage image] (imageio/read input)
         ^IIOImage resized (imageio/reduce-iioimage image 16384)
         rendered (.getRenderedImage resized)
         w (.getWidth rendered)
         h (.getHeight rendered)
         output (mci/append-to-filename input (str "-" w "x" h))]
     (imageio/write reader resized output)
+    (.dispose reader)
     (image/write-metadata-markdown input)
     (image/write-metadata-markdown output)))
 ;;---------------------------------------------------------------------

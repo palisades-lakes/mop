@@ -6,25 +6,31 @@
 
   {:doc     "Image utilities."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-12-05"}
+   :version "2025-12-06"}
 
-  (:require [clojure.java.io :as io]
-            [clojure.string :as s]
-            [mop.commons.arrays :as mca]
-            [mop.commons.io :as mci]
-            [mop.commons.string :as mcs])
-  (:import [com.drew.imaging ImageMetadataReader]
-           [com.drew.metadata Directory Metadata Tag]
-           [com.drew.metadata.exif ExifIFD0Directory]
-           [com.drew.metadata.xmp XmpDirectory]
-           [java.awt Image]
-           [java.awt.image BufferedImage DataBuffer DataBufferByte DataBufferDouble DataBufferFloat DataBufferInt DataBufferShort DataBufferUShort Raster RenderedImage SampleModel]
-           [java.io File]
-           [java.nio ByteBuffer FloatBuffer IntBuffer]
-           [java.util Arrays Map$Entry]
-           [javax.imageio ImageIO]
-           [org.apache.commons.imaging Imaging]
-           [org.lwjgl BufferUtils]))
+  (:require
+   [clojure.java.io :as io]
+   [clojure.string :as s]
+   [mop.commons.arrays :as mca]
+   [mop.commons.io :as mci]
+   [mop.commons.string :as mcs])
+  (:import
+   [clojure.lang IFn]
+   [com.drew.imaging ImageMetadataReader]
+   [com.drew.metadata Directory Metadata Tag]
+   [com.drew.metadata.exif ExifIFD0Directory]
+   [com.drew.metadata.xmp XmpDirectory]
+   [java.awt Image]
+   [java.awt.image
+    BufferedImage DataBuffer DataBufferByte DataBufferDouble
+    DataBufferFloat DataBufferInt DataBufferShort DataBufferUShort
+    Raster RenderedImage SampleModel]
+   [java.io File]
+   [java.nio ByteBuffer FloatBuffer IntBuffer]
+   [java.util Arrays Map$Entry]
+   [javax.imageio ImageIO]
+   [org.apache.commons.imaging Imaging]
+   [org.lwjgl BufferUtils]))
 
 ;;----------------------------------------------------------------
 (def ^:private image-file-type?
@@ -71,22 +77,28 @@
     "x3f"                                                   ;; Sigma
     })
 ;;-------------------------------------------------------------
-(defn image-file? [^File f]
-  ;; filter out some odd hidden files in recycle bins, etc.
-  (and (not (s/starts-with? (.getName f) "$"))
-       (image-file-type? (mci/extension f))))
+;; TODO: move to more general file type predicate
+(defn image-file?
+  ([^File f ^IFn ext-predicate]
+   ;; filter out some odd hidden files in recycle bins, etc.
+   (and (not (s/starts-with? (.getName f) "$"))
+        (ext-predicate (mci/extension f))))
+  ([^File f] (image-file? f image-file-type?)))
 ;;----------------------------------------------------------------
+;; TODO: move to more general file-seq?
 (defn image-file-seq
 
   "Return a <code>seq</code> of all the files, in any folder under
    <code>d</code>, that are accepted by
-   <code>image-file?</code>., which at present is just a set of
+   <code>predicate</code>,
+   which defaults to <code>image-file?</code>, which at present is just a Set of
    known image file endings."
 
-  [^File d]
+  ([^File d ^IFn ext-predicate]
+   (assert (.exists d) (.getPath d))
+   (filter #(image-file? % ext-predicate) (file-seq d)))
 
-  (assert (.exists d) (.getPath d))
-  (filter image-file? (file-seq d)))
+  ([^File d] (image-file-seq d image-file-type?)))
 ;;---------------------------------------------------------------------
 ;; predicates and debugging
 ;;---------------------------------------------------------------------

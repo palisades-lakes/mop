@@ -12,6 +12,11 @@
     <artifactId>palisades-lakes-parent</artifactId>
     <version>0.0.11</version>
   </parent>
+  <properties>
+    <maven.compiler.release>25</maven.compiler.release>
+    <gt.version>34.0</gt.version>
+    <maven.deploy.skip>true</maven.deploy.skip>
+  </properties>
   <build>
     <plugins>
       <plugin>
@@ -67,7 +72,51 @@
       </plugin>
     </plugins>
   </build>
+  <dependencyManagement>
+    <dependencies>
+      <!-- Import the GeoTools BOM -->
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-bom</artifactId>
+        <version>${gt.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>5.11.0</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   <dependencies>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>${guava-version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-geotiff</artifactId>
+      <version>34.0</version>
+      <exclusions>
+        <!-- some versions have vulnerabilities -->
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <!-- doesn't work as well as vanilla javax.imageio 2025-12-06
+    <dependency>
+      <groupId>com.twelvemonkeys.imageio</groupId>
+      <artifactId>imageio-tiff</artifactId>
+      <version>3.12.0</version>
+    </dependency>
+    -->
+
     <!--
     <dependency>
       <groupId>clj-http</groupId>

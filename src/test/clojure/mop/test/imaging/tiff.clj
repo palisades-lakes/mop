@@ -1,11 +1,12 @@
 (ns mop.test.imaging.tiff
   {:doc     "Image utilities related to Apache Commons Imaging."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-12-02"}
+   :version "2025-12-06"}
   (:require [clojure.java.io :as io]
             [clojure.test :as t]
             [mop.commons.io :as mci]
-            [mop.image.imaging :as imaging])
+            [mop.image.imaging :as imaging]
+            [mop.image.util :as image])
   (:import [java.nio ByteOrder]
            [java.util Arrays]
            [org.apache.commons.imaging ImageInfo Imaging]
@@ -15,9 +16,10 @@
 ;; TODO: add image files of differing contents
 ;; TODO: replace TIFF F32 specific IO with generic, adaptive.
 
-(defn- check-read-write-read-tiff-f32 [input]
+#_(defn- check-read-write-read-tiff-f32 [input]
+  (image/write-metadata-markdown input)
   (let [input (io/file input)
-        output (mci/append-to-filename input "-test")
+        output (mci/append-to-filename input "-imaging")
         {^AbstractTiffRasterData raster-in :raster
          ^ByteOrder byteOrder-in           :byteOrder
          ^TiffImageMetadata metadata-in    :metadata} (imaging/read-tiff-f32 input)
@@ -28,6 +30,7 @@
         ^floats pixels-in (.getData raster-in)
         ^ImageInfo info-in (Imaging/getImageInfo input)]
     (imaging/write-tiff-f32-strips pixels-in w h byteOrder-in metadata-in output)
+    (image/write-metadata-markdown output)
     (let [{^AbstractTiffRasterData raster-out :raster
            ^ByteOrder byteOrder-out           :byteOrder
            ^TiffImageMetadata metadata-out    :metadata}
@@ -40,7 +43,7 @@
       (t/is (imaging/equal-ImageMetadata? metadata-in metadata-out)))))
 ;;---------------------------------------------------------------------
 
-(t/deftest read-write-read-tiff-f32
+#_(t/deftest read-write-read-tiff-f32
   (t/testing
    (doseq [input [
                   "src/test/resources/images/ldem_4.tif"

@@ -7,7 +7,7 @@
   obvious place elsewhere in mop."
 
   {:author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-24"}
+   :version "2025-12-06"}
 
   (:require [clojure.java.io :as io]
             [clojure.string :as s])
@@ -15,8 +15,9 @@
 
 ;;----------------------------------------------------------------
 
-(defn prefix ^String [^File f]
-  (let [filename (.getName f)
+(defn prefix ^String [f]
+  (let [f (io/file f)
+        filename (.getName f)
         i (s/last-index-of filename ".")]
     (if (nil? i)
       filename
@@ -24,8 +25,9 @@
 
 ;;----------------------------------------------------------------
 
-(defn extension ^String [^File f]
-  (let [filename (.getName f)
+(defn extension ^String [f]
+  (let [f (io/file f)
+        filename (.getName f)
         i (s/last-index-of filename ".")
         ^String ext (if (nil? i)
                       ""

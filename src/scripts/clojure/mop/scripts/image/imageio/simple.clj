@@ -1,9 +1,9 @@
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-;; clj src\scripts\clojure\mop\scripts\image\imageio\roundtrip.clj
+;; clj src\scripts\clojure\mop\scripts\image\imageio\simple.clj
 ;;----------------------------------------------------------------
-(ns mop.scripts.image.imageio.roundtrip
+(ns mop.scripts.image.imageio.simple
   {:doc
    "Work out idempotent image read-write roundtrips."
    :author  "palisades dot lakes at gmail dot com"
@@ -11,35 +11,25 @@
 
   (:require
    [clojure.java.io :as io]
-   [clojure.string :as s]
    [mop.commons.debug :as debug]
    [mop.commons.io :as mci]
-   [mop.image.imageio :as imageio]
    [mop.image.util :as image])
   (:import
-   [javax.imageio IIOImage]))
+   [javax.imageio ImageIO]))
 ;---------------------------------------------------------------------
-;; TODO: check metadata
-(def suffix "-iio" )
+(def suffix "-simple" )
 (defn roundtrip [input]
   (println)
   (debug/echo input)
+  (image/write-metadata-markdown input)
   (let [output (mci/append-to-filename input suffix)
-        [reader-in ^IIOImage image-in] (imageio/read input)
-        [_writer _writeParam] (imageio/write reader-in image-in output)
-        rendered-in (.getRenderedImage image-in)
-        [_reader-out ^IIOImage image-out] (imageio/read output)
-        rendered-out (.getRenderedImage image-out)
+        rendered-in (ImageIO/read (io/file input))
+        _ (ImageIO/write rendered-in (mci/extension input) (io/file output))
+        rendered-out  (ImageIO/read (io/file output))
         ]
-    (image/write-metadata-markdown input)
     (image/write-metadata-markdown output)
     (assert (image/equals? rendered-in rendered-out))))
 ;;---------------------------------------------------------------------
+(roundtrip "images/imageio/ETOPO_2022_v1_60s_PNW_bed.tiff")
 (roundtrip "images/imageio/ETOPO_2022_v1_60s_N90W180_bed.tif")
-#_(doseq [input
-        (remove #(or #_(s/starts-with? (mci/prefix %) "ETOPO")
-                     (s/ends-with? (mci/prefix %) suffix))
-                (image/image-file-seq (io/file "images/imageio") #_#{"png" "PNG"}))
-        ]
-  (roundtrip input))
 ;;---------------------------------------------------------------------

@@ -7,12 +7,14 @@
    :author  "palisades dot lakes at gmail dot com"
    :version "2025-12-05"}
   (:refer-clojure :exclude [read reduce])
-  (:require [clojure.java.io :as io])
+  (:require [clojure.java.io :as io]
+            [mop.commons.debug :as debug])
   (:import
    [java.awt Graphics2D RenderingHints]
    [java.awt.image BufferedImage RenderedImage]
-   [javax.imageio IIOImage ImageIO ImageReader ImageTypeSpecifier ImageWriteParam ImageWriter]
+   [javax.imageio IIOImage ImageIO ImageReadParam ImageReader ImageTypeSpecifier ImageWriteParam ImageWriter]
    [javax.imageio.metadata IIOMetadata]
+   [javax.imageio.plugins.tiff TIFFImageReadParam]
    [javax.imageio.stream ImageInputStream ImageOutputStream]))
 ;;----------------------------------------------------------------------
 ;; TODO: handle multi-image, multi-thumbnail cases?
@@ -21,9 +23,14 @@
 
 (defn ^[ImageReader IIOImage] read [input]
   (let [^ImageInputStream iis (ImageIO/createImageInputStream (io/file input))
-        ^ImageReader reader (first (iterator-seq (ImageIO/getImageReaders iis)))]
+        ^ImageReader reader (first (iterator-seq (ImageIO/getImageReaders iis)))
+        ^ImageReadParam params (.getDefaultReadParam reader)]
     (.setInput reader iis)
-    [reader (.readAll reader 0 nil)]))
+
+    #_(when (instance? TIFFImageReadParam params)
+      (debug/echo (.getAllowedTagSets ^TIFFImageReadParam params))
+      (.setReadUnknownTags ^TIFFImageReadParam params true))
+    [reader (.readAll reader 0 params)]))
 ;;----------------------------------------------------------------------
 (defn ^[ImageWriter ImageWriteParam] write [^ImageReader reader ^IIOImage image output]
   (let [^ImageWriter writer (ImageIO/getImageWriter reader)
@@ -51,7 +58,7 @@
          ^Graphics2D g2 (.createGraphics resized)]
      (.setRenderingHint g2 RenderingHints/KEY_INTERPOLATION hint)
      (.drawImage g2 image 0 0 w h nil)
-     (.dispose g2)
+     #_(.dispose g2)
      resized))
 
   ([^RenderedImage image ^long w ^long h]
@@ -79,8 +86,8 @@
 (defn ^IIOImage resize-iioimage
 
   ([^IIOImage image ^long w ^long h ^Object hint]
-     (IIOImage. (resize-rendered-image (.getRenderedImage image) w h hint)
-                (.getThumbnails image) (.getMetadata image)))
+   (IIOImage. (resize-rendered-image (.getRenderedImage image) w h hint)
+              (.getThumbnails image) (.getMetadata image)))
 
   ([^IIOImage image ^long w ^long h]
    (resize-iioimage image w h RenderingHints/VALUE_INTERPOLATION_BILINEAR)))
