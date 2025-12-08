@@ -6,7 +6,7 @@
 
   {:doc     "Image utilities."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-12-06"}
+   :version "2025-12-07"}
 
   (:require
    [clojure.java.io :as io]
@@ -29,7 +29,6 @@
    [java.nio ByteBuffer FloatBuffer IntBuffer]
    [java.util Arrays Map$Entry]
    [javax.imageio ImageIO]
-   [org.apache.commons.imaging Imaging]
    [org.lwjgl BufferUtils]))
 
 ;;----------------------------------------------------------------
@@ -219,8 +218,6 @@
 (defn ^BufferedImage get-image
 
   ([path] (ImageIO/read (io/file path)))
-
-  #_([path] (Imaging/getBufferedImage (io/file path)))
 
   ([path remote-url]
    (when (not (.exists (io/file path)))

@@ -5,47 +5,54 @@
 
   {:doc     "Image utilities related to javax.imageio."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-12-05"}
+   :version "2025-12-08"}
   (:refer-clojure :exclude [read reduce])
   (:require [clojure.java.io :as io]
-            [mop.commons.debug :as debug])
+            [mop.commons.debug :as debug]
+            [mop.image.util :as image])
   (:import
    [java.awt Graphics2D RenderingHints]
    [java.awt.image BufferedImage RenderedImage]
    [javax.imageio IIOImage ImageIO ImageReadParam ImageReader ImageTypeSpecifier ImageWriteParam ImageWriter]
    [javax.imageio.metadata IIOMetadata]
-   [javax.imageio.plugins.tiff TIFFImageReadParam]
-   [javax.imageio.stream ImageInputStream ImageOutputStream]))
+   [javax.imageio.plugins.tiff TIFFImageReadParam]))
+;;----------------------------------------------------------------------
+(defmethod image/equals? [IIOImage IIOImage] [^IIOImage a ^IIOImage b]
+  ;; TODO: compare metadata, etc.
+  (image/equals? (.getRenderedImage a) (.getRenderedImage b)))
 ;;----------------------------------------------------------------------
 ;; TODO: handle multi-image, multi-thumbnail cases?
 ;; TODO: what if there is more than one reader?
 ;; TODO: custom ImageReadParams?
-
+;; TODO: can we .close the input stream if the reader is returned?
 (defn ^[ImageReader IIOImage] read [input]
-  (let [^ImageInputStream iis (ImageIO/createImageInputStream (io/file input))
-        ^ImageReader reader (first (iterator-seq (ImageIO/getImageReaders iis)))
-        ^ImageReadParam params (.getDefaultReadParam reader)]
-    (.setInput reader iis)
-
-    #_(when (instance? TIFFImageReadParam params)
-      (debug/echo (.getAllowedTagSets ^TIFFImageReadParam params))
-      (.setReadUnknownTags ^TIFFImageReadParam params true))
-    [reader (.readAll reader 0 params)]))
+  (with-open [iis (ImageIO/createImageInputStream (io/file input))]
+    (let [^ImageReader reader (first (iterator-seq (ImageIO/getImageReaders iis)))
+          ^ImageReadParam params (.getDefaultReadParam reader)]
+      (.setInput reader iis)
+      #_(when (instance? TIFFImageReadParam params)
+          (debug/echo (.getAllowedTagSets ^TIFFImageReadParam params))
+          (.setReadUnknownTags ^TIFFImageReadParam params true))
+      [reader (.readAll reader 0 params)])))
 ;;----------------------------------------------------------------------
+;; TODO: do we need to return writer, write-param?
+;; TODO: dispose of writer, other cleanup...
 (defn ^[ImageWriter ImageWriteParam] write [^ImageReader reader ^IIOImage image output]
-  (let [^ImageWriter writer (ImageIO/getImageWriter reader)
+  (let [output (io/file output)
+        ^ImageWriter writer (ImageIO/getImageWriter reader)
         ^ImageWriteParam write-param (.getDefaultWriteParam writer);
-        ^IIOMetadata metadata (.getMetadata image)
-        ^ImageOutputStream ios (ImageIO/createImageOutputStream (io/file output))]
-    (.setOutput writer ios)
-    (.write writer metadata image write-param)
-    [writer write-param]))
+        ^IIOMetadata metadata (.getMetadata image)]
+    (try
+      (with-open [ios (ImageIO/createImageOutputStream output)]
+        (.setOutput writer ios)
+        (.write writer metadata image write-param))
+      (finally (.dispose writer)))))
 ;;----------------------------------------------------------------------
-(defn ^[IIOImage ImageWriter ImageWriteParam] read-write [input output]
-  "Primarily for testing."
-  (let [[reader image] (read input)
-        [writer write-param] (write reader image output)]
-    [image writer write-param]))
+#_(defn ^[IIOImage ImageWriter ImageWriteParam] read-write [input output]
+    "Primarily for testing."
+    (let [[reader image] (read input)
+          [writer write-param] (write reader image output)]
+      [image writer write-param]))
 ;;----------------------------------------------------------------------
 ;; see https://web.archive.org/web/20070515094604/https://today.java.net/pub/a/today/2007/04/03/perils-of-image-getscaledinstance.html
 ;; need to use ImageTypeSpecifier to handle input images with TYPE_CUSTOM

@@ -7,7 +7,8 @@
   obvious place elsewhere in Mop."
 
   {:author  "palisades dot lakes at gmail dot com"
-   :version "2025-12-05"})
+   :version "2025-12-08"}
+  (:require [mop.commons.string :as mcs]))
 
 ;;----------------------------------------------------------------
 ;; primitive arrays
@@ -31,8 +32,8 @@
 ;;----------------------------------------------------------------
 ;; more general arrays
 ;;----------------------------------------------------------------
-(def ^Class object-array-type (let [a (object-array 0)] (class a)))
-(defn object-array? [x] (instance? object-array-type x))
+(def ^Class ObjectArray (let [a (object-array 0)] (class a)))
+(defn object-array? [x] (instance? ObjectArray x))
 
 (defn element-type ^Class [x]
   (let [c (.getClass ^Object x)]
@@ -50,3 +51,21 @@
   (and (array? x)
        (.isAssignableFrom (element-type x) c)))
 ;;----------------------------------------------------------------
+(defmethod mcs/simple-string BooleanArray [^booleans x]
+  (java.util.Arrays/toString x))
+(defmethod mcs/simple-string ByteArray [^bytes x]
+  (java.util.Arrays/toString x))
+(defmethod mcs/simple-string CharArray [^chars x]
+  (java.util.Arrays/toString x))
+(defmethod mcs/simple-string DoubleArray [^doubles x]
+  (java.util.Arrays/toString x))
+(defmethod mcs/simple-string FloatArray [^floats x]
+  (java.util.Arrays/toString x))
+(defmethod mcs/simple-string IntArray [^ints x]
+  (java.util.Arrays/toString x))
+(defmethod mcs/simple-string LongArray [^longs x]
+  (java.util.Arrays/toString x))
+(defmethod mcs/simple-string ShortArray [^shorts x]
+  (java.util.Arrays/toString x))
+(defmethod mcs/simple-string ObjectArray [^objects x]
+  (java.util.Arrays/toString x))

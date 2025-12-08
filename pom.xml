@@ -72,9 +72,10 @@
       </plugin>
     </plugins>
   </build>
+
+  <!--
   <dependencyManagement>
     <dependencies>
-      <!-- Import the GeoTools BOM -->
       <dependency>
         <groupId>org.geotools</groupId>
         <artifactId>gt-bom</artifactId>
@@ -91,86 +92,49 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
+  -->
+
   <dependencies>
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>2.21.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>it.geosolutions.imageio-ext</groupId>
+      <artifactId>imageio-ext-tiff</artifactId>
+      <version>2.0.1</version>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-io</groupId>
+          <artifactId>commons-io</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
       <version>${guava-version}</version>
     </dependency>
+    <!--
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-geotiff</artifactId>
       <version>34.0</version>
       <exclusions>
-        <!-- some versions have vulnerabilities -->
         <exclusion>
           <groupId>com.google.guava</groupId>
           <artifactId>guava</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
-    <!-- doesn't work as well as vanilla javax.imageio 2025-12-06
-    <dependency>
-      <groupId>com.twelvemonkeys.imageio</groupId>
-      <artifactId>imageio-tiff</artifactId>
-      <version>3.12.0</version>
-    </dependency>
-    -->
-
-    <!--
-    <dependency>
-      <groupId>clj-http</groupId>
-      <artifactId>clj-http</artifactId>
-      <version>${clj-http-version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpclient</artifactId>
-      <version>4.5.14</version>
-    </dependency>
-    -->
+-->
     <dependency>
       <groupId>com.drewnoakes</groupId>
       <artifactId>metadata-extractor</artifactId>
       <version>${metadata-extractor-version}</version>
-    </dependency>
-    <!--
-    <dependency>
-      <groupId>io.joshmiller</groupId>
-      <artifactId>exif-processor</artifactId>
-      <version>${exif-processor-version}</version>
-      <exclusions>
-        <exclusion>
-        <groupId>clj-http</groupId>
-        <artifactId>clj-http</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.drewnoakes</groupId>
-          <artifactId>metadata-extractor</artifactId>
-        </exclusion>
-        <exclusion>
-        <groupId>org.clojure</groupId>
-        <artifactId>clojure</artifactId>
-        </exclusion>
-    </exclusions>
-    </dependency>
-    -->
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-lang3</artifactId>
-      <version>${commons-lang3-version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-imaging</artifactId>
-      <version>${commons-imaging-version}</version>
-      <exclusions>
-        <!-- some versions have vulnerabilities -->
-        <exclusion>
-          <groupId>org.apache.commons</groupId>
-          <artifactId>commons-lang3</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
@@ -204,11 +168,11 @@
       <artifactId>eastwood</artifactId>
       <version>${eastwood-version}</version>
       <exclusions>
-      <!-- early versions of clojure 1.12 have vulnerabilities -->
-      <exclusion>
-        <groupId>org.clojure</groupId>
-        <artifactId>clojure</artifactId>
-      </exclusion>
+        <!-- early versions of clojure 1.12 have vulnerabilities -->
+        <exclusion>
+          <groupId>org.clojure</groupId>
+          <artifactId>clojure</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>

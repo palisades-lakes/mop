@@ -43,7 +43,7 @@
 
 (defmethod simple-string Iterable [^Iterable this]
   (str (.getSimpleName (class this)) "["
-       (apply str (map simple-string (sequence this)))
+       (apply str (interpose " " (map simple-string (sequence this))))
        "]"))
 
 (defmethod simple-string Map [^Map this]

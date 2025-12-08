@@ -7,39 +7,40 @@
   {:doc
    "Work out idempotent image read-write roundtrips."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-12-06"}
+   :version "2025-12-07"}
 
   (:require
    [clojure.java.io :as io]
-   [clojure.string :as s]
-   [mop.commons.debug :as debug]
    [mop.commons.io :as mci]
    [mop.image.imageio :as imageio]
    [mop.image.util :as image])
   (:import
    [javax.imageio IIOImage]))
-;---------------------------------------------------------------------
+;;---------------------------------------------------------------------
 ;; TODO: check metadata
 (def suffix "-iio" )
 (defn roundtrip [input]
-  (println)
-  (debug/echo input)
-  (let [output (mci/append-to-filename input suffix)
+  (println input)
+  (image/write-metadata-markdown input)
+  (let [input (io/file input)
+        output (mci/append-to-filename input suffix)
         [reader-in ^IIOImage image-in] (imageio/read input)
-        [_writer _writeParam] (imageio/write reader-in image-in output)
+        _(imageio/write reader-in image-in output)
         rendered-in (.getRenderedImage image-in)
         [_reader-out ^IIOImage image-out] (imageio/read output)
         rendered-out (.getRenderedImage image-out)
         ]
-    (image/write-metadata-markdown input)
     (image/write-metadata-markdown output)
     (assert (image/equals? rendered-in rendered-out))))
 ;;---------------------------------------------------------------------
-(roundtrip "images/imageio/ETOPO_2022_v1_60s_N90W180_bed.tif")
-#_(doseq [input
-        (remove #(or #_(s/starts-with? (mci/prefix %) "ETOPO")
-                     (s/ends-with? (mci/prefix %) suffix))
-                (image/image-file-seq (io/file "images/imageio") #_#{"png" "PNG"}))
-        ]
+(doseq [input [
+               "images/imageio/ETOPO_2022_v1_60s_N90W180_bed.tif"
+               "images/imageio/eo_base_2020_clean_geo.tif"
+               "images/imageio/ETOPO_2022_v1_60s_PNW_bed.tiff"
+               "images/imageio/gebco_08_rev_elev_21600x10800.png"
+               "images/imageio/ldem_4.tif"
+               "images/imageio/USGS_13_n38w077_dir5.tiff"
+               "images/imageio/world.topo.bathy.200412.3x5400x2700.png"
+               ]]
   (roundtrip input))
 ;;---------------------------------------------------------------------
