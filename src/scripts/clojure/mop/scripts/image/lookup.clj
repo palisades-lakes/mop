@@ -1,9 +1,9 @@
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-;; clj src\scripts\clojure\mop\scripts\image\iiox\lookup.clj > lookup.txt
+;; clj src\scripts\clojure\mop\scripts\image\lookup.clj > lookup.txt
 ;;----------------------------------------------------------------
-(ns mop.scripts.image.iiox.lookup
+(ns mop.scripts.image.lookup
   {:doc
    "Explore image metadata."
    :author  "palisades dot lakes at gmail dot com"
@@ -11,7 +11,8 @@
   (:require
    [clojure.java.io :as io]
    [clojure.pprint :as pp]
-   [mop.commons.debug :as debug])
+   [mop.commons.debug :as debug]
+   [mop.image.util :as image])
   (:import
    [com.sun.imageio.plugins.png PNGMetadata]
    [it.geosolutions.imageio.plugins.tiff BaselineTIFFTagSet]
@@ -171,21 +172,22 @@
     (debug/echo compressionField)
     (debug/echo (tiff-compression-name compression))))
 ;;---------------------------------------------------------------------
-(defmethod metadata-lookup PNGMetadata [^TIFFImageMetadata metadata]
-  (let [rootIFD (.getRootIFD metadata)
-        predictorField (.getTIFFField rootIFD BaselineTIFFTagSet/TAG_PREDICTOR)
-        predictor (if predictorField
-                    (.getAsLong predictorField 0)
-                    BaselineTIFFTagSet/PREDICTOR_NONE)
-        compressionField (.getTIFFField rootIFD BaselineTIFFTagSet/TAG_COMPRESSION)
-        compression (if compressionField
-                      (.getAsLong compressionField 0)
-                      BaselineTIFFTagSet/COMPRESSION_NONE)]
-    (debug/echo rootIFD)
-    (debug/echo predictorField)
-    (debug/echo (tiff-predictor-name predictor))
-    (debug/echo compressionField)
-    (debug/echo (tiff-compression-name compression))))
+;; TODO: extract useful info from pngs
+#_(defmethod metadata-lookup PNGMetadata [^PNGMetadata metadata]
+    (let [rootIFD (.getRootIFD metadata)
+          predictorField (.getTIFFField rootIFD BaselineTIFFTagSet/TAG_PREDICTOR)
+          predictor (if predictorField
+                      (.getAsLong predictorField 0)
+                      BaselineTIFFTagSet/PREDICTOR_NONE)
+          compressionField (.getTIFFField rootIFD BaselineTIFFTagSet/TAG_COMPRESSION)
+          compression (if compressionField
+                        (.getAsLong compressionField 0)
+                        BaselineTIFFTagSet/COMPRESSION_NONE)]
+      (debug/echo rootIFD)
+      (debug/echo predictorField)
+      (debug/echo (tiff-predictor-name predictor))
+      (debug/echo compressionField)
+      (debug/echo (tiff-compression-name compression))))
 ;;---------------------------------------------------------------------
 (defn lookup [input]
   (println)
@@ -201,14 +203,15 @@
       (metadata-lookup metadata)
       )))
 ;;---------------------------------------------------------------------
-(doseq [input [
-               "images/imageio/USGS_13_n38w077_dir5.tiff"
-               "images/imageio/ETOPO_2022_v1_60s_PNW_bed.tiff"
-               "images/imageio/ETOPO_2022_v1_60s_N90W180_bed.tif"
-               "images/imageio/eo_base_2020_clean_geo.tif"
-               "images/imageio/ldem_4.tif"
-               "images/imageio/gebco_08_rev_elev_21600x10800.png"
-               "images/imageio/world.topo.bathy.200412.3x5400x2700.png"
-               ]]
+(doseq [input (image/image-file-seq (io/file "images/imageio"))
+        #_[
+           "images/imageio/USGS_13_n38w077_dir5.tiff"
+           "images/imageio/ETOPO_2022_v1_60s_PNW_bed.tiff"
+           "images/imageio/ETOPO_2022_v1_60s_N90W180_bed.tif"
+           "images/imageio/eo_base_2020_clean_geo.tif"
+           "images/imageio/ldem_4.tif"
+           "images/imageio/gebco_08_rev_elev_21600x10800.png"
+           "images/imageio/world.topo.bathy.200412.3x5400x2700.png"
+           ]]
   (lookup input))
 ;;---------------------------------------------------------------------

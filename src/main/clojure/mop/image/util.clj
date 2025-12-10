@@ -6,7 +6,7 @@
 
   {:doc     "Image utilities."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-12-07"}
+   :version "2025-12-10"}
 
   (:require
    [clojure.java.io :as io]
@@ -78,11 +78,12 @@
 ;;-------------------------------------------------------------
 ;; TODO: move to more general file type predicate
 (defn image-file?
-  ([^File f ^IFn ext-predicate]
+  ([f ^IFn ext-predicate]
+   (let [f (io/file f)]
    ;; filter out some odd hidden files in recycle bins, etc.
    (and (not (s/starts-with? (.getName f) "$"))
-        (ext-predicate (mci/extension f))))
-  ([^File f] (image-file? f image-file-type?)))
+        (ext-predicate (mci/extension f)))))
+  ([f] (image-file? f image-file-type?)))
 ;;----------------------------------------------------------------
 ;; TODO: move to more general file-seq?
 (defn image-file-seq
@@ -93,11 +94,12 @@
    which defaults to <code>image-file?</code>, which at present is just a Set of
    known image file endings."
 
-  ([^File d ^IFn ext-predicate]
-   (assert (.exists d) (.getPath d))
-   (filter #(image-file? % ext-predicate) (file-seq d)))
+  ([d ^IFn ext-predicate]
+   (let [d (io/file d)]
+     (assert (.exists d) (.getPath d))
+     (filter #(image-file? % ext-predicate) (file-seq (io/file d)))))
 
-  ([^File d] (image-file-seq d image-file-type?)))
+  ([d] (image-file-seq d image-file-type?)))
 ;;---------------------------------------------------------------------
 ;; predicates and debugging
 ;;---------------------------------------------------------------------
