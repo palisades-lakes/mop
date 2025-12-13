@@ -16,9 +16,10 @@
    [mop.image.util :as image])
   (:import
    [java.awt RenderingHints]
-   [java.awt.geom AffineTransform]
-   [java.awt.image AffineTransformOp Raster]
-   [javax.imageio IIOImage]))
+   [java.awt.image BufferedImage Raster]
+   [java.util Hashtable]
+   [javax.imageio IIOImage]
+   [mop.java.imageio SubSampleOp]))
 ;;----------------------------------------------------------------------
 (defn ^Raster raster [^IIOImage image]
   (if (.hasRaster image)
@@ -27,13 +28,18 @@
 ;;----------------------------------------------------------------------
 (defn ^IIOImage rescale-iioimage
 
-  ([^IIOImage image ^double s ^RenderingHints hints]
-   (let [r-in (raster image)
-         a (AffineTransform/getScaleInstance s s)
-         op (AffineTransformOp. a hints)
-         r-out (.filter op r-in nil)]
-     (debug/echo r-out)
-     (IIOImage. r-out (.getThumbnails image) (.getMetadata image))))
+  ([^IIOImage image ^double s ^RenderingHints _hints]
+   (let [^BufferedImage b-in (.getRenderedImage image)
+         r-in (.getData b-in)
+         op (SubSampleOp/make s)
+         r-out (.filter op r-in nil)
+         b-out (BufferedImage.
+                (.getColorModel b-in)
+                r-out
+                (.isAlphaPremultiplied b-in)
+                (Hashtable.))]
+     (debug/echo b-out)
+     (IIOImage. b-out (.getThumbnails image) (.getMetadata image))))
 
   ([^IIOImage image ^double s]
    (rescale-iioimage
@@ -53,8 +59,8 @@
    (let [r (raster image)
          w (.getWidth r)
          h (.getHeight r)
-         s (/ (double max-dimension) (Math/max w h))]
-     (when (< s 1.0)
+         s (/ (Math/max w h) (double max-dimension) )]
+     (when (> s 1.0)
        (rescale-iioimage image s hints))))
 
   (^IIOImage [^IIOImage image ^long max-dimension]
@@ -90,10 +96,10 @@
 
          "images/imageio/USGS_13_n38w077_dir5.tiff"
 
-         ;;"images/imageio/ETOPO_2022_v1_60s_PNW_bed.tiff"
-         ;;"images/imageio/ETOPO_2022_v1_60s_N90W180_bed.tif"
-         ;;"images/imageio/ldem_4.tif"
-         ;;"images/imageio/ETOPO_2022_v1_60s_N90W180_bed-lzw.tif"
+         "images/imageio/ETOPO_2022_v1_60s_PNW_bed.tiff"
+         "images/imageio/ETOPO_2022_v1_60s_N90W180_bed.tif"
+         "images/imageio/ldem_4.tif"
+         "images/imageio/ETOPO_2022_v1_60s_N90W180_bed-lzw.tif"
          ]
         ]
   (resize input))

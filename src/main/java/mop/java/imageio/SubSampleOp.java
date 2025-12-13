@@ -3,12 +3,7 @@ package mop.java.imageio;
 import java.awt.RenderingHints;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
-import java.awt.image.BufferedImageOp;
-import java.awt.image.ColorModel;
-import java.awt.image.Raster;
-import java.awt.image.RasterOp;
-import java.awt.image.WritableRaster;
+import java.awt.image.*;
 
 /** Trivial method to reduce image resolution.
  *  assigning to each low resolution pixel the value of the single
@@ -30,11 +25,13 @@ public final class SubSampleOp
   //-------------------------------------------------------------------
 
   private final double _lowToHighScale;
+
   public final double lowToHighScale () { return _lowToHighScale; }
 
   //-------------------------------------------------------------------
   // RasterOp methods
   //-------------------------------------------------------------------
+
   /** Rendering hints are ignored.
    */
 
@@ -59,13 +56,16 @@ public final class SubSampleOp
     return dstPt; }
 
   @Override
-  public final WritableRaster createCompatibleDestRaster (final Raster src) {
+  public final WritableRaster
+  createCompatibleDestRaster (final Raster src) {
+
     final Rectangle2D r = getBounds2D(src);
     return src.createCompatibleWritableRaster((int)r.getX(),
                                               (int)r.getY(),
                                               (int)r.getWidth(),
                                               (int)r.getHeight()); }
 
+  // simple, fast enough for occasional use
   @Override
   public final WritableRaster filter (final Raster src,
                                       final WritableRaster dest) {
@@ -76,8 +76,20 @@ public final class SubSampleOp
        ? src.createCompatibleWritableRaster(w,h)
        : dest);
     assert ((w == dst.getWidth()) && (h == dst.getHeight()));
-    return dst;
-  }
+    // only grayscale float images for now
+    assert (DataBuffer.TYPE_FLOAT == src.getTransferType());
+    assert (DataBuffer.TYPE_FLOAT == src.getDataBuffer().getDataType());
+    assert (src.getSampleModel() instanceof PixelInterleavedSampleModel);
+    assert (1 == src.getNumBands());
+    final int nb = dst.getNumBands();
+    for (int x=0;x<w;x++) {
+      for (int y=0;y<h;y++) {
+        for (int b=0;b<nb;b++) {
+          final int xSrc = (int) (x*lowToHighScale());
+          final int ySrc = (int) (y*lowToHighScale());
+          dst.setSample(x,y,b,src.getSample(xSrc,ySrc,b)); } } }
+
+    return dst; }
 
   //-------------------------------------------------------------------
   // BufferedImageOp methods
@@ -88,15 +100,17 @@ public final class SubSampleOp
     return getBounds2D(src.getRaster()); }
 
   @Override
-  public final BufferedImage createCompatibleDestImage (
-    final BufferedImage src,
-    final ColorModel destCM) {
+  public final BufferedImage
+  createCompatibleDestImage (final BufferedImage src,
+                             final ColorModel destCM) {
+    assert false;
     return null;
   }
 
   @Override
   public final BufferedImage filter (final BufferedImage src,
                                      final BufferedImage dest) {
+    assert false;
     return null;
   }
 
@@ -107,8 +121,9 @@ public final class SubSampleOp
   private  SubSampleOp (final double lowToHighScale) {
     _lowToHighScale = lowToHighScale; }
 
-  public  static final SubSampleOp make (final double lowToHighScale) {
-    return new  SubSampleOp(lowToHighScale); }
+  public  static final SubSampleOp
+  make (final double lowToHighScale) {
+    return new SubSampleOp(lowToHighScale); }
 
   //-------------------------------------------------------------------
 }
