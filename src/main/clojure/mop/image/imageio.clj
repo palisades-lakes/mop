@@ -8,6 +8,7 @@
    :version "2025-12-10"}
   (:refer-clojure :exclude [read reduce])
   (:require [clojure.java.io :as io]
+            [clojure.pprint :as pp]
             [mop.image.util :as image])
   (:import
    [it.geosolutions.imageio.plugins.tiff BaselineTIFFTagSet TIFFField]
@@ -113,17 +114,21 @@
       (finally
         (.dispose writer)))))
 ;;----------------------------------------------------------------------
-;; see https://web.archive.org/web/20070515094604/https://today.java.net/pub/a/today/2007/04/03/perils-of-image-getscaledinstance.html
+;; see https://web.archive.org/web/20070515094604/
+;; https://today.java.net/pub/a/today/2007/04/03/perils-of-image-getscaledinstance.html
 ;; need to use ImageTypeSpecifier to handle input images with TYPE_CUSTOM
 
 (defn ^RenderedImage resize-rendered-image
 
   ([^RenderedImage image ^long w ^long h ^Object hint]
-   (println w h)
    (let [type-specifier (ImageTypeSpecifier/createFromRenderedImage image)
          ^BufferedImage resized (.createBufferedImage type-specifier w h)
          ^Graphics2D g2 (.createGraphics resized)]
-     (println type-specifier)
+     (pp/pprint g2)
+     (pp/pprint type-specifier)
+     (pp/pprint (.getColorModel type-specifier))
+     (pp/pprint (.getSampleModel type-specifier))
+     (println (.getTransferType (.getColorModel type-specifier)))
      (.setRenderingHint g2 RenderingHints/KEY_INTERPOLATION hint)
      (.drawImage g2 image 0 0 w h nil)
      #_(.dispose g2)
