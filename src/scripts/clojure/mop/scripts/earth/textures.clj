@@ -7,7 +7,7 @@
   {:doc
    "Resize images."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-12-05"}
+   :version "2025-12-13"}
 
   (:require
    [clojure.java.io :as io]
@@ -23,7 +23,7 @@
   (debug/echo input)
   (image/write-metadata-markdown input)
   (let [[reader image] (imageio/read input)
-       ^IIOImage resized (imageio/reduce-iioimage image 16384)
+       ^IIOImage resized (imageio/subsample image 16384)
         rendered (.getRenderedImage resized)
         w (.getWidth rendered)
         h (.getHeight rendered)

@@ -7,7 +7,7 @@
   {:doc
    "Work out idempotent image read-write roundtrips."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-12-10"}
+   :version "2025-12-13"}
   (:refer-clojure :exclude [read reduce])
   (:require
    [clojure.java.io :as io]
@@ -30,16 +30,21 @@
         rendered-out (.getRenderedImage image-out)
         ]
     (image/write-metadata-markdown output)
-    (assert (image/equals? rendered-in rendered-out))))
+    (assert (image/equals? rendered-in rendered-out))
+    (.delete output)
+    (.delete (mci/replace-extension output ".md"))
+    ))
 ;;---------------------------------------------------------------------
-(doseq [input [
-               "images/imageio/USGS_13_n38w077_dir5.tiff"
-               "images/imageio/ETOPO_2022_v1_60s_PNW_bed.tiff"
-               "images/imageio/ETOPO_2022_v1_60s_N90W180_bed.tif"
-               "images/imageio/eo_base_2020_clean_geo.tif"
-               "images/imageio/gebco_08_rev_elev_21600x10800.png"
-               "images/imageio/ldem_4.tif"
-               "images/imageio/world.topo.bathy.200412.3x5400x2700.png"
-               ]]
+(doseq [input
+        (reverse (image/image-file-seq (io/file "images/moon")))
+        #_[
+           "images/imageio/USGS_13_n38w077_dir5.tiff"
+           "images/imageio/ETOPO_2022_v1_60s_PNW_bed.tiff"
+           "images/imageio/ETOPO_2022_v1_60s_N90W180_bed.tif"
+           "images/imageio/eo_base_2020_clean_geo.tif"
+           "images/imageio/gebco_08_rev_elev_21600x10800.png"
+           "images/imageio/ldem_4.tif"
+           "images/imageio/world.topo.bathy.200412.3x5400x2700.png"
+           ]]
   (roundtrip input))
 ;;---------------------------------------------------------------------

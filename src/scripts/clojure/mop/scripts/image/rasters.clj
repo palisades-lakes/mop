@@ -10,12 +10,14 @@
    :version "2025-12-12"}
 
   (:require
+   [clojure.java.io :as io]
    [clojure.pprint :as pp]
-   [mop.image.imageio :as imageio])
+   [mop.image.imageio :as imageio]
+   [mop.image.util :as image])
   (:import
    [java.awt.image DataBuffer Raster SampleModel]
    [javax.imageio IIOImage]
-   [mop.java.imageio SubSampleOp]))
+   [mop.java.imageio MaxDimensionOp]))
 ;;----------------------------------------------------------------------
 (defn ^String data-buffer-type-name [^long code]
   (cond
@@ -57,13 +59,14 @@
   (println input)
   (let [[_reader ^IIOImage image] (imageio/read input)
         raster (get-raster image)
-        subsample (SubSampleOp/make (/ (.getWidth raster) 256.0))]
+        subsample (MaxDimensionOp/make (/ (.getWidth raster) 256.0))]
     (examine raster)
     (examine (.createCompatibleDestRaster subsample raster))
     ))
 ;;---------------------------------------------------------------------
 (doseq [input
-        [
+        (image/image-file-seq (io/file "images/moon"))
+        #_[
          "images/imageio/eo_base_2020_clean_geo.tif"
          "images/imageio/gebco_08_rev_elev_21600x10800.png"
          "images/imageio/world.topo.bathy.200412.3x5400x2700.png"

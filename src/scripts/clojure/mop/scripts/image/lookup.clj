@@ -7,7 +7,7 @@
   {:doc
    "Explore image metadata."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-12-09"}
+   :version "2025-12-13"}
   (:require
    [clojure.java.io :as io]
    [clojure.pprint :as pp]
@@ -203,7 +203,8 @@
       (metadata-lookup metadata)
       )))
 ;;---------------------------------------------------------------------
-(doseq [input (image/image-file-seq (io/file "images/imageio"))
+(doseq [input
+        (image/image-file-seq (io/file "images"))
         #_[
            "images/imageio/USGS_13_n38w077_dir5.tiff"
            "images/imageio/ETOPO_2022_v1_60s_PNW_bed.tiff"

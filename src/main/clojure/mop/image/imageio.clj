@@ -5,7 +5,7 @@
 
   {:doc     "Image utilities related to javax.imageio."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-12-10"}
+   :version "2025-12-13"}
   (:refer-clojure :exclude [read reduce])
   (:require [clojure.java.io :as io]
             [clojure.pprint :as pp]
@@ -15,7 +15,8 @@
    [it.geosolutions.imageioimpl.plugins.tiff TIFFImageMetadata]
    [java.awt Graphics2D RenderingHints]
    [java.awt.image BufferedImage RenderedImage]
-   [javax.imageio IIOImage ImageIO ImageReader ImageTypeSpecifier]))
+   [javax.imageio IIOImage ImageIO ImageReader ImageTypeSpecifier]
+   [mop.java.imageio MaxDimensionOp]))
 ;;----------------------------------------------------------------------
 (defmethod image/equals? [IIOImage IIOImage] [^IIOImage a ^IIOImage b]
   ;; TODO: compare metadata, etc.
@@ -97,16 +98,19 @@
     ;; seems to force PREDICTOR_NONE with LZW, creating approx 2x larger files than ZLIB input
     ;; TODO: more experiments to find better compression
     ;; TODO: keep checking whether imageio-ext is really necessary
-    (when (and (instance? TIFFImageMetadata metadata)
-               (= BaselineTIFFTagSet/COMPRESSION_ZLIB (tiff-compression metadata)))
-      (set-tiff-compression metadata BaselineTIFFTagSet/COMPRESSION_LZW)
-      ;(set-tiff-predictor metadata predictor)
+    (when (instance? TIFFImageMetadata metadata)
+      ;; imageio/imageio-ext can't write zlib
+      (when (= BaselineTIFFTagSet/COMPRESSION_ZLIB (tiff-compression metadata))
+        (set-tiff-compression metadata BaselineTIFFTagSet/COMPRESSION_LZW))
+      ;; image-io/imageio-ext can't correctly write anything other than BaselineTIFFTagSet/PREDICTOR_NONE
+      (set-tiff-predictor metadata BaselineTIFFTagSet/PREDICTOR_NONE)
       ;(debug/echo (tiff-predictor metadata))
       ;(debug/echo (.getCompressionType compressor))
       ;(.setCompressionMode ^TIFFImageWriteParam write-param ImageWriteParam/MODE_EXPLICIT);
       ;(.setTIFFCompressor ^TIFFImageWriteParam write-param compressor)
       ;(.setCompressionType ^TIFFImageWriteParam write-param (.getCompressionType compressor))
       )
+
     (try
       (with-open [ios (ImageIO/createImageOutputStream output)]
         (.setOutput writer ios)
@@ -117,8 +121,9 @@
 ;; see https://web.archive.org/web/20070515094604/
 ;; https://today.java.net/pub/a/today/2007/04/03/perils-of-image-getscaledinstance.html
 ;; need to use ImageTypeSpecifier to handle input images with TYPE_CUSTOM
+;; doesn't work for Float32 images
 
-(defn ^RenderedImage resize-rendered-image
+#_(defn ^RenderedImage resize-rendered-image
 
   ([^RenderedImage image ^long w ^long h ^Object hint]
    (let [type-specifier (ImageTypeSpecifier/createFromRenderedImage image)
@@ -136,9 +141,8 @@
 
   ([^RenderedImage image ^long w ^long h]
    (resize-rendered-image image w h RenderingHints/VALUE_INTERPOLATION_BILINEAR)))
-
 ;;----------------------------------------------------------------------
-(defn ^RenderedImage reduce-rendered-image
+#_(defn ^RenderedImage reduce-rendered-image
 
   "Return an image that has no dimension larger that max-dimension.
   If small enough, return the input."
@@ -156,7 +160,7 @@
   ([^RenderedImage image ^long max-dimension]
    (reduce-rendered-image image max-dimension RenderingHints/VALUE_INTERPOLATION_BILINEAR)))
 ;;----------------------------------------------------------------------
-(defn ^IIOImage resize-iioimage
+#_(defn ^IIOImage resize-iioimage
 
   ([^IIOImage image ^long w ^long h ^Object hint]
    (IIOImage. (resize-rendered-image (.getRenderedImage image) w h hint)
@@ -165,23 +169,12 @@
   ([^IIOImage image ^long w ^long h]
    (resize-iioimage image w h RenderingHints/VALUE_INTERPOLATION_BILINEAR)))
 ;;----------------------------------------------------------------------
-(defn ^IIOImage reduce-iioimage
+;; TODO: methods for RenderedImage and Rasters
+(defmulti subsample
+          "Return a similar image with width and height
+          no more than <code>max-dimension</code>"
+          (fn [image ^long _max-dimension] (class image)))
 
-  "Return an image that has no dimension larger that max-dimension.
-  If small enough, return the input."
-
-  (^IIOImage [^IIOImage image ^long max-dimension ^Object hint]
-   (let [rendered (.getRenderedImage image)
-         w (.getWidth rendered)
-         h (.getHeight rendered)
-         s (/ (double max-dimension) (Math/max w h))
-         sw (long (* s w))
-         sh (long (* s h))]
-     (if (or (< sw w) (< sh h))
-       (resize-iioimage image sw sh hint)
-       image)))
-
-
-  (^IIOImage [^IIOImage image ^long max-dimension]
-   (reduce-iioimage image max-dimension RenderingHints/VALUE_INTERPOLATION_BILINEAR)))
+(defmethod ^IIOImage subsample IIOImage [image ^long max-dimension]
+   (.filter (MaxDimensionOp/make max-dimension) image))
 ;;----------------------------------------------------------------------
