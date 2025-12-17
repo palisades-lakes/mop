@@ -1,0 +1,111 @@
+2025-12-15
+---------------------------------
+javax.imageio.ImageIO/read,/write,/read
+no extension libraries in pom
+
+Successful roundtrip images seem fine. All are uncompressed.
+
+Fails reading:
+
+"Illegal value for Predictor in TIFF file" (FLOATING_POINT)
+ETOPO_2022_v1_60s_N90W180_bed.tif
+ETOPO_2022_v1_60s_N90W180_geoid.tif
+ETOPO_2022_v1_60s_N90W180_surface.tif
+USGS_13_n38w077_dir5.tif
+
+Assert failed: (image/equals? rendered-in rendered-out)
+
+Compression type DEFLATE -> uncompressed
+world.200412.3x21600x10800.png
+world.topo.bathy.200412.3x21600x10800.png
+world.topo.bathy.200412.3x5400x2700.png
+
+---------------------------------
+mop.image.imageio/read,/write,/read
+no extension libraries in pom
+
+Successful roundtrip images seem fine.
+Compressed TIFF almost same as original, PNG slightly larger.
+
+Fails reading:
+
+"Unexpected count 15 for DateTime field"
+ETOPO_2022_v1_60s_N90W180_bed.tif
+ETOPO_2022_v1_60s_N90W180_surface.tif
+
+"Illegal value for Predictor in TIFF file"
+ETOPO_2022_v1_60s_N90W180_geoid.tif
+USGS_13_n38w077_dir5.tiff
+
+---------------------------------
+mop.image.imageio/read,/write,/read
+imageio-ext in pom, but no direct calls to it.geosolutions.imageio-ext classes
+
+Fails writing:
+
+Cannot invoke "it.geosolutions.imageio.compression.Compressor.done()"
+because "this.deflateCompressor" is null
+ETOPO_2022_v1_60s_N90W180_bed.tif
+ETOPO_2022_v1_60s_N90W180_geoid.tif
+ETOPO_2022_v1_60s_N90W180_surface.tif
+
+Assert failed: (image/equals? rendered-in rendered-out)
+lroc_color_poles.tif
+lroc_color_poles_2k.tif
+lroc_color_poles_4k.tif
+lroc_color_poles_8k.tif
+lroc_color_poles_16k.tif
+Predictor=HORIZONTAL_DIFFERENCING
+output image may be failing to undo horizontal differencing
+
+---------------------------------
+mop.image.imageiox/read,/write,/read
+imageio-ext in pom, direct calls to it.geosolutions.imageio-ext classes
+
+All roundtrips succeed, but:
+lroc output images are corrupted, appear to fail to undo horizontal differencing.
+
+---------------------------------
+mop.image.imageio/read,/write,/read
+twelvemonkeys in pom, but no direct calls
+
+Fails reading:
+
+"Unexpected count 15 for DateTime field"
+ETOPO_2022_v1_60s_N90W180_bed.tif
+ETOPO_2022_v1_60s_N90W180_surface.tif
+
+"Illegal value for Predictor in TIFF file"
+ETOPO_2022_v1_60s_N90W180_geoid.tif
+USGS_13_n38w077_dir5.tiff
+
+Same results as no extension libraries...
+
+---------------------------------
+mop.image.imageio/read,/write,/read
+gt-image, gt-geotiff in pom, but no direct calls
+Same results as including imageio-ext dependency without direct calls
+
+Fails writing:
+
+Cannot invoke "it.geosolutions.imageio.compression.Compressor.done()"
+because "this.deflateCompressor" is null
+ETOPO_2022_v1_60s_N90W180_bed.tif
+ETOPO_2022_v1_60s_N90W180_geoid.tif
+ETOPO_2022_v1_60s_N90W180_surface.tif
+
+Assert failed: (image/equals? rendered-in rendered-out)
+lroc_color_poles.tif
+lroc_color_poles_2k.tif
+lroc_color_poles_4k.tif
+lroc_color_poles_8k.tif
+lroc_color_poles_16k.tif
+
+---------------------------------
+mop.image.imageiox/read,/write,/read
+gt-image, gt-geotiff in pom, direct calls to imgageio-ext classes
+Same results as including imageio-ext dependency, with direct calls
+
+All roundtrips succeed, but:
+lroc output images are corrupted, appear to fail to undo horizontal differencing.
+

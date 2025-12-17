@@ -1,9 +1,9 @@
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-;; clj src\scripts\clojure\mop\scripts\image\roundtrip.clj
+;; clj src\scripts\clojure\mop\scripts\image\roundtripx.clj
 ;;----------------------------------------------------------------
-(ns mop.scripts.image.roundtrip
+(ns mop.scripts.image.roundtripx
   {:doc
    "Work out idempotent image read-write roundtrips."
    :author  "palisades dot lakes at gmail dot com"
@@ -13,12 +13,12 @@
    [clojure.java.io :as io]
    [clojure.string :as s]
    [mop.commons.io :as mci]
-   [mop.image.imageio :as imageio]
+   [mop.image.imageiox :as imageio]
    [mop.image.util :as image])
   (:import
    [javax.imageio IIOImage]))
 ;;---------------------------------------------------------------------
-(def suffix "-gt")
+(def suffix "-gtx")
 (defn roundtrip [input]
   (println input)
   (image/write-metadata-markdown input)
@@ -48,21 +48,23 @@
 (defn failure? [f]
   (println (mci/prefix f))
   (#{
-     "ETOPO_2022_v1_60s_N90W180_bed"
-     "ETOPO_2022_v1_60s_N90W180_geoid"
-     "ETOPO_2022_v1_60s_N90W180_surface"
-     ;"USGS_13_n38w077_dir5"
-     "lroc_color_poles"
-     "lroc_color_poles_2k"
-     "lroc_color_poles_4k"
-     "lroc_color_poles_8k"
-     "lroc_color_poles_16k"
+     "notables"
+     "sampleRGBIR"
+     ;"ETOPO_2022_v1_60s_N90W180_bed"
+     ;"ETOPO_2022_v1_60s_N90W180_geoid"
+     ;"ETOPO_2022_v1_60s_N90W180_surface"
+     ;;"USGS_13_n38w077_dir5"
+     ;"lroc_color_poles"
+     ;"lroc_color_poles_2k"
+     ;"lroc_color_poles_4k"
+     ;"lroc_color_poles_8k"
+     ;"lroc_color_poles_16k"
      }
    (mci/prefix f)))
 ;;---------------------------------------------------------------------
 (doseq [input
         (remove #(or (output? %) (failure? %))
-                (image/image-file-seq (io/file "images")))
+                (image/image-file-seq (io/file "images/imageio-ext")))
         #_[
            "images/lroc/eo_base_2020_clean_geo.tif"
            "images/lroc/lroc_color_poles_2k.tif"

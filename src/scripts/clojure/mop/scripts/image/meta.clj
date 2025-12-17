@@ -1,16 +1,17 @@
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-;; clj src\scripts\clojure\mop\scripts\image\meta.clj > meta.edn
+;; clj src\scripts\clojure\mop\scripts\image\meta.clj
 ;;----------------------------------------------------------------
 (ns mop.scripts.image.meta
   {:doc
    "Explore image metadata."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-12-10"}
+   :version "2025-12-15"}
   (:require
    [clojure.java.io :as io]
    [clojure.pprint :as pp]
+   [mop.commons.io :as mci]
    [mop.image.util :as image])
   (:import
    [it.geosolutions.imageioimpl.plugins.tiff TIFFFieldNode]
@@ -50,22 +51,25 @@
 
 ;; Does this always represent a short?
 #_(defn ^Integer tiff-short-clj [^Node node]
-  (assert (= :TIFFShort (keyword (.getNodeName node))))
-  (let [attributes (attributes-clj node)]
-    (Integer/parseInt (:value attributes))))
+    (assert (= :TIFFShort (keyword (.getNodeName node))))
+    (let [attributes (attributes-clj node)]
+      (Integer/parseInt (:value attributes))))
 
 ;; Does this represent a short[]?
 #_(defn tiff-shorts-clj [^Node node]
-  (assert (= :TIFFShorts (keyword (.getNodeName node))))
-  (println (children-clj node))
-  (children-clj node))
+    (assert (= :TIFFShorts (keyword (.getNodeName node))))
+    (println (children-clj node))
+    (children-clj node))
 
 (defmethod to-clj Node [^Node node]
-  {:class (class node)
-   :name  (.getNodeName node)
-   :value (.getNodeValue node)
-   :attributes (attributes-clj node)
-   :children (children-clj node)})
+  (let [attributes (attributes-clj node)
+        children (children-clj node)
+        meta {:class (class node)
+              :name  (.getNodeName node)
+              :value (.getNodeValue node)}
+        meta (if-not (empty? attributes) (assoc meta :attributes attributes) meta)
+        meta (if-not (empty? children) (assoc meta :children children) meta)]
+    meta))
 
 #_(defmethod to-clj Attr [^Attr node]
     {(keyword (.getName node)) (.getValue node)})
@@ -109,17 +113,23 @@
           extra-format-names (if extra-format-names (Arrays/asList extra-format-names) [])
           format-names (concat format-names extra-format-names)
           trees (map #(.getAsTree metadata ^String %) format-names)]
-      (doseq [tree trees] (pp/pprint (to-clj tree))))))
+      (with-open [w (io/writer (mci/replace-extension input "edn"))]
+        (binding [*out* w]
+          (binding [*print-level* false]
+            (doseq [tree trees] (pp/pprint (to-clj tree)))))))))
 ;;---------------------------------------------------------------------
-(doseq [input (image/image-file-seq (io/file "images/imageio"))
+(doseq [input
+        (image/image-file-seq (io/file "images/imageio-ext"))
         #_[
-           "images/imageio/USGS_13_n38w077_dir5.tiff"
-           "images/imageio/ETOPO_2022_v1_60s_PNW_bed.tiff"
-           "images/imageio/ETOPO_2022_v1_60s_N90W180_bed.tif"
-           "images/imageio/eo_base_2020_clean_geo.tif"
-           "images/imageio/ldem_4.tif"
-           "images/imageio/gebco_08_rev_elev_21600x10800.png"
-           "images/imageio/world.topo.bathy.200412.3x5400x2700.png"
-           ]]
+         "images/lroc/lroc_color_poles_2k.tif"
+         "images/lroc/lroc_color_poles_2k-gtx.tif"
+         ;"images/imageio/USGS_13_n38w077_dir5.tiff"
+         ;"images/imageio/ETOPO_2022_v1_60s_PNW_bed.tiff"
+         ;"images/imageio/ETOPO_2022_v1_60s_N90W180_bed.tif"
+         ;"images/imageio/eo_base_2020_clean_geo.tif"
+         ;"images/imageio/ldem_4.tif"
+         ;"images/imageio/gebco_08_rev_elev_21600x10800.png"
+         ;"images/imageio/world.topo.bathy.200412.3x5400x2700.png"
+         ]]
   (meta-to-clj input))
 ;;---------------------------------------------------------------------

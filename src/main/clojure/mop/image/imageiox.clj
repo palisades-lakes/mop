@@ -1,7 +1,7 @@
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 ;;---------------------------------------------------------------------
-(ns mop.image.imageio
+(ns mop.image.imageiox
 
   {:doc     "Image utilities related to javax.imageio."
    :author  "palisades dot lakes at gmail dot com"
@@ -11,11 +11,11 @@
             [clojure.pprint :as pp]
             [mop.image.util :as image])
   (:import
-   [com.sun.imageio.plugins.tiff TIFFImageMetadata]
+   [it.geosolutions.imageio.plugins.tiff BaselineTIFFTagSet TIFFField]
+   [it.geosolutions.imageioimpl.plugins.tiff TIFFImageMetadata]
    [java.awt Graphics2D RenderingHints]
    [java.awt.image BufferedImage RenderedImage]
    [javax.imageio IIOImage ImageIO ImageReader ImageTypeSpecifier]
-   [javax.imageio.plugins.tiff BaselineTIFFTagSet TIFFField]
    [mop.java.imageio MaxDimensionOp]))
 ;;----------------------------------------------------------------------
 (defmethod image/equals? [IIOImage IIOImage] [^IIOImage a ^IIOImage b]

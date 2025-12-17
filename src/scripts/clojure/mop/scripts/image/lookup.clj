@@ -1,7 +1,7 @@
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-;; clj src\scripts\clojure\mop\scripts\image\lookup.clj > lookup.txt
+;; clj src\scripts\clojure\mop\scripts\image\lookup.clj
 ;;----------------------------------------------------------------
 (ns mop.scripts.image.lookup
   {:doc
@@ -12,6 +12,7 @@
    [clojure.java.io :as io]
    [clojure.pprint :as pp]
    [mop.commons.debug :as debug]
+   [mop.commons.io :as mci]
    [mop.image.util :as image])
   (:import
    [com.sun.imageio.plugins.png PNGMetadata]
@@ -198,21 +199,30 @@
           _(.setInput reader iis)
           metadata (.getImageMetadata reader 0)
           writer (ImageIO/getImageWriter reader)]
-      (pp/pprint writer)
-      (pp/pprint metadata)
-      (metadata-lookup metadata)
-      )))
+      (with-open [w (io/writer (mci/replace-extension input "lkp"))]
+        (binding [*out* w]
+          (pp/pprint writer)
+          (pp/pprint metadata)
+          (metadata-lookup metadata))))))
 ;;---------------------------------------------------------------------
 (doseq [input
-        (image/image-file-seq (io/file "images"))
+        (image/image-file-seq (io/file "images/imageio-ext"))
         #_[
-           "images/imageio/USGS_13_n38w077_dir5.tiff"
-           "images/imageio/ETOPO_2022_v1_60s_PNW_bed.tiff"
-           "images/imageio/ETOPO_2022_v1_60s_N90W180_bed.tif"
-           "images/imageio/eo_base_2020_clean_geo.tif"
-           "images/imageio/ldem_4.tif"
-           "images/imageio/gebco_08_rev_elev_21600x10800.png"
-           "images/imageio/world.topo.bathy.200412.3x5400x2700.png"
-           ]]
+         "images/lroc/lroc_color_poles_2k.tif"
+         "images/lroc/lroc_color_poles_2k-gtx.tif"
+         ;"images/imageio/ldem_64_uint.tif"
+         ;"images/imageio/ldem_64.tif"
+         ;"images/imageio/lroc_color_poles.tif"
+         ;"images/imageio/lroc_color_poles-iiox.tif"
+         ;;"images/imageio/USGS_13_n38w077_dir5.tiff"
+         ;"images/imageio/ETOPO_2022_v1_60s_PNW_bed.tiff"
+         ;"images/imageio/ETOPO_2022_v1_60s_N90W180_bed.tif"
+         ;"images/imageio/eo_base_2020_clean_geo.tif"
+         ;"images/imageio/gebco_08_rev_elev_21600x10800.png"
+         ;"images/imageio/ldem_4.tif"
+         ;"images/imageio/world.topo.bathy.200412.3x5400x2700.png"
+         ]
+        #_(reverse (image/image-file-seq (io/file "images/moon")))
+        ]
   (lookup input))
 ;;---------------------------------------------------------------------

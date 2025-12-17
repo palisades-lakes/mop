@@ -10,6 +10,8 @@
    :version "2025-12-13"}
 
   (:require
+   [clojure.java.io :as io]
+   [mop.commons.debug :as debug]
    [mop.commons.io :as mci]
    [mop.image.imageio :as imageio]
    [mop.image.util :as image])
@@ -22,19 +24,22 @@
     [(.getWidth (.getRenderedImage image)) (.getHeight (.getRenderedImage image))]))
 ;;---------------------------------------------------------------------
 (defn resize [input]
-  (println input)
+  (println)
+  (debug/echo input)
   (image/write-metadata-markdown input)
-  (let [max-dim 256
+  (let [max-dim 2048
         [reader ^IIOImage image] (imageio/read input)
         resized (imageio/subsample image max-dim)]
     (when resized
       (let [[w h] (wh resized)
             output (mci/append-to-filename input (str "-" w "x" h))]
         (imageio/write reader resized output)
-        (image/write-metadata-markdown output)))))
+        (image/write-metadata-markdown output)
+        (debug/echo output)))))
 ;;---------------------------------------------------------------------
 (doseq [input
-        [
+        (image/image-file-seq (io/file "images/moon"))
+        #_[
          "images/imageio/eo_base_2020_clean_geo.tif"
          "images/imageio/gebco_08_rev_elev_21600x10800.png"
          "images/imageio/world.topo.bathy.200412.3x5400x2700.png"

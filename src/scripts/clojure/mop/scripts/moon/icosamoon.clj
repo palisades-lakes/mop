@@ -1,13 +1,13 @@
 (set! *warn-on-reflection* true)
 ;;(set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-;; clj src\scripts\clojure\mop\moon\icosamoon.clj
+;; clj src\scripts\clojure\mop\scripts\moon\icosamoon.clj
 ;;----------------------------------------------------------------
 (ns mop.scripts.moon.icosamoon
   {:doc "Mesh Viewer demo using lwjgl and glfw.
   Started with https://clojurecivitas.github.io/opengl_visualization/main.html"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-11-21"}
+   :version "2025-12-14"}
 
   (:require
    [mop.cmplx.complex :as cmplx]
@@ -56,10 +56,10 @@
     :radius          radius
     :color-image
     (image/get-image
-     "images/lroc_color_poles_2k.tif"
+     "images/moon/lroc_color_poles_2k.tif"
      "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_poles_2k.tif")
     :elevation-image
     (image/get-image
-     "images/ldem_4.tif"
+     "images/moon/ldem_4.tif"
      "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/ldem_4.tif")})
   )
