@@ -1,13 +1,13 @@
 (set! *warn-on-reflection* true)
 ;;(set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-;; clj src\scripts\clojure\mop\earth\icosaearth.clj
+;; clj src\scripts\clojure\mop\scripts/earth\icosaearth.clj
 ;;----------------------------------------------------------------
 (ns mop.scripts.earth.icosaearth
   {:doc "Mesh Viewer demo using lwjgl and glfw.
   Started with https://clojurecivitas.github.io/opengl_visualization/main.html"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-11-21"}
+   :version "2025-12-18"}
 
   (:require
    [mop.cmplx.complex :as cmplx]
@@ -53,9 +53,6 @@
     :rgba-embedding rgba
     :radius radius
     :color-image
-    #_(image/get-image
-     "world.topo.bathy.200412.3x5400x2700.png"
-     "https://eoimages.gsfc.nasa.gov/images/imagerecords/73000/73909/world.topo.bathy.200412.3x5400x2700.png")
     (image/get-image
      "images/earth/world.topo.bathy.200412.3x21600x10800-16384x8192.png")
     #_(image/get-image
@@ -63,9 +60,8 @@
      "https://eoimages.gsfc.nasa.gov/images/imagerecords/73000/73909/world.topo.bathy.200412.3x21600x10800.png")
     :elevation-image
     (image/get-image
-     "images/ldem_4.tif"
-     "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/ldem_4.tif")
-    #_(image/get-image
-     "images/earth/gebco_08_rev_elev_21600x10800.png"
+       "images/earth/gebco_08_rev_elev_21600x10800-16384x8192.png")
+       #_(image/get-image
+          "images/earth/gebco_08_rev_elev_21600x10800.png"
      "https://eoimages.gsfc.nasa.gov/images/imagerecords/73000/73934/gebco_08_rev_elev_21600x10800.png")
     }))
