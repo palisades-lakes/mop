@@ -5,10 +5,9 @@
 ;;----------------------------------------------------------------
 (ns mop.scripts.image.roundtrip
   {:doc
-   "Work out idempotent image read-write roundtrips."
+   "Work out idempotent image read-write-read roundtrips."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-12-15"}
-  (:refer-clojure :exclude [read reduce])
+   :version "2025-12-18"}
   (:require
    [clojure.java.io :as io]
    [clojure.string :as s]
@@ -18,7 +17,7 @@
   (:import
    [javax.imageio IIOImage]))
 ;;---------------------------------------------------------------------
-(def suffix "-gt")
+(def suffix "-iio")
 (defn roundtrip [input]
   (println input)
   (image/write-metadata-markdown input)
@@ -51,12 +50,6 @@
      "ETOPO_2022_v1_60s_N90W180_bed"
      "ETOPO_2022_v1_60s_N90W180_geoid"
      "ETOPO_2022_v1_60s_N90W180_surface"
-     ;"USGS_13_n38w077_dir5"
-     "lroc_color_poles"
-     "lroc_color_poles_2k"
-     "lroc_color_poles_4k"
-     "lroc_color_poles_8k"
-     "lroc_color_poles_16k"
      }
    (mci/prefix f)))
 ;;---------------------------------------------------------------------

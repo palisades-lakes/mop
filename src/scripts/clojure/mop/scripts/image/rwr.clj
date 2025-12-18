@@ -39,14 +39,15 @@
         (s/ends-with? name "-iio")
         (s/ends-with? name "-ii0x"))))
 (defn failure? [f]
-  (println (mci/prefix f))
-  (#{"ETOPO_2022_v1_60s_N90W180_bed"
-     "ETOPO_2022_v1_60s_N90W180_geoid"
-     "ETOPO_2022_v1_60s_N90W180_surface"
-     "USGS_13_n38w077_dir5"
-     "world.200412.3x21600x10800"
-     "world.topo.bathy.200412.3x21600x10800"
-     "world.topo.bathy.200412.3x5400x2700"}
+  (#{
+  ;"ETOPO_2022_v1_60s_N90W180_bed"
+  ;   "ETOPO_2022_v1_60s_N90W180_geoid"
+  ;   "ETOPO_2022_v1_60s_N90W180_surface"
+  ;   "USGS_13_n38w077_dir5"
+  ;   "world.200412.3x21600x10800"
+  ;   "world.topo.bathy.200412.3x21600x10800"
+  ;   "world.topo.bathy.200412.3x5400x2700"
+     }
    (mci/prefix f)))
 ;;---------------------------------------------------------------------
 (doseq [input

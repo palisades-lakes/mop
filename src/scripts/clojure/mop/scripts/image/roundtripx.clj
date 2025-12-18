@@ -5,10 +5,11 @@
 ;;----------------------------------------------------------------
 (ns mop.scripts.image.roundtripx
   {:doc
-   "Work out idempotent image read-write roundtrips."
+   "Work out idempotent image read-write-read roundtrips.
+   As of 2025-12-18 works on all current moon/earth images,
+   with a local fix to imageio-ext PredictorDecompressor."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-12-15"}
-  (:refer-clojure :exclude [read reduce])
+   :version "2025-12-18"}
   (:require
    [clojure.java.io :as io]
    [clojure.string :as s]
@@ -18,7 +19,7 @@
   (:import
    [javax.imageio IIOImage]))
 ;;---------------------------------------------------------------------
-(def suffix "-gtx")
+(def suffix "-iiox")
 (defn roundtrip [input]
   (println input)
   (image/write-metadata-markdown input)
@@ -48,8 +49,8 @@
 (defn failure? [f]
   (println (mci/prefix f))
   (#{
-     "notables"
-     "sampleRGBIR"
+     ;;"notables"
+     ;;"sampleRGBIR"
      ;"ETOPO_2022_v1_60s_N90W180_bed"
      ;"ETOPO_2022_v1_60s_N90W180_geoid"
      ;"ETOPO_2022_v1_60s_N90W180_surface"
@@ -64,7 +65,7 @@
 ;;---------------------------------------------------------------------
 (doseq [input
         (remove #(or (output? %) (failure? %))
-                (image/image-file-seq (io/file "images/imageio-ext")))
+                (image/image-file-seq (io/file "images")))
         #_[
            "images/lroc/eo_base_2020_clean_geo.tif"
            "images/lroc/lroc_color_poles_2k.tif"

@@ -1,15 +1,14 @@
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-;; clj src\scripts\clojure\mop\scripts\image\lroc.clj
+;; clj src\scripts\clojure\mop\scripts\image\lroc.clj >lroc.txt
 ;;----------------------------------------------------------------
 (ns mop.scripts.image.lroc
   {:doc
-   "Work out idempotent image read-write roundtrips."
+   "Work out idempotent image read-write-read roundtrips."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-12-15"}
-  (:refer-clojure :exclude [read reduce])
-  (:require
+   :version "2025-12-18"}
+ (:require
    [clojure.java.io :as io]
    [mop.commons.io :as mci]
    [mop.image.imageio :as imageio]

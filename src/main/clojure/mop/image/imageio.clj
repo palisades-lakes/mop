@@ -3,7 +3,9 @@
 ;;---------------------------------------------------------------------
 (ns mop.image.imageio
 
-  {:doc     "Image utilities related to javax.imageio."
+  {:doc     "Image utilities related to javax.imageio.
+  NOTE: these functions fail on some images, which ones depending on whether
+  compiled with an imageio-ext-tiff dependency."
    :author  "palisades dot lakes at gmail dot com"
    :version "2025-12-15"}
   (:refer-clojure :exclude [read reduce])
