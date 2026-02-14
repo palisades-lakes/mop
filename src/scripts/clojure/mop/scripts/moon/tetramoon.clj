@@ -1,16 +1,17 @@
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-;; clj src\scripts\clojure\mop\moon\tetramoon.clj
+;; clj src\scripts\clojure\mop\scripts\moon\tetramoon.clj
 ;;----------------------------------------------------------------
 (ns mop.scripts.moon.tetramoon
   {:doc "Mesh Viewer demo using lwjgl and glfw.
   Start with spherical quad mesh, subdivide, and transform to R^3.
   Started with https://clojurecivitas.github.io/opengl_visualization/main.html"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-11-24"}
+   :version "2026-02-14"}
 
   (:require
+   [mop.commons.string :as mcs]
    [mop.cmplx.complex :as cmplx]
    [mop.geom.rn :as rn]
    [mop.geom.s2 :as s2]

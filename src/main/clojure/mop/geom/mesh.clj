@@ -4,18 +4,22 @@
 (ns mop.geom.mesh
   {:doc     "Embedded cell complexes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-23"}
-  (:require [mop.cmplx.complex :as cmplx]
-            [mop.geom.rn :as rn]
-            [mop.geom.s2 :as s2]
-            [mop.geom.space :as space])
-  (:import [clojure.lang IFn]
-           [java.util List]
-           [mop.cmplx.complex CellComplex OneSimplex SimplicialComplex2D
-                              TwoSimplex VertexPair ZeroSimplex]
-           [mop.java.cmplx Cell]
-           [mop.java.geom Point2U]
-           [org.apache.commons.geometry.spherical.twod GreatArc Point2S]))
+   :version "2026-02-14"}
+
+  (:require
+   [mop.cmplx.complex :as cmplx]
+   [mop.geom.rn :as rn]
+   [mop.geom.s2 :as s2]
+   [mop.geom.space :as space])
+
+  (:import
+   [clojure.lang IFn]
+   [java.util List]
+   [mop.cmplx.complex CellComplex OneSimplex SimplicialComplex2D
+                      TwoSimplex VertexPair ZeroSimplex]
+   [mop.java.cmplx Cell]
+   [mop.java.geom Point2U]
+   [org.apache.commons.geometry.spherical.twod GreatArc Point2S]))
 
 ;;---------------------------------------------------------------
 
@@ -155,6 +159,8 @@ most likely R^3 or S^2."
   (defn unwrap-1 ^Point2U [^Point2S a ^Point2S b]
     "Update <code>a</code> so the path
   from <code>a</code> to <code>b</code> is continuous"
+    (assert (not (nil? a)))
+    (assert (not (nil? b)))
     (let [aa (.getAzimuth a)
           ba (.getAzimuth b)]
       (Point2U/of (if (> aa ba) (- aa TWO_PI) (+ aa TWO_PI))
@@ -163,6 +169,8 @@ most likely R^3 or S^2."
   (defn unwrap-2 ^Point2U [^Point2S a ^Point2S b]
     "Update <code>a</code> so the path
     from <code>a</code> to <code>b</code> is continuous"
+    (assert (not (nil? a)))
+    (assert (not (nil? b)))
     (let [aa (.getAzimuth a)
           ba (.getAzimuth b)
           [aaa bba] (if (> aa ba)
@@ -173,6 +181,9 @@ most likely R^3 or S^2."
 
   (defn unwrap-3 ^Point2U [^Point2S a ^Point2S b ^Point2S c]
     "Azimuth a is zero, and b-c intersects dateline"
+    (assert (not (nil? a)))
+    (assert (not (nil? b)))
+    (assert (not (nil? c)))
     (let [aa (.getAzimuth a)
           ba (.getAzimuth b)
           ca (.getAzimuth c)
@@ -180,54 +191,79 @@ most likely R^3 or S^2."
           [bba cca] (if (> ba ca)
                       [(- aa TWO_PI) (+ ca TWO_PI)]
                       [(+ ba TWO_PI) (- ca TWO_PI)])]
-      (assert (== 0.0 aa))
+      (assert (== 0.0 aa)
+              (str "a=" a ", b=" b ", c=" c))
       [(Point2U/of aaa (.getPolar a))
        (Point2U/of bba (.getPolar b))
        (Point2U/of cca (.getPolar c))
-       ]))
-  )
+       ])))
+
+(defn- rotate-to-leading-zero-azimuth [^IFn embedding ^TwoSimplex face]
+  "rotate to leading minimum azimuth to reduce assumptions"
+  (let [z0 (.z0 face)
+        z1 (.z1 face)
+        z2 (.z2 face)
+        ^Point2S p0 (embedding z0)
+        ^Point2S p1 (embedding z1)
+        ^Point2S p2 (embedding z2)
+        a0 (.getAzimuth p0)
+        a1 (.getAzimuth p1)
+        a2 (.getAzimuth p2)]
+    (if (<= a0 a1)
+      (if (<= a0 a2)
+        [z0 p0 z1 p1 z2 p2]
+        [z2 p2 z0 p0 z1 p1])
+      (if (<= a1 a2)
+        [z1 p1 z2 p2 z0 p0]
+        [z2 p2 z0 p0 z1 p1]))))
 
 ;; TODO: check orientation of new faces
 (defn dateline-cut-face [^IFn embedding ^TwoSimplex face]
   "Take a face with an <code>PointS2</code> embedding,
-  return new face(s) and vertices with a U2 embedding that is continuous
+  return new face(s) and vertices with a PointU2 embedding that is 'continuous'
   across the dateline."
-  ;; TODO: sort by azimuth to reduce assumptions
-  (let [a (.z0 face)
-        b (.z1 face)
-        c (.z2 face)
-        pa (embedding a)
-        pb (embedding b)
-        pc (embedding c)
+  (let [[a pa b pb c pc] (rotate-to-leading-zero-azimuth embedding face)
         ab (s2/dateline-crossing pa pb)
         bc (s2/dateline-crossing pb pc)
         ca (s2/dateline-crossing pc pa)]
+    (assert (not (nil? pa)))
+    (assert (not (nil? pb)))
+    (assert (not (nil? pc)))
     (cond
       ab
       (cond
         bc
         (if ca
-          ;; 3 edges may interset dateline if a vertex lies on it
+          ;; 3 edges may intersect dateline if a vertex lies on it
           ;; in that case we need unwrap all 3 vertices
           (let [aa (cmplx/simplex (str (.toString a) "*"))
                 bb (cmplx/simplex (str (.toString b) "*"))
                 cc (cmplx/simplex (str (.toString c) "*"))
                 [paa pbb pcc] (unwrap-3 pa pb pc)]
+            (assert (not (nil? paa)))
+            (assert (not (nil? pbb)))
+            (assert (not (nil? pcc)))
             {:new-faces [(cmplx/simplex aa b cc)
                          (cmplx/simplex a bb c)]
              :u2 {aa paa bb pbb cc pcc}})
           ;; else
-          (let [bb (cmplx/simplex (str (.toString b) "*"))]
+          (let [bb (cmplx/simplex (str (.toString b) "*"))
+                pbb (unwrap-1 pb pa)]
+            (assert (not (nil? pbb)))
             {:new-faces [(cmplx/simplex a bb c)]
-             :u2 {bb (unwrap-1 pb pa)}}))
+             :u2 {bb pbb}}))
         ca
-        (let [aa (cmplx/simplex (str (.toString a) "*"))]
+        (let [aa (cmplx/simplex (str (.toString a) "*"))
+              paa (unwrap-1 pa pb)]
+          (assert (not (nil? paa)))
           {:new-faces [(cmplx/simplex aa b c)]
-           :u2 {aa (unwrap-1 pa pb)}})
+           :u2 {aa paa}})
         :else
         (let [aa (cmplx/simplex (str (.toString a) "*"))
               bb (cmplx/simplex (str (.toString b) "*"))
               [paa pbb] (unwrap-2 pa pb)]
+          (assert (not (nil? paa)))
+          (assert (not (nil? pbb)))
           {:new-faces [(cmplx/simplex aa b c)
                        (cmplx/simplex a bb c)]
            :u2 {aa paa bb pbb}}))
@@ -239,15 +275,22 @@ most likely R^3 or S^2."
            (let [cc (cmplx/simplex (str (.toString c) "*"))
                  bb (cmplx/simplex (str (.toString b) "*"))
                  [pcc pbb] (unwrap-2 pc pb)]
+             (assert (not (nil? pbb)))
+             (assert (not (nil? pcc)))
              {:new-faces [(cmplx/simplex a b cc)(cmplx/simplex a bb c)]
               :u2 {cc pcc bb pbb}}))
       ca (let [aa (cmplx/simplex (str (.toString a) "*"))
                cc (cmplx/simplex (str (.toString c) "*"))
                [pcc paa] (unwrap-2 pc pa)]
+           (assert (not (nil? paa)))
+           (assert (not (nil? pcc)))
            {:new-faces [(cmplx/simplex aa b c)
                         (cmplx/simplex a b cc)]
             :u2 {aa paa cc pcc}})
-      :else {})))
+      :else
+      (do
+        #_(println "falling out of dateline-cut-face")
+        {:u2 {} :new-faces [face]}))))
 
 ;;---------------------------------------------------------------
 
@@ -256,16 +299,16 @@ most likely R^3 or S^2."
   duplicate vertices and faces to enable, create, and return
   a continuous <code>PointU2</code> embedding."
   (let [s2-embedding (.embedding mesh)]
-    (loop [faces (faces mesh)
-           remaining faces
+    (loop [remaining (faces mesh)
+           faces nil
            u2-embedding (update-vals s2-embedding s2/s2-to-u2)]
       (if (empty? remaining)
         (triangle-mesh (cmplx/simplicial-complex-2d faces) u2-embedding)
         (let [{:keys [u2 new-faces]}
-              (dateline-cut-face s2-embedding (first faces))]
-          (recur (concat new-faces faces)
-                 (rest remaining)
-                 (merge u2 u2-embedding)))))))
+              (dateline-cut-face s2-embedding (first remaining))]
+          (recur (rest remaining)
+                 (concat new-faces faces)
+                 (merge u2-embedding u2)))))))
 
 ;;---------------------------------------------------------------
 

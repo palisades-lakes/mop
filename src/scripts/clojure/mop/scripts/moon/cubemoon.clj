@@ -1,16 +1,17 @@
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-;; clj src\scripts\clojure\mop\moon\cubemoon.clj
+;; clj src\scripts\clojure\mop\scripts\moon\cubemoon.clj
 ;;----------------------------------------------------------------
 (ns mop.scripts.moon.cubemoon
   {:doc "Mesh Viewer demo using lwjgl and glfw.
   Colored cube to help debugging.
   Started with https://clojurecivitas.github.io/opengl_visualization/main.html"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-11-24"}
+   :version "2026-02-14"}
 
   (:require
+   [mop.commons.string :as mcs]
    [mop.cmplx.complex :as cmplx]
    [mop.geom.quads :as quads]
    [mop.geom.rn :as rn]

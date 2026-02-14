@@ -11,12 +11,14 @@
   <code>Point2S</code>, a possible performance hit."
 
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-17"}
+   :version "2026-02-14"}
 
-  (:require [mop.commons.debug :as debug]
-            [mop.commons.string :as mcs]
-            [mop.geom.rn :as rn]
-            [mop.geom.space :as space])
+  (:require
+   [mop.commons.debug :as debug]
+   [mop.commons.string :as mcs]
+   [mop.geom.rn :as rn]
+   [mop.geom.space :as space])
+
   (:import
    [clojure.lang IFn]
    [mop.geom.rn Vector4D]
@@ -97,6 +99,8 @@
     "Does the arc cross azimuth=0/2PI,polar in [0,PI]?
     Ignore endpoints on dateline.
     See https://observablehq.com/@fil/spherical-intersection"
+    (assert (not (nil? from)) (.toString from))
+    (assert (not (nil? to)) (.toString to))
     (let [from-azimuth (.getAzimuth from)
           to-azimuth (.getAzimuth to)
           from-polar (.getPolar from)

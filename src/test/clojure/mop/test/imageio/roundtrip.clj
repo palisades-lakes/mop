@@ -32,7 +32,8 @@
 ;;---------------------------------------------------------------------
 (t/deftest roundtrip
   (t/testing "read-write-read roundtrips produce identical images, if not identical files."
-    (doseq [input ["src/test/resources/images/USGS_13_n38w077_dir5.tiff"
+    (doseq [input ["src/test/resources/images/lroc_color_poles_2k.tif"
+                   "src/test/resources/images/USGS_13_n38w077_dir5.tiff"
                    "src/test/resources/images/ETOPO_2022_v1_60s_PNW_bed.tiff"
                    "src/test/resources/images/ldem_4.tif"
                    "src/test/resources/images/gebco_08_rev_elev_21600x10800.png"
