@@ -41,8 +41,11 @@
     (- counter (.counter ^ZeroSimplex that)))
 
   Cell
-  ;(isOriented [_] true) ;; could also be false...
-  (vertices [this] [this]))
+  (equivalent [this that] (identical? this that))
+  (vertices [this] [this])
+  ;; could also be false...
+  (isOriented [_] true)
+  )
 
 ;;---------------------------------------------------------------
 ;; AKA '(Abstract) Edge'.
@@ -67,10 +70,43 @@
   (compareTo [_ that] (- counter (.counter ^OneSimplex that)))
 
   Cell
-  ;(isOriented [_] true)
   (vertices [_] [z0 z1])
+  (isOriented [_] true)
+  (equivalent [this that]
+    (boolean
+     (or (identical? this that)
+         (and (instance? OneSimplex that)
+              (identical? z0 (.z0 ^OneSimplex that))
+              (identical? z1 (.z1 ^OneSimplex that))))))
   )
 
+;;---------------------------------------------------------------
+;; TODO: more efficient testing
+
+(defn- minimal-circular-permutation
+  "Return a circular permutation of the arguments that leads with
+  the minimum."
+  ([^Comparable c0 ^Comparable c1 ^Comparable c2]
+   (cond
+     (and (< (.compareTo c0 c1) 0) (< (.compareTo c0 c2) 0))
+     [c0 c1 c2]
+     (< (.compareTo c1 c2) 0)
+     [c1 c2 c0]
+     :else
+     [c2 c0 c1]))
+  ([^Comparable c0 ^Comparable c1 ^Comparable c2 ^Comparable c3]
+   (cond
+     (and (< (.compareTo c0 c1) 0)
+          (< (.compareTo c0 c2) 0)
+          (< (.compareTo c0 c3) 0))
+     [c0 c1 c2 c3]
+     (and (< (.compareTo c1 c2) 0)
+          (< (.compareTo c1 c3) 0))
+     [c1 c2 c3 c0]
+     (< (.compareTo c2 c3) 0)
+     [c2 c3 c0 c1]
+     :else
+     [c3 c0 c1 c2])))
 ;;---------------------------------------------------------------
 ;; AKA '(Abstract) Face/Triangle'.
 ;; An ordered triple of zero simplexes.
@@ -95,8 +131,17 @@
   (compareTo [_ that] (- counter (.counter ^TwoSimplex that)))
 
   Cell
-  ;(isOriented [_] true)
-  (vertices [_] [z0 z1 z2]))
+  (vertices [_] [z0 z1 z2])
+  (isOriented [_] true)
+  ;; Testing for circular permutation invariant equivalence.
+  ;; TODO: move to java and enforce choice of circular permutation in
+  ;; private constructor.
+  (equivalent [this that]
+    (boolean
+     (or (identical? this that)
+         (and (instance? TwoSimplex that)
+              (identical? z0 (.z0 ^TwoSimplex that))
+              (identical? z1 (.z1 ^TwoSimplex that)))))))
 
 ;;---------------------------------------------------------------
 
@@ -114,16 +159,14 @@
     (^TwoSimplex [^ZeroSimplex z0
                   ^ZeroSimplex z1
                   ^ZeroSimplex z2]
+     "Enforce consistent choice of circular permutation of vertices,
+     preserving orientation."
      (assert (not= z0 z1))
      (assert (not= z0 z2))
      (assert (not= z1 z2))
-     ;; enforce consistent choice of circular permutation
-     ;; of vertices
-     (let [n (swap! counter inc)]
-       (cond (and (< (.compareTo z0 z1) 0) (< (.compareTo z0 z2) 0))
-             (TwoSimplex. n z0 z1 z2)
-             (< (.compareTo z1 z2) 0) (TwoSimplex. n z1 z2 z0)
-             :else (TwoSimplex. n z2 z0 z1))))))
+     (let [n (swap! counter inc)
+           [v0 v1 v2] (minimal-circular-permutation z0 z1 z2)]
+       (TwoSimplex. n v0 v1 v2)))))
 
 ;;---------------------------------------------------------------
 
@@ -191,9 +234,9 @@
 ;; icosahedral 2d simplicial complex with spherical topology
 
 #_(defn ^SimplicialComplex2D icosahedron []
-    (let [a (simplex "a") b (simplex"b") c (simplex"c") d (simplex"d")
-          e (simplex"e") f (simplex"f") g (simplex"g") h (simplex"h")
-          i (simplex"i") j (simplex"j") k (simplex"k") l (simplex"l")]
+    (let [a (simplex "a") b (simplex "b") c (simplex "c") d (simplex "d")
+          e (simplex "e") f (simplex "f") g (simplex "g") h (simplex "h")
+          i (simplex "i") j (simplex "j") k (simplex "k") l (simplex "l")]
       (simplicial-complex-2d
        (map #(apply simplex %)
             [[a b c] [a d b] [a c f] [a e d] [a f e]
@@ -205,12 +248,12 @@
 ;; 2d projections.
 
 #_(defn ^SimplicialComplex2D cut-icosahedron []
-    (let [a (simplex "a") b (simplex"b") c (simplex"c") d (simplex"d")
-          e (simplex"e") f (simplex"f") g (simplex"g") h (simplex"h")
-          i (simplex"i") j (simplex"j") k (simplex"k") l (simplex"l")
-          m (simplex"m") n (simplex"n") o (simplex"o")
-          p (simplex"p") q (simplex"q") r (simplex"r") s (simplex"s") t (simplex"t")
-          u (simplex"u") v (simplex"v")]
+    (let [a (simplex "a") b (simplex "b") c (simplex "c") d (simplex "d")
+          e (simplex "e") f (simplex "f") g (simplex "g") h (simplex "h")
+          i (simplex "i") j (simplex "j") k (simplex "k") l (simplex "l")
+          m (simplex "m") n (simplex "n") o (simplex "o")
+          p (simplex "p") q (simplex "q") r (simplex "r") s (simplex "s") t (simplex "t")
+          u (simplex "u") v (simplex "v")]
       (simplicial-complex-2d
        (map #(apply simplex %)
             [[a f g] [b g h] [c h i] [d i j] [e j k]
@@ -250,7 +293,7 @@
   (hashCode [_]
     (let [h (int 17)
           h (unchecked-multiply-int h (int 31))
-          h (unchecked-add-int h (.hashCode z0 ))
+          h (unchecked-add-int h (.hashCode z0))
           h (unchecked-multiply-int h (int 31))
           h (unchecked-add-int h (.hashCode z1))]
       h))
@@ -305,7 +348,7 @@
          child-faces []
          children {}]
     (if (empty? faces)
-      {:child (simplicial-complex-2d child-faces)
+      {:child  (simplicial-complex-2d child-faces)
        :parent (set/map-invert children)}
       ;; else
       (let [^TwoSimplex face (first faces)

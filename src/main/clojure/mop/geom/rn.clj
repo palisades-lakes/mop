@@ -122,7 +122,7 @@
 ;; TODO: avoid intermediate sequence, defmulti?
 
 #_(defn ^doubles double-coordinates [g]
-  (double-array (coordinates g)))
+    (double-array (coordinates g)))
 
 (defn float-coordinates ^floats [g]
   (float-array (coordinates g)))
@@ -179,15 +179,38 @@
           EG, if f is a number, do linear scaling in all dimensions."
           (fn [f x] [(class f) (class x)]))
 
+;; scaling
 (defmethod transform
   [Number Vector]
   [^Number f ^Vector x]
   (multiply x f))
 
+;; translation
+(defmethod transform
+  [Vector Vector]
+  [^Vector f ^Vector x]
+  (add x f))
+
 (defmethod transform
   [QuaternionRotation Vector3D]
   [^QuaternionRotation f ^Vector3D x]
   (.apply f x))
+
+;;----------------------------------------------------------------
+;; TODO: drop (* 0.5 ...) for orientation testing?
+
+(defn signed-area ^double [^Vector2D p0 ^Vector2D p1 ^Vector2D p2]
+  "The signed area of the 2d triangle formed by the 3 points.
+  https://cp-algorithms.com/geometry/oriented-triangle-area.html"
+  (let [x0 (.getX p0)
+        y0 (.getY p0)
+        x1 (.getX p1)
+        y1 (.getY p1)
+        x2 (.getX p2)
+        y2 (.getY p2)]
+    (* 0.5
+       (- (* (- x1 x0) (- y2 y1))
+          (* (- x2 x1) (- y1 y0))))))
 
 ;;----------------------------------------------------------------
 

@@ -16,10 +16,10 @@ import org.jetbrains.annotations.NotNull;
  * azimuth = u mod 2PI
  * polar = v mod PI
  * </pre>
- * Immutable;
+ * Immutable.
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2025-11-13
+ * @version 2026-02-16
  */
 
 @SuppressWarnings("PatternVariableCanBeUsed")
