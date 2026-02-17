@@ -4,7 +4,7 @@
 (ns mop.geom.tetrahedron
   {:doc     "Tetrahedra with various embeddings."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-18"}
+   :version "2026-02-16"}
   (:require [mop.cmplx.complex :as cmplx]
             [mop.geom.mesh :as mesh]
             [mop.geom.s2 :as s2])

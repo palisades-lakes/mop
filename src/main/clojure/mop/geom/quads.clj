@@ -1,7 +1,7 @@
 (ns mop.geom.quads
   {:doc     "Quadrilateral meshes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-18"}
+   :version "2026-02-16"}
   (:require [clojure.set :as set]
             [mop.cmplx.complex :as cmplx]
             [mop.commons.string :as mcs]
@@ -11,16 +11,16 @@
             [mop.geom.space :as space])
   (:import [clojure.lang IFn]
            [java.util List]
-           [mop.cmplx.complex CellComplex ZeroSimplex]
+           [mop.cmplx.complex CellComplex]
            [mop.geom.mesh Mesh]
-           [mop.java.cmplx Cell]))
+           [mop.java.cmplx Cell ZeroSimplex Quad]))
 
 ;;---------------------------------------------------------------
 ;; Abstract quadrilateral cell.
 ;; Not a simplex, so maybe should be elsewhere.
 ;; An ordered quadruple of zero simplexes.
 
-(deftype Quad
+#_(deftype Quad
   [^long counter
    ^ZeroSimplex z0
    ^ZeroSimplex z1
@@ -51,7 +51,7 @@
     (assert (not= z1 z2))
     (assert (not= z1 z3))
     (assert (not= z2 z3))
-    (Quad. (swap! counter inc) z0 z1 z2 z3)))
+    (Quad/make (swap! counter inc) z0 z1 z2 z3)))
 
 ;;---------------------------------------------------------------
 ;; Abstract 2d quadrilateral cell complex.

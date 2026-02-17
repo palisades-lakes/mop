@@ -14,7 +14,8 @@
    [mop.geom.quads :as quads]
    [mop.geom.rn :as rn]
    [mop.geom.s2 :as s2])
-  (:import [org.apache.commons.geometry.euclidean.threed Vector3D]))
+  (:import
+   [org.apache.commons.geometry.euclidean.threed Vector3D]))
 
 ;;-------------------------------------------------------------
 ;; TODO: convert to unit test, check singular cases.

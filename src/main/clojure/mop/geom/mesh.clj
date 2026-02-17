@@ -15,9 +15,8 @@
   (:import
    [clojure.lang IFn]
    [java.util List]
-   [mop.cmplx.complex CellComplex OneSimplex SimplicialComplex2D
-                      TwoSimplex VertexPair ZeroSimplex]
-   [mop.java.cmplx Cell]
+   [mop.cmplx.complex CellComplex SimplicialComplex2D VertexPair]
+   [mop.java.cmplx Cell ZeroSimplex OneSimplex TwoSimplex]
    [mop.java.geom Point2U]
    [org.apache.commons.geometry.spherical.twod GreatArc Point2S]))
 
@@ -35,7 +34,7 @@
 ;; TODO: move these to Java to get better control over construction?
 ;; TODO: require sorted map for embedding consistency?
 ;;---------------------------------------------------------------
-;; Embedded quadrilateral cell complex.
+;; Embedded 2d simplicial complex.
 
 (deftype TriangleMesh
   [^SimplicialComplex2D _cmplx

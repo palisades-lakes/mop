@@ -6,14 +6,15 @@
 (ns mop.scripts.debug.cut
   {:doc     "cut mesh at 'dateline'"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-18"}
+   :version "2026-02-16"}
 
   (:require
    [mop.cmplx.complex :as cmplx]
    [mop.geom.mesh :as mesh]
    [mop.geom.s2 :as s2]
    [mop.geom.tetrahedron :as tetrahedron])
-  (:import [mop.cmplx.complex SimplicialComplex2D VertexPair]
+  (:import [mop.java.cmplx ZeroSimplex]
+           [mop.cmplx.complex SimplicialComplex2D VertexPair]
            [mop.geom.mesh Mesh]))
 
 ;;-------------------------------------------------------------
