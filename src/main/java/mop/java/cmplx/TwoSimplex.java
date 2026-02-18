@@ -50,10 +50,10 @@ public final class TwoSimplex implements Cell {
   @Override
   public final int hashCode () { return _count; }
 
-  @Override
-  public final boolean equals (final Object that) {
-    assert that instanceof TwoSimplex;
-    return (this == that); }
+//  @Override
+//  public final boolean equals (final Object that) {
+//    assert that instanceof TwoSimplex;
+//    return (this == that); }
 
   //--------------------------------------------------------------------
   // Comparable
@@ -95,6 +95,9 @@ public final class TwoSimplex implements Cell {
   private TwoSimplex (final ZeroSimplex z0,
                       final ZeroSimplex z1,
                       final ZeroSimplex z2) {
+    assert ! z0.equals(z1);
+    assert ! z1.equals(z2);
+    assert ! z2.equals(z0);
     _count = Cell.counter();
     final ZeroSimplex[] z = minimalCircularPermutation(z0, z1, z2);
     _z0 = z[0]; _z1 = z[1]; _z2 = z[2]; }

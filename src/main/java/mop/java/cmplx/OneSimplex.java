@@ -34,10 +34,10 @@ public final class OneSimplex implements Cell {
   @Override
   public final int hashCode () { return _count; }
 
-  @Override
-  public final boolean equals (final Object that) {
-    assert that instanceof OneSimplex;
-    return (this == that); }
+//  @Override
+//  public final boolean equals (final Object that) {
+//    assert that instanceof OneSimplex;
+//    return (this == that); }
 
   //--------------------------------------------------------------------
   // Comparable
@@ -79,6 +79,7 @@ public final class OneSimplex implements Cell {
 
   private OneSimplex (final ZeroSimplex z0,
                       final ZeroSimplex z1) {
+    assert z0 != z1;
     _count = Cell.counter(); _z0 = z0; _z1 = z1; }
 
   public static final OneSimplex make (final ZeroSimplex z0,

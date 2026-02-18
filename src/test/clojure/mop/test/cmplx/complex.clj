@@ -23,9 +23,9 @@
         cba (cmplx/simplex c b a)
         ]
   (t/testing
-     (t/is (cmplx/equal-vertices abc abc1))
-     (t/is (cmplx/equal-vertices abc bca))
-     (t/is (cmplx/equal-vertices abc cab))
-     (t/is (not (cmplx/equal-vertices abc cba))
+     (t/is (cmplx/equivalent abc abc1))
+     (t/is (cmplx/equivalent abc bca))
+     (t/is (cmplx/equivalent abc cab))
+     (t/is (not (cmplx/equivalent abc cba))
      ))))
 

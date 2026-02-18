@@ -33,11 +33,12 @@ public final class ZeroSimplex implements Cell {
   @Override
   public final int hashCode () { return _count; }
 
-  @Override
-  public final boolean equals (final Object that) {
-    assert that instanceof ZeroSimplex;
-    return (this == that);
-  }
+//  @Override
+//  public final boolean equals (final Object that) {
+//    assert that instanceof ZeroSimplex :
+//      that.getClass().getSimpleName() + ": " +that.toString();
+//    return (this == that);
+//  }
 
   //--------------------------------------------------------------------
   // Comparable
@@ -50,7 +51,7 @@ public final class ZeroSimplex implements Cell {
    */
   @Override
   public final int compareTo (final @NonNull Object that) {
-    assert that instanceof ZeroSimplex;
+    assert that instanceof ZeroSimplex : that.toString();
     return _count - ((ZeroSimplex) that).count(); }
 
   //--------------------------------------------------------------------

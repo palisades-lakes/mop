@@ -62,10 +62,10 @@ public final class Quad implements Cell {
   @Override
   public final int hashCode () { return _count; }
 
-  @Override
-  public final boolean equals (final Object that) {
-    assert that instanceof Quad;
-    return (this == that); }
+//  @Override
+//  public final boolean equals (final Object that) {
+//    assert that instanceof Quad;
+//    return (this == that); }
 
   //--------------------------------------------------------------------
   // Comparable
@@ -108,6 +108,12 @@ public final class Quad implements Cell {
                 final ZeroSimplex z1,
                 final ZeroSimplex z2,
                 final ZeroSimplex z3) {
+    assert z0 != z1;
+    assert z0 != z2;
+    assert z0 != z3;
+    assert z1 != z2;
+    assert z1 != z3;
+    assert z2 != z3;
     _count = Cell.counter();
     final ZeroSimplex[] z = minimalCircularPermutation(z0, z1, z2, z3);
     _z0 = z[0]; _z1 = z[1]; _z2 = z[2]; _z3 = z[3]; }
