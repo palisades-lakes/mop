@@ -4,76 +4,11 @@
 (ns mop.cmplx.complex
   {:doc     "(Abstract) simplicial and cell complexes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-02-16"}
+   :version "2026-02-18"}
   (:require [clojure.set :as set]
             [mop.commons.string :as mcs])
   (:import [java.util List]
            [mop.java.cmplx Cell ZeroSimplex OneSimplex TwoSimplex]))
-;;---------------------------------------------------------------
-;; TODO: move these to Java to get better control over construction?
-;;---------------------------------------------------------------
-
-#_(deftype ZeroSimplex
-    [^long counter
-     ^String name]
-    :load-ns true
-
-    Object
-    (toString [_] name)
-    (hashCode [_] counter)
-    (equals [this that]
-      (cond
-        (identical? this that) true
-        (not (instance? ZeroSimplex that)) false
-        :else (== (.counter this) (.counter ^ZeroSimplex that))))
-
-    ;; ordering will be match order of creation within a thread.
-    ;; will be used to identify which point goes with which zero simplex
-    ;; in embeddings.
-    Comparable
-    (compareTo [_ that]
-      (- counter (.counter ^ZeroSimplex that)))
-
-    Cell
-    (equivalent [this that] (identical? this that))
-    (vertices [this] [this])
-    ;; could also be false...
-    (isOriented [_] true)
-    )
-
-;;---------------------------------------------------------------
-;; AKA '(Abstract) Edge'.
-;; An ordered pair of zero simplexes.
-
-#_(deftype OneSimplex
-    [^long counter
-     ^ZeroSimplex z0
-     ^ZeroSimplex z1]
-    :load-ns true
-
-    Object
-    (toString [_] (str z0 "->" z1))
-    (hashCode [_] counter)
-    (equals [this that]
-      (cond
-        (identical? this that) true
-        (not (instance? OneSimplex that)) false
-        :else (== (.counter this) (.counter ^OneSimplex that))))
-
-    Comparable
-    (compareTo [_ that] (- counter (.counter ^OneSimplex that)))
-
-    Cell
-    (vertices [_] [z0 z1])
-    (isOriented [_] true)
-    (equivalent [this that]
-      (boolean
-       (or (identical? this that)
-           (and (instance? OneSimplex that)
-                (identical? z0 (.z0 ^OneSimplex that))
-                (identical? z1 (.z1 ^OneSimplex that))))))
-    )
-
 ;;---------------------------------------------------------------
 ;; TODO: more efficient testing
 
@@ -101,54 +36,18 @@
      [c2 c3 c0 c1]
      :else
      [c3 c0 c1 c2])))
-;;---------------------------------------------------------------
-;; AKA '(Abstract) Face/Triangle'.
-;; An ordered triple of zero simplexes.
-
-#_(deftype TwoSimplex
-    [^long counter
-     ^ZeroSimplex z0
-     ^ZeroSimplex z1
-     ^ZeroSimplex z2]
-    :load-ns true
-
-    Object
-    (toString [_] (str z0 "->" z1 "->" z2))
-    (hashCode [_] counter)
-    (equals [this that]
-      (cond
-        (identical? this that) true
-        (not (instance? TwoSimplex that)) false
-        :else (== (.counter this) (.counter ^TwoSimplex that))))
-
-    Comparable
-    (compareTo [_ that] (- counter (.counter ^TwoSimplex that)))
-
-    Cell
-    (vertices [_] [z0 z1 z2])
-    (isOriented [_] true)
-    ;; Testing for circular permutation invariant equivalence.
-    ;; TODO: move to java and enforce choice of circular permutation in
-    ;; private constructor.
-    (equivalent [this that]
-      (boolean
-       (or (identical? this that)
-           (and (instance? TwoSimplex that)
-                (identical? z0 (.z0 ^TwoSimplex that))
-                (identical? z1 (.z1 ^TwoSimplex that)))))))
 
 ;;---------------------------------------------------------------
 
-(let [counter (atom -1)]
   (defn simplex
 
     (^ZeroSimplex [^String name]
-     (ZeroSimplex/make (swap! counter inc) name))
+     (ZeroSimplex/make name))
 
     (^OneSimplex [^ZeroSimplex z0
                   ^ZeroSimplex z1]
      (assert (not= z0 z1))
-     (OneSimplex/make (swap! counter inc) z0 z1))
+     (OneSimplex/make z0 z1))
 
     (^TwoSimplex [^ZeroSimplex z0
                   ^ZeroSimplex z1
@@ -158,9 +57,8 @@
      (assert (not= z0 z1))
      (assert (not= z0 z2))
      (assert (not= z1 z2))
-     (let [n (swap! counter inc)
-           [v0 v1 v2] (minimal-circular-permutation z0 z1 z2)]
-       (TwoSimplex/make n v0 v1 v2)))))
+     (let [[v0 v1 v2] (minimal-circular-permutation z0 z1 z2)]
+       (TwoSimplex/make v0 v1 v2))))
 
 ;;---------------------------------------------------------------
 

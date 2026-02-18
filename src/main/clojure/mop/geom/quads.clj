@@ -1,7 +1,7 @@
 (ns mop.geom.quads
   {:doc     "Quadrilateral meshes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-02-16"}
+   :version "2026-02-18"}
   (:require [clojure.set :as set]
             [mop.cmplx.complex :as cmplx]
             [mop.commons.string :as mcs]
@@ -16,42 +16,18 @@
            [mop.java.cmplx Cell ZeroSimplex Quad]))
 
 ;;---------------------------------------------------------------
-;; Abstract quadrilateral cell.
-;; Not a simplex, so maybe should be elsewhere.
-;; An ordered quadruple of zero simplexes.
 
-#_(deftype Quad
-  [^long counter
-   ^ZeroSimplex z0
-   ^ZeroSimplex z1
-   ^ZeroSimplex z2
-   ^ZeroSimplex z3]
-  :load-ns true
-
-  Object
-  (toString [_] (str "Q[" counter ";"  z0 "," z1 "," z2 "," z3 ")"))
-  (hashCode [_] counter)
-
-  Comparable
-  (compareTo [_ that] (- counter (.counter ^Quad that)))
-
-  Cell
-  (vertices [_] [z0 z1 z2 z3]) )
-
-;;---------------------------------------------------------------
-
-(let [counter (atom -1)]
-  (defn quad ^Quad [^ZeroSimplex z0
-                    ^ZeroSimplex z1
-                    ^ZeroSimplex z2
-                    ^ZeroSimplex z3]
-    (assert (not= z0 z1))
-    (assert (not= z0 z2))
-    (assert (not= z0 z3))
-    (assert (not= z1 z2))
-    (assert (not= z1 z3))
-    (assert (not= z2 z3))
-    (Quad/make (swap! counter inc) z0 z1 z2 z3)))
+(defn quad ^Quad [^ZeroSimplex z0
+                  ^ZeroSimplex z1
+                  ^ZeroSimplex z2
+                  ^ZeroSimplex z3]
+  (assert (not= z0 z1))
+  (assert (not= z0 z2))
+  (assert (not= z0 z3))
+  (assert (not= z1 z2))
+  (assert (not= z1 z3))
+  (assert (not= z2 z3))
+  (Quad/make z0 z1 z2 z3))
 
 ;;---------------------------------------------------------------
 ;; Abstract 2d quadrilateral cell complex.
@@ -95,7 +71,10 @@
 
 (defn quad-complex ^QuadComplex [faces]
   "Accumulate the vertices from the faces, and sort."
-  (let [vertices (sort (into #{} (flatten (map #(.vertices ^Cell %) faces))))]
+  (let [vertices (sort
+                  (into
+                   #{}
+                   (flatten (map #(vec (.vertices ^Cell %)) faces))))]
     (QuadComplex. vertices faces)))
 
 ;;---------------------------------------------------------------
@@ -114,7 +93,7 @@
          child-faces []
          children {}]
     (if (empty? faces)
-      {:child (quad-complex child-faces)
+      {:child  (quad-complex child-faces)
        :parent (set/map-invert children)}
       ;; else
       (let [^Quad face (first faces)
@@ -127,11 +106,11 @@
             e12 (sort [z1 z2])
             e23 (sort [z2 z3])
             e30 (sort [z3 z0])
-            ^ZeroSimplex z01 (or (children e01) (cmplx/simplex"ab"))
-            ^ZeroSimplex z12 (or (children e12) (cmplx/simplex"bc"))
-            ^ZeroSimplex z23 (or (children e23) (cmplx/simplex"cd"))
-            ^ZeroSimplex z30 (or (children e30) (cmplx/simplex"da"))
-            ^ZeroSimplex z0123 (cmplx/simplex"abcd")]
+            ^ZeroSimplex z01 (or (children e01) (cmplx/simplex "ab"))
+            ^ZeroSimplex z12 (or (children e12) (cmplx/simplex "bc"))
+            ^ZeroSimplex z23 (or (children e23) (cmplx/simplex "cd"))
+            ^ZeroSimplex z30 (or (children e30) (cmplx/simplex "da"))
+            ^ZeroSimplex z0123 (cmplx/simplex "abcd")]
         (recur
          (rest faces)
          (concat child-faces
@@ -140,8 +119,8 @@
                   (quad z12 z2 z23 z0123)
                   (quad z23 z3 z30 z0123)])
          (merge children
-                {z0 z0 z1 z1 z2 z2 z3 z3
-                 e01 z01 e12 z12 e23 z23 e30 z30
+                {z0   z0 z1 z1 z2 z2 z3 z3
+                 e01  z01 e12 z12 e23 z23 e30 z30
                  face z0123}))))))
 
 ;;---------------------------------------------------------------
@@ -150,14 +129,14 @@
 (defn ^QuadComplex quad-cube []
   "Return an oriented quad complex with 6 faces, topologically
   equivalent to a sphere or cube surface."
-  (let [z0 (cmplx/simplex"a")
-        z1 (cmplx/simplex"b")
-        z2 (cmplx/simplex"c")
-        z3 (cmplx/simplex"d")
-        z4 (cmplx/simplex"e")
-        z5 (cmplx/simplex"f")
-        z6 (cmplx/simplex"g")
-        z7 (cmplx/simplex"h")
+  (let [z0 (cmplx/simplex "a")
+        z1 (cmplx/simplex "b")
+        z2 (cmplx/simplex "c")
+        z3 (cmplx/simplex "d")
+        z4 (cmplx/simplex "e")
+        z5 (cmplx/simplex "f")
+        z6 (cmplx/simplex "g")
+        z7 (cmplx/simplex "h")
         q0321 (quad z0 z3 z2 z1)
         q4567 (quad z4 z5 z6 z7)
         q0473 (quad z0 z4 z7 z3)
@@ -267,20 +246,20 @@
               [v (s2/point p)])
             (.vertices cmplx)
             [(rn/vector -1 -1 -1)
-             (rn/vector  1 -1 -1)
-             (rn/vector  1  1 -1)
-             (rn/vector -1  1 -1)
-             (rn/vector -1 -1  1)
-             (rn/vector  1 -1  1)
-             (rn/vector  1  1  1)
-             (rn/vector -1  1  1)]))))))
+             (rn/vector 1 -1 -1)
+             (rn/vector 1 1 -1)
+             (rn/vector -1 1 -1)
+             (rn/vector -1 -1 1)
+             (rn/vector 1 -1 1)
+             (rn/vector 1 1 1)
+             (rn/vector -1 1 1)]))))))
 
 ;;---------------------------------------------------------------
 
 (defmethod cmplx/midpoint-subdivide-4 QuadMesh [^QuadMesh qm]
   (let [{^CellComplex child :child
          parent             :parent} (cmplx/midpoint-subdivide-4 (.cmplx qm))
-        embedding (.embedding qm) ]
+        embedding (.embedding qm)]
     (mesh/mesh
      child
      (into

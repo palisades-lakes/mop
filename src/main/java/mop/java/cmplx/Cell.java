@@ -1,6 +1,7 @@
 package mop.java.cmplx;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Simplices and other (eg quadrilateral) cells.
@@ -13,10 +14,14 @@ import java.util.List;
  * sub-cells.
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2026-02-16
+ * @version 2026-02-18
  */
 
 public interface Cell extends Comparable {
+
+
+  static final AtomicInteger _counter = new AtomicInteger(-1);
+  static int counter () { return _counter.getAndIncrement(); }
 
   /** Currently, only require the included zero simplices.
    * Higher dimensional sub-cells may be transient and created as needed.
@@ -34,12 +39,14 @@ public interface Cell extends Comparable {
 
   /** In general, 2 cells are equivalent is they have the same vertices.
    */
+  @SuppressWarnings("unused")
   public boolean isOriented ();
 
   /** Do the 2 cells have the same sub-cells and same orientation
    * (when oriented).
    */
 
+  @SuppressWarnings("unused")
   public boolean equivalent (Cell other);
 
 }

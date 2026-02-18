@@ -1,5 +1,7 @@
 package mop.java.cmplx;
 
+import org.jspecify.annotations.NonNull;
+
 import java.util.List;
 
 /**
@@ -9,13 +11,13 @@ import java.util.List;
  * dangerous with multiple meshes that may share vertices, edges, etc.
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2026-02-16
+ * @version 2026-02-18
  */
 public final class ZeroSimplex implements Cell {
+  //--------------------------------------------------------------------
 
-  private final int _counter;
-
-  private final int counter () { return _counter; }
+  private final int _count;
+  private final int count () { return _count; }
 
   private final String _name;
 
@@ -29,10 +31,11 @@ public final class ZeroSimplex implements Cell {
   public final String toString () { return _name; }
 
   @Override
-  public final int hashCode () { return _counter; }
+  public final int hashCode () { return _count; }
 
   @Override
   public final boolean equals (final Object that) {
+    assert that instanceof ZeroSimplex;
     return (this == that);
   }
 
@@ -46,9 +49,9 @@ public final class ZeroSimplex implements Cell {
    * embeddings.
    */
   @Override
-  public final int compareTo (final Object that) {
-    return _counter - ((ZeroSimplex) that).counter();
-  }
+  public final int compareTo (final @NonNull Object that) {
+    assert that instanceof ZeroSimplex;
+    return _count - ((ZeroSimplex) that).count(); }
 
   //--------------------------------------------------------------------
   // Cell
@@ -65,23 +68,17 @@ public final class ZeroSimplex implements Cell {
 
   @Override
   public final boolean equivalent (final Cell that) {
-    return this == that;
-  }
-
+    return this == that; }
 
   //--------------------------------------------------------------------
   // construction
   //--------------------------------------------------------------------
 
-  private ZeroSimplex (final int counter,
-                       final String name) {
-    _counter = counter;
-    _name = name;
-  }
+  private ZeroSimplex (final String name) {
+    _count = Cell.counter(); _name = name; }
 
-  public static final ZeroSimplex make (final int counter,
-                                        final String name) {
-    return new ZeroSimplex(counter, name);
+  public static final ZeroSimplex make (final String name) {
+    return new ZeroSimplex(name);
   }
   //--------------------------------------------------------------------
 } // end class
