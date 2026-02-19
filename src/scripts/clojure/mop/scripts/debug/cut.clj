@@ -13,9 +13,10 @@
    [mop.geom.mesh :as mesh]
    [mop.geom.s2 :as s2]
    [mop.geom.tetrahedron :as tetrahedron])
-  (:import [mop.java.cmplx ZeroSimplex]
-           [mop.cmplx.complex SimplicialComplex2D VertexPair]
-           [mop.geom.mesh Mesh]))
+  (:import
+   [mop.java.cmplx ZeroSimplex SimplicialComplex2D]
+   [mop.cmplx.complex VertexPair]
+   [mop.geom.mesh Mesh]))
 
 ;;-------------------------------------------------------------
 

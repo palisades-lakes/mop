@@ -5,7 +5,7 @@
 
   {:doc     "LWJGL utilities"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-23"}
+   :version "2026-02-18"}
 
   (:require [clojure.math :as math]
             [clojure.pprint :as pp]
@@ -15,7 +15,7 @@
 
   (:import [java.awt.image BufferedImage]
            [java.nio ByteBuffer FloatBuffer]
-           [mop.cmplx.complex CellComplex SimplicialComplex2D]
+           [mop.java.cmplx CellComplex SimplicialComplex2D]
            [org.apache.commons.geometry.euclidean.threed Vector3D]
            [org.apache.commons.geometry.euclidean.threed.rotation QuaternionRotation]
            [org.apache.commons.geometry.euclidean.twod Vector2D]

@@ -2,6 +2,8 @@ package mop.java.cmplx;
 
 import org.jspecify.annotations.NonNull;
 
+import java.util.List;
+
 /**
  * AKA '(Abstract) Face'.
  * An oriented (ordered up to circular permutation)
@@ -75,8 +77,8 @@ public final class TwoSimplex implements Cell {
   //--------------------------------------------------------------------
   /** Note: returns immutable list. */
   @Override
-  public final java.util.List vertices () {
-    return java.util.List.of(z0(), z1(), z2()); }
+  public final List vertices () {
+    return List.of(z0(), z1(), z2()); }
 
   @Override
   public final boolean isOriented () { return true; }

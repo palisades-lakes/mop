@@ -34,6 +34,8 @@ public interface Cell extends Comparable {
    * In the meantime, implementations can use a list with the elements
    * ordered so that the minimal (in the sense of Comparable) vertex
    * comes first.
+   * <br>
+   * Return an unmodifiable List.
    */
   public List vertices ();
 

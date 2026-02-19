@@ -2,18 +2,18 @@
   {:doc     "Quadrilateral meshes."
    :author  "palisades dot lakes at gmail dot com"
    :version "2026-02-18"}
-  (:require [clojure.set :as set]
-            [mop.cmplx.complex :as cmplx]
-            [mop.commons.string :as mcs]
-            [mop.geom.mesh :as mesh]
-            [mop.geom.rn :as rn]
-            [mop.geom.s2 :as s2]
-            [mop.geom.space :as space])
-  (:import [clojure.lang IFn]
-           [java.util List]
-           [mop.cmplx.complex CellComplex]
-           [mop.geom.mesh Mesh]
-           [mop.java.cmplx Cell ZeroSimplex Quad]))
+  (:require
+   [clojure.set :as set]
+   [mop.cmplx.complex :as cmplx]
+   [mop.commons.string :as mcs]
+   [mop.geom.mesh :as mesh]
+   [mop.geom.rn :as rn]
+   [mop.geom.s2 :as s2]
+   [mop.geom.space :as space])
+  (:import
+   [clojure.lang IFn]
+   [mop.geom.mesh Mesh]
+   [mop.java.cmplx CellComplex QuadComplex ZeroSimplex Quad]))
 
 ;;---------------------------------------------------------------
 
@@ -30,34 +30,6 @@
   (Quad/make z0 z1 z2 z3))
 
 ;;---------------------------------------------------------------
-;; Abstract 2d quadrilateral cell complex.
-;; <code>deftype</code over <code>defrecord</code> to avoid
-;; clojure generated equals and hashCode --- want identity
-;; based equality and corresponding hash codes.
-;; TODO: check whether this is really necessary
-;; TODO: immutable internal collections
-
-(deftype QuadComplex
-  [^List _vertices
-   ^List _faces]
-  :load-ns true
-
-  #_Object
-  #_(toString [_]
-              (str "Quad(" counter "; "
-                   (.counter z0) ","
-                   (.counter z1) ","
-                   (.counter z2) ","
-                   (.counter z3) ")"))
-  #_(hashCode [this] (System/identityHashCode this))
-  #_(equals [this that] (identical? this that))
-
-  CellComplex
-  (vertices [this] (._vertices this))
-  (faces [this] (._faces this))
-  )
-
-;;---------------------------------------------------------------
 
 (defmethod mcs/simple-string QuadComplex [^QuadComplex this]
   (str "QCmplx["
@@ -70,12 +42,7 @@
 ;; TODO: enforce orientedness?
 
 (defn quad-complex ^QuadComplex [faces]
-  "Accumulate the vertices from the faces, and sort."
-  (let [vertices (sort
-                  (into
-                   #{}
-                   (flatten (map #(vec (.vertices ^Cell %)) faces))))]
-    (QuadComplex. vertices faces)))
+  (QuadComplex/make faces))
 
 ;;---------------------------------------------------------------
 
