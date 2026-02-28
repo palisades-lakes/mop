@@ -1,7 +1,7 @@
 (set! *warn-on-reflection* true)
 ;;(set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-;; clj src\scripts\clojure\mop\scripts/earth\icosaearth.clj
+;; clj src\scripts\clojure\mop\scripts\earth\icosaearth.clj
 ;;----------------------------------------------------------------
 (ns mop.scripts.earth.icosaearth
   {:doc "Mesh Viewer demo using lwjgl and glfw.

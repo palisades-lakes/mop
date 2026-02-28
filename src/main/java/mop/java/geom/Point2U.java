@@ -6,7 +6,6 @@ import org.apache.commons.geometry.core.Point;
 import org.apache.commons.geometry.core.internal.SimpleTupleFormat;
 import org.apache.commons.geometry.euclidean.threed.Vector3D;
 import org.apache.commons.geometry.spherical.twod.Point2S;
-import org.jetbrains.annotations.NotNull;
 
 //----------------------------------------------------------------------
 
@@ -19,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  * Immutable.
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2026-02-16
+ * @version 2026-02-27
  */
 
 @SuppressWarnings("PatternVariableCanBeUsed")
@@ -58,7 +57,7 @@ public record Point2U (double _u, double _v)
   //--------------------------------------------------------------------
 
   @Override
-  public final @NotNull String toString () {
+  public final String toString () {
     return SimpleTupleFormat.getDefault().format(getU(), getV()); }
 
   @Override
