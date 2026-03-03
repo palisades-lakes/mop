@@ -81,12 +81,6 @@
 
 ;;------------------------------------------------------------------------------
 ;; Cut icosahedron to simplify texture mapping and other
-;; 2d projections. Return unwrapped txt coordinate embedding.
-;; TODO: automate the cut. Key question: what to do when it's not spherical?
-;; TODO: check if this is a regular icosahedron
-
-;;------------------------------------------------------------------------------
-;; Cut icosahedron to simplify texture mapping and other
 ;; 2d projections. Return wrapped s2 embedding.
 ;; TODO: automate the cut. Key question: what to do when it's not spherical?
 ;; TODO: check if this is a regular icosahedron

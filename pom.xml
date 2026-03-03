@@ -108,6 +108,12 @@
     </dependency>
 
     <dependency>
+      <groupId>org.clojure</groupId>
+      <artifactId>data.json</artifactId>
+      <version>${clojure-data-json-version}</version>
+    </dependency>
+
+    <dependency>
       <groupId>it.geosolutions.imageio-ext</groupId>
       <artifactId>imageio-ext-tiff</artifactId>
  <!--     <version>${imageio-ext-version}</version> -->
