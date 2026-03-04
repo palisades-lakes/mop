@@ -38,6 +38,7 @@
 ;; Embedded 2d simplicial complex.
 
 (deftype TriangleMesh
+
   [^SimplicialComplex2D _cmplx
    ^IFn _embedding]
   :load-ns true

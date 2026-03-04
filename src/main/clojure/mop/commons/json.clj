@@ -15,7 +15,7 @@
   <br>
   So, using clojure.data.json for now."
   {:author  "palisades dot lakes at gmail dot com"
-   :version "2026-03-03"}
+   :version "2026-03-04"}
   (:require [clojure.java.io :as io]
             [clojure.data.json :as cdj]))
 ;;-------------------------------------------------------------------
@@ -28,6 +28,8 @@
 ;;-------------------------------------------------------------------
 (defn write-json [edn json]
   "Write json text ~equivalent~ to the clojure (edn) data."
-  (with-open [json (io/writer json)]
-    (cdj/write edn json :indent true :escape-slash false)))
+  (let [json (io/file json)]
+    (io/make-parents json)
+    (with-open [json (io/writer json)]
+      (cdj/write edn json :indent true :escape-slash false))))
 ;;-------------------------------------------------------------------

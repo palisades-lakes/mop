@@ -13,7 +13,6 @@
   (:import [mop.geom.mesh TriangleMesh]
            [mop.java.geom Point2U]
            [org.apache.commons.geometry.spherical.twod Point2S]))
-
 ;;---------------------------------------------------------------
 ;; Create abstract complex and r3 embedding together
 ;; to avoid orientation problems, etc.

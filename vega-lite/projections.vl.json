@@ -1,0 +1,72 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "width": 700,
+  "height": 500,
+  "params": [
+    {
+      "name": "projection",
+      "value": "equalEarth",
+      "bind": {
+        "input": "select",
+        "options": [
+          "albers",
+          "albersUsa",
+          "azimuthalEqualArea",
+          "azimuthalEquidistant",
+          "conicConformal",
+          "conicEqualArea",
+          "conicEquidistant",
+          "equalEarth",
+          "equirectangular",
+          "gnomonic",
+          "mercator",
+          "naturalEarth1",
+          "orthographic",
+          "stereographic",
+          "transverseMercator"
+        ]
+      }
+    }
+  ],
+  "layer": [
+    {
+      "data": {
+        "url": "../data/topojson/world-110m.json",
+        "format": {
+          "type": "topojson",
+          "feature": "countries"
+        }
+      },
+      "projection": {
+        "type": {
+          "expr": "projection"
+        }
+      },
+      "mark": {
+        "type": "geoshape",
+        "fill": "lightgray",
+        "stroke": "gray"
+      }
+    },
+    {
+      "data": {
+        "url": "../out/geojson/icosahedron.json",
+        "format": {
+          "type": "json",
+          "property": "features"
+        }
+      },
+      "projection": {
+        "type": {
+          "expr": "projection"
+        }
+      },
+      "mark": {
+        "type": "geoshape",
+        "fill": "lightblue",
+        "stroke": "blue",
+        "opacity": 0.5
+      }
+    }
+  ]
+}
