@@ -1,7 +1,7 @@
 (ns mop.geom.quads
   {:doc     "Quadrilateral meshes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-02-18"}
+   :version "2026-03-06"}
   (:require
    [clojure.set :as set]
    [mop.cmplx.complex :as cmplx]
@@ -12,7 +12,7 @@
    [mop.geom.space :as space])
   (:import
    [clojure.lang IFn]
-   [mop.geom.mesh Mesh]
+   [mop.java.geom.mesh QuadMesh]
    [mop.java.cmplx CellComplex QuadComplex ZeroSimplex Quad]))
 
 ;;---------------------------------------------------------------
@@ -113,18 +113,6 @@
     (quad-complex [q0321 q4567 q0473 q5126 q2376 q0154])))
 
 ;;---------------------------------------------------------------
-;; Embedded quadrilateral cell complex.
-
-(deftype QuadMesh
-  [^QuadComplex _cmplx
-   ^IFn _embedding]
-  :load-ns true
-
-  Mesh
-  (cmplx [this] (._cmplx this))
-  (embedding [this] (._embedding this)))
-
-;;---------------------------------------------------------------
 
 (defmethod mcs/simple-string QuadMesh [^QuadMesh this]
   (str "QuadMesh[" \newline " "
@@ -140,7 +128,7 @@
   (dorun
    (map #(assert (not (nil? (embedding %))))
         (.vertices cmplx)))
-  (QuadMesh. cmplx embedding))
+  (QuadMesh/make cmplx embedding))
 
 ;;---------------------------------------------------------------
 

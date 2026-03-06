@@ -18,7 +18,7 @@
    [mop.io.geojson :as geojson])
 
   (:import
-   [mop.geom.mesh Mesh]))
+   [mop.java.geom.mesh Mesh]))
 ;;----------------------------------------------------------------
 
 (let [^Mesh initial (icosahedron/s2-icosahedron)

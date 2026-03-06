@@ -18,7 +18,7 @@
    [mop.lwjgl.glfw.util :as glfw])
 
   (:import
-   [mop.geom.mesh Mesh]
+   [mop.java.geom.mesh Mesh]
    [org.apache.commons.geometry.spherical.twod Point2S]))
 
 ;;-------------------------------------------------------------

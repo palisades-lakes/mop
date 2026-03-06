@@ -16,7 +16,7 @@
   (:import
    [mop.java.cmplx ZeroSimplex SimplicialComplex2D]
    [mop.cmplx.complex VertexPair]
-   [mop.geom.mesh Mesh]))
+   [mop.java.geom.mesh Mesh]))
 
 ;;-------------------------------------------------------------
 

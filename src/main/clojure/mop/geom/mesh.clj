@@ -4,7 +4,7 @@
 (ns mop.geom.mesh
   {:doc     "Embedded cell complexes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-02-18"}
+   :version "2026-03-06"}
 
   (:require
    [mop.cmplx.complex :as cmplx]
@@ -15,37 +15,20 @@
   (:import
    [clojure.lang IFn]
    [java.util List]
+   [org.apache.commons.geometry.spherical.twod
+    GreatArc Point2S]
    [mop.cmplx.complex VertexPair]
-   [mop.java.cmplx Cell CellComplex SimplicialComplex2D
-                   ZeroSimplex OneSimplex TwoSimplex]
+   [mop.java.cmplx
+    Cell CellComplex SimplicialComplex2D
+    ZeroSimplex OneSimplex TwoSimplex]
    [mop.java.geom Point2U]
-   [org.apache.commons.geometry.spherical.twod GreatArc Point2S]))
+   [mop.java.geom.mesh Mesh TriangleMesh]))
 
 ;;---------------------------------------------------------------
-
-(definterface Mesh
-  (^mop.java.cmplx.CellComplex cmplx [])
-  (^clojure.lang.IFn embedding []))
 
 (defn cmplx ^CellComplex [^Mesh mesh] (.cmplx mesh))
 (defn embedding ^IFn [^Mesh mesh] (.embedding mesh))
 (defn faces [^Mesh mesh] (.faces (.cmplx mesh)))
-
-;;---------------------------------------------------------------
-;; TODO: move these to Java to get better control over construction?
-;; TODO: require sorted map for embedding consistency?
-;;---------------------------------------------------------------
-;; Embedded 2d simplicial complex.
-
-(deftype TriangleMesh
-
-  [^SimplicialComplex2D _cmplx
-   ^IFn _embedding]
-  :load-ns true
-
-  Mesh
-  (cmplx [this] (._cmplx this))
-  (embedding [this] (._embedding this)))
 
 ;;---------------------------------------------------------------
 
@@ -55,7 +38,7 @@
    (map #(assert (not (nil? (embedding %)))
                  (println %))
         (.vertices cmplx)))
-  (TriangleMesh. cmplx embedding))
+  (TriangleMesh/make cmplx embedding))
 
 ;;---------------------------------------------------------------
 ;; TODO: defmulti depending on co-domain of embedding

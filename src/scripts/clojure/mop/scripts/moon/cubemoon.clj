@@ -21,7 +21,7 @@
 
   (:import
    [mop.cmplx.complex VertexPair]
-   [mop.geom.mesh Mesh]))
+   [mop.java.geom.mesh Mesh]))
 
 ;;----------------------------------------------------------------------
 (let [radius 1737.4

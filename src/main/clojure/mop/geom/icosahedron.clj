@@ -10,7 +10,7 @@
             [mop.geom.mesh :as mesh]
             [mop.geom.rn :as rn]
             [mop.geom.s2 :as s2])
-  (:import [mop.geom.mesh TriangleMesh]
+  (:import [mop.java.geom.mesh TriangleMesh]
            [mop.java.geom Point2U]
            [org.apache.commons.geometry.spherical.twod Point2S]))
 ;;---------------------------------------------------------------
@@ -39,8 +39,8 @@
                      g (rn/vector  r  0  1) h (rn/vector  r  0 -1)
                      i (rn/vector  0 -1 -r) j (rn/vector  0 -1  r)
                      k (rn/vector -1 -r  0) l (rn/vector  1 -r  0)}]
-      #_(rn/transform qr (TriangleMesh. cmplx embedding))
-      (TriangleMesh. cmplx embedding))))
+      #_(rn/transform qr (TriangleMesh/make cmplx embedding))
+      (TriangleMesh/make cmplx embedding))))
 
 (defn ^TriangleMesh s2-icosahedron []
   (let [da (double (* 0.2 Math/PI))
@@ -75,8 +75,8 @@
                    k (s2/point (*  8 da) p2)
 
                    l (s2/point 0.0 Math/PI)}]
-    #_(rn/transform qr (TriangleMesh. cmplx embedding))
-    (TriangleMesh. cmplx embedding)))
+    #_(rn/transform qr (TriangleMesh/make cmplx embedding))
+    (TriangleMesh/make cmplx embedding)))
 
 ;;------------------------------------------------------------------------------
 ;; Cut icosahedron to simplify texture mapping and other

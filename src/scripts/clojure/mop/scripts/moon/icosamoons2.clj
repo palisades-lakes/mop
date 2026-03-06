@@ -22,7 +22,7 @@
 
   (:import
    [mop.cmplx.complex VertexPair]
-   [mop.geom.mesh Mesh]
+   [mop.java.geom.mesh Mesh]
    [org.apache.commons.geometry.spherical.twod Point2S]))
 
 ;;-------------------------------------------------------------

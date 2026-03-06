@@ -66,11 +66,11 @@
    2D viewer, for speed if nothing else.
    "
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-03-04"}
+   :version "2026-03-06"}
   (:require [mop.geom.mesh :as mesh])
   (:import [java.awt Polygon]
            [mop.java.cmplx TwoSimplex]
-           [mop.geom.mesh TriangleMesh]
+           [mop.java.geom.mesh TriangleMesh]
            [org.apache.commons.geometry.spherical.twod Point2S]))
 ;;-------------------------------------------------------------------
 ;; TODO: handle other embedding codomains
