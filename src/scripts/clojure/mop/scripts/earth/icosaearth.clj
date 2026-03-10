@@ -1,5 +1,4 @@
 (set! *warn-on-reflection* true)
-;;(set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
 ;; clj src\scripts\clojure\mop\scripts\earth\icosaearth.clj
 ;;----------------------------------------------------------------
@@ -7,7 +6,7 @@
   {:doc "Mesh Viewer demo using lwjgl and glfw.
   Started with https://clojurecivitas.github.io/opengl_visualization/main.html"
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-12-18"}
+   :version "2026-03-10"}
 
   (:require
    [mop.cmplx.complex :as cmplx]
@@ -20,7 +19,7 @@
   (:import
    [mop.java.geom.mesh Mesh]
    [org.apache.commons.geometry.spherical.twod Point2S]))
-
+(set! *unchecked-math* :warn-on-boxed)
 ;;-------------------------------------------------------------
 
 (let [radius 6371.0
