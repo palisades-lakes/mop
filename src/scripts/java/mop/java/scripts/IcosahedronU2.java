@@ -7,7 +7,9 @@ import clojure.lang.IFn;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
+import javafx.stage.Stage;
 import mop.java.cmplx.TwoSimplex;
 import mop.java.geom.Point2U;
 import mop.java.geom.mesh.TriangleMesh;
@@ -29,7 +31,7 @@ public final class IcosahedronU2 extends Application {
   }
 
   @Override
-  public final void start (final javafx.stage.Stage stage) {
+  public final void start (final Stage stage) {
 
     final int w = 640;
     final int h = 640;
@@ -55,10 +57,25 @@ public final class IcosahedronU2 extends Application {
                     Math.toDegrees(p2.getV()));
       triangle.setFill(fill);
       triangle.setStroke(stroke);
-      group.getChildren().add(triangle);
-    }
+      group.getChildren().add(triangle); }
+    System.out.println(group.boundsInLocalProperty().getValue());
+    System.out.println(group.boundsInParentProperty().getValue());
+    System.out.println(group.getLayoutBounds());
+    System.out.println(group.getLocalToParentTransform());
+    System.out.println(group.getLocalToSceneTransform());
     final StackPane stackPane = new StackPane(group);
-    final Scene scene = new Scene(stackPane, w, h);
+    stackPane.setPrefSize(w, h);
+    stackPane.setStyle("-fx-background-color: lightgray;");
+    System.out.println(stackPane.boundsInLocalProperty().getValue());
+    System.out.println(stackPane.boundsInParentProperty().getValue());
+    System.out.println(stackPane.getLayoutBounds());
+    System.out.println(stackPane.getPadding());
+    System.out.println(stackPane.getLocalToParentTransform());
+    System.out.println(stackPane.getLocalToSceneTransform());
+    final Scene scene = new Scene(stackPane, w, h, Color.web("aliceblue"));
+    System.out.println(scene.getCamera());
+    System.out.println(scene.getWidth());
+    System.out.println(scene.getHeight());
     stage.setScene(scene);
     stage.show();
   }
