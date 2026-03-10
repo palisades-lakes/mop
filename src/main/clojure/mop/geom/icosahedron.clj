@@ -140,7 +140,7 @@
           k (cmplx/simplex"k") l (cmplx/simplex"l") m (cmplx/simplex"m")
           n (cmplx/simplex"n")
           ;; TODO: problem with txt coordinates when cut at exactly 0 and 2PI
-          s2-embedding {a Point2U/PLUS_K
+          u2-embedding {a Point2U/PLUS_K
                         b (Point2U/of (+ a0 (*  0 da)) p1)
                         c (Point2U/of (+ a0 (*  2 da)) p1)
                         d (Point2U/of (+ a0 (*  4 da)) p1)
@@ -165,7 +165,7 @@
                        [n j i] [n k j] [n l k] [n m l]
                        ]))
           ]
-      (mesh/triangle-mesh cmplx s2-embedding)
+      (mesh/triangle-mesh cmplx u2-embedding)
       )))
 
 ;;---------------------------------------------------------------
