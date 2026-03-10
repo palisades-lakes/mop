@@ -10,15 +10,15 @@ import java.util.TreeSet;
  * Minimal representation: vertices and faces only.
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2026-02-18
+ * @version 2026-03-10
  */
 public final class QuadComplex implements CellComplex {
 
-  private final List _vertices;
-  public final List vertices () { return _vertices; }
+  private final List<ZeroSimplex> _vertices;
+  public final List<ZeroSimplex> vertices () { return _vertices; }
 
-  private final List _faces;
-  public final List faces () { return _faces; }
+  private final List<Quad> _faces;
+  public final List<Quad> faces () { return _faces; }
 
   //--------------------------------------------------------------------
   // construction
@@ -26,14 +26,13 @@ public final class QuadComplex implements CellComplex {
   /** Accumulate the sorted vertices from the provided faces.
    */
 
-  private QuadComplex (final Collection faces) {
+  private QuadComplex (final Collection<Quad> faces) {
     final SortedSet<ZeroSimplex> vertices = new TreeSet<>();
-    for (final Object f : faces) {
-      final Quad f2 = (Quad) f;
-      vertices.add(f2.z0());
-      vertices.add(f2.z1());
-      vertices.add(f2.z2());
-      vertices.add(f2.z3()); }
+    for (final Quad f : faces) {
+      vertices.add(f.z0());
+      vertices.add(f.z1());
+      vertices.add(f.z2());
+      vertices.add(f.z3()); }
     _vertices = List.copyOf(vertices);
     _faces = List.copyOf(faces); }
 
@@ -41,7 +40,7 @@ public final class QuadComplex implements CellComplex {
    * Do not retain a reference to <code>faces</code>.
    * Use unmodifiable lists internally.
    */
-  public static final QuadComplex make (final Collection faces) {
+  public static final QuadComplex make (final Collection<Quad> faces) {
     return new QuadComplex(faces); }
 
   //--------------------------------------------------------------------

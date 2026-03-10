@@ -14,11 +14,12 @@ import java.util.TreeSet;
  */
 public final class SimplicialComplex2D implements CellComplex {
 
-  private final List _vertices;
-  public final List vertices () { return _vertices; }
+  // TODO: ordered set
+  private final List<ZeroSimplex> _vertices;
+  public final List<ZeroSimplex> vertices () { return _vertices; }
 
-  private final List _faces;
-  public final List faces () { return _faces; }
+  private final List<TwoSimplex> _faces;
+  public final List<TwoSimplex> faces () { return _faces; }
 
   //--------------------------------------------------------------------
   // construction
@@ -26,13 +27,12 @@ public final class SimplicialComplex2D implements CellComplex {
   /** Accumulate the sorted vertices from the provided faces.
    */
 
-  private SimplicialComplex2D (final Collection faces) {
+  private SimplicialComplex2D (final Collection<TwoSimplex> faces) {
     final SortedSet<ZeroSimplex> vertices = new TreeSet<>();
-    for (final Object f : faces) {
-      final TwoSimplex f2 = (TwoSimplex) f;
-      vertices.add(f2.z0());
-      vertices.add(f2.z1());
-      vertices.add(f2.z2()); }
+    for (final TwoSimplex f : faces) {
+      vertices.add(f.z0());
+      vertices.add(f.z1());
+      vertices.add(f.z2()); }
     _vertices = List.copyOf(vertices);
     _faces = List.copyOf(faces); }
 
@@ -40,7 +40,8 @@ public final class SimplicialComplex2D implements CellComplex {
    * Do not retain a reference to <code>faces</code>.
    * Use unmodifiable lists internally.
    */
-  public static final SimplicialComplex2D make (final Collection faces) {
+  public static final SimplicialComplex2D make (
+    final Collection<TwoSimplex> faces) {
     return new SimplicialComplex2D(faces); }
 
   //--------------------------------------------------------------------
