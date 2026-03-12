@@ -7,6 +7,7 @@ import clojure.lang.IFn;
 import javafx.application.Application;
 import javafx.scene.Group;
 import javafx.scene.Scene;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
@@ -27,6 +28,9 @@ public final class IcosahedronS2 extends Application {
     final double lat = 90 - Math.toDegrees(p.getPolar());
     return Vector2D.of(lon, lat); }
 
+  // TODO: not sure how much of this is necessary
+  // hard to debug if run as script because java source launcher
+  // truncates stack traces.
   private static final IFn require =
     Clojure.var("clojure.core", "require");
 
@@ -54,8 +58,11 @@ public final class IcosahedronS2 extends Application {
   @Override
   public final void start (final Stage stage) {
 
-    final int w = 640;
-    final int h = 640;
+    final int w = (360*4)/3;
+    final int h = (180*4)/3;
+    //stage.setMinWidth(w);
+    //stage.setMinHeight(h);
+
     final Group group = new Group();
     final Color positiveStroke = Color.web("#2166ac", 1);
     final Color positiveFill = Color.web("#d1e5f0", 0.2);
@@ -88,8 +95,14 @@ public final class IcosahedronS2 extends Application {
       group.getChildren().add(triangle); }
     group.setAutoSizeChildren(true);
     final StackPane stackPane = new StackPane(group);
-    final Scene scene = new Scene(stackPane, w, h);
+    final ScrollPane scrollPane = new ScrollPane(stackPane);
+    scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+    scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+    scrollPane.setFitToWidth(true);
+    scrollPane.setFitToHeight(true);
+    final Scene scene = new Scene(scrollPane, w, h);
     stage.setScene(scene);
+    stage.setResizable(true);
     stage.show(); }
   //-------------------------------------------------------------------
   // main
