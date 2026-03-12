@@ -19,6 +19,7 @@
   (:import
    [mop.java.geom.mesh Mesh]
    [org.apache.commons.geometry.spherical.twod Point2S]))
+;;-------------------------------------------------------------
 (set! *unchecked-math* :warn-on-boxed)
 ;;-------------------------------------------------------------
 

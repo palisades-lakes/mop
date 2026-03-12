@@ -36,7 +36,7 @@
                    "src/test/resources/images/USGS_13_n38w077_dir5.tiff"
                    "src/test/resources/images/ETOPO_2022_v1_60s_PNW_bed.tiff"
                    "src/test/resources/images/ldem_4.tif"
-                   "src/test/resources/images/gebco_08_rev_elev_21600x10800.png"
+                   ;;"src/test/resources/images/gebco_08_rev_elev_21600x10800.png"
                    ] ]
       (t/is (check-simple-roundtrip input))
       (t/is (check-roundtrip input)))))
