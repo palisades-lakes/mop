@@ -1,6 +1,6 @@
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
-;;----------------------------------------------------------------
+;;---------------------------------------------------------------------
 (ns mop.geom.s2
 
   {:doc "Geometry utilities for the 2-dimensional sphere, S_2.
@@ -11,7 +11,7 @@
   <code>Point2S</code>, a possible performance hit."
 
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-02-14"}
+   :version "2026-03-14"}
 
   (:require
    [mop.commons.debug :as debug]
@@ -47,6 +47,13 @@
 (defn ^Point2S u2-to-s2 [^Point2U uv] (.toPoint2S uv))
 
 (defn ^Point2U s2-to-u2 [^Point2S uv] (Point2U/of uv))
+
+(defn ^Vector2D s2-to-ll [^Point2S ap]
+  "Convert (azimuth,polar) angles in radians to (lon,lat) in ([-180,180),[-90,90))"
+  (let [azimuth (Math/toDegrees (.getAzimuth ap))
+        lon (if (<= 180 azimuth) (- azimuth 360) azimuth)
+        lat (- 90 (Math/toDegrees (.getPolar ap)))]
+    (Vector2D/of lon lat)))
 
 (defn ^Vector3D u2-to-r3 [^Point2U uv]
   (s2-to-r3 (u2-to-s2 uv)))
