@@ -18,7 +18,7 @@ import org.apache.commons.geometry.spherical.twod.Point2S;
  * Immutable.
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2026-02-27
+ * @version 2026-03-16
  */
 
 @SuppressWarnings("PatternVariableCanBeUsed")

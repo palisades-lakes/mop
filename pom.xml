@@ -51,7 +51,12 @@
           </execution>
         </executions>
         <configuration>
-          <vmargs>${clojure.vmargs}</vmargs>
+          <!--
+          ought to be allow-native-access=ALL_UNNAMED or some module name
+          but 'ALL_UNNAMED' warns it's an unknown module,
+          and all the other module names I can think of generate more warnings
+          -->
+          <vmargs>--illegal-native-access=allow ${clojure.vmargs}</vmargs>
           <clojureOptions>${clojure.options}</clojureOptions>
           <namespaces>
             <namespace>!mop.test.*</namespace>
@@ -70,7 +75,10 @@
         <configuration>
           <source>${java-version}</source>
           <target>${java-version}</target>
-          <compilerArgs>--enable-preview</compilerArgs>
+          <compilerArgs>
+            <arg>--enable-preview</arg>
+            <!--            <arg>&#45;&#45;enable-native-access=ALL_UNAMED</arg>-->
+          </compilerArgs>
         </configuration>
       </plugin>
     </plugins>

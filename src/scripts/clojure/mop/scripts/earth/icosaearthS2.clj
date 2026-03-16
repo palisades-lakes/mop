@@ -1,12 +1,12 @@
 (set! *warn-on-reflection* true)
 ;;----------------------------------------------------------------
-;; mvn install & clj src\scripts\clojure\mop\scripts\earth\icosaearth.clj
+;; mvn install & clj src\scripts\clojure\mop\scripts\earth\icosaearthS2.clj
 ;;----------------------------------------------------------------
-(ns mop.scripts.earth.icosaearth
+(ns mop.scripts.earth.icosaearthS2
   {:doc "Mesh Viewer demo using lwjgl and glfw.
   Started with https://clojurecivitas.github.io/opengl_visualization/main.html"
    :author "palisades dot lakes at gmail dot com"
-   :version "2026-03-10"}
+   :version "2026-03-16"}
 
   (:require
    [mop.cmplx.complex :as cmplx]
@@ -26,14 +26,14 @@
 (let [radius 6371.0
       ^Mesh icosahedron
       ((comp
-        ;cmplx/midpoint-subdivide-4
+        cmplx/midpoint-subdivide-4
         cmplx/midpoint-subdivide-4
         cmplx/midpoint-subdivide-4
         cmplx/midpoint-subdivide-4
         )
-       (icosahedron/u2-cut-icosahedron))
-      u2 (.embedding icosahedron)
-      s2 (update-vals u2 s2/u2-to-s2)
+       (icosahedron/s2-cut-icosahedron))
+      s2 (.embedding icosahedron)
+      u2 (update-vals s2 s2/s2-to-u2)
       txt (update-vals u2 s2/u2-to-txt)
       xyz (update-vals s2 (fn [^Point2S p] (rn/multiply (s2/s2-to-r3 p) radius)))
       rgba (update-vals s2 s2/s2-to-rgba)

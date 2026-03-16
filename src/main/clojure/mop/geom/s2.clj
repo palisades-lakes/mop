@@ -55,6 +55,17 @@
         lat (- 90 (Math/toDegrees (.getPolar ap)))]
     (Vector2D/of lon lat)))
 
+(defn ^Vector2D u2-to-ll [^Point2U ap]
+  "Convert unwrapped (azimuth,polar) angles in radians to (lon,lat) in ([-180,180),[-90,90))"
+  (let [azimuth (Math/toDegrees (.getU ap))
+        lon (if (<= 180 azimuth) (- azimuth 360) azimuth)
+        lat (- 90 (Math/toDegrees (.getV ap)))]
+    (Vector2D/of lon lat)))
+
+(defmulti ^Vector2D to-ll class)
+(defmethod to-ll Point2S [^Point2S p] (s2-to-ll p))
+(defmethod to-ll Point2U [^Point2U p] (u2-to-ll p))
+
 (defn ^Vector3D u2-to-r3 [^Point2U uv]
   (s2-to-r3 (u2-to-s2 uv)))
 
