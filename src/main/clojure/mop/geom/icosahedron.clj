@@ -128,7 +128,9 @@
 ;; TODO: automate the cut. Key question: what to do when it's not spherical?
 ;; TODO: check if this is a regular icosahedron
 
-(let [a0 0.0;; (* Math/PI -0.1)
+
+
+(let [a0 (- -0.1 Math/PI) ;;0.0;; (* Math/PI -0.1)
       da (double (* Math/PI 0.2))
       p1 (double (/ Math/PI 3.0))
       p2 (double (* 2 p1))]
