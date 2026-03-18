@@ -1,6 +1,6 @@
 package mop.java.jfx;
 
-// mvn install & jfx mop.java.jfx.IcosahedronS2
+// mvn -q install & jfx mop.java.jfx.IcosahedronS2
 
 import clojure.java.api.Clojure;
 import clojure.lang.IFn;
@@ -9,7 +9,6 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
 import javafx.scene.Group;
 import javafx.scene.Scene;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
@@ -25,6 +24,14 @@ import org.locationtech.jts.geom.GeometryCollection;
 import java.util.List;
 
 //---------------------------------------------------------------------
+/**
+ * Experiment with icosahedron and map display via jfx.
+ * <p>
+ *
+ * @author palisades dot lakes at gmail dot com
+ * @version 2026-03-18
+ */
+
 @SuppressWarnings("unchecked")
 public final class IcosahedronS2 extends Application {
 
@@ -89,7 +96,9 @@ public final class IcosahedronS2 extends Application {
       readJTSGeometries("data/natural-earth/ne_110m_land.shp");
     final Color fill = Color.web("#ffffff00");
     final Color stroke = Color.web("#a6611aFF");
-    return jfxNode(polygons, fill, stroke);
+    final Group group = jfxNode(polygons, fill, stroke);
+    System.out.println("\nland:\n" + group.getBoundsInLocal());
+    return group;
   }
 
   //-------------------------------------------------------------------
@@ -105,15 +114,15 @@ public final class IcosahedronS2 extends Application {
     final List<TwoSimplex> faces = mesh.cmplx().faces();
     final IFn embedding = mesh.embedding();
     for (final TwoSimplex face : faces) {
-      System.out.println(face);
       final Point2U u0 = (Point2U) embedding.invoke(face.z0());
       final Point2U u1 = (Point2U) embedding.invoke(face.z1());
       final Point2U u2 = (Point2U) embedding.invoke(face.z2());
-      System.out.println("u:" + u0 + ", " + u1 + ", " + u2);
       final Vector2D p0 = toLonLat(u0);
       final Vector2D p1 = toLonLat(u1);
       final Vector2D p2 = toLonLat(u2);
-      System.out.println("p:" + p0 + ", " + p1 + ", " + p2);
+      //System.out.println(face);
+      //System.out.println("u:" + u0 + ", " + u1 + ", " + u2);
+      //System.out.println("p:" + p0 + ", " + p1 + ", " + p2);
       final Polygon triangle =
         new Polygon(p0.getX(), p0.getY(),
                     p1.getX(), p1.getY(),
@@ -123,36 +132,29 @@ public final class IcosahedronS2 extends Application {
       // strokeWidth 0.0 doesn't seem to work.
       // may need to invert scaling transform to get more-or-less
       // constant width on screen
-      triangle.setStrokeWidth(0.2);
+      triangle.setStrokeWidth(0.3);
       triangle.setStrokeType(StrokeType.CENTERED);
       if (0.0 <= area) {
         triangle.setFill(positiveFill);
-        triangle.setStroke(positiveStroke);
-      }
+        triangle.setStroke(positiveStroke); }
       else {
         triangle.setFill(negativeFill);
-        triangle.setStroke(negativeStroke);
-      }
-      group.getChildren().add(triangle);
-    }
-    return group;
-  }
+        triangle.setStroke(negativeStroke); }
+      group.getChildren().add(triangle); }
+    System.out.println("\nicosahedron:\n" + group.getBoundsInLocal());
+    return group; }
 
-  private static final Group makeGroup (final double w,
-                                        final double h) {
+  private static final Group makeGroup () {
     final Group land = land();
     final Group icosahedron = icosahedron();
-    final Group group = new Group(land, icosahedron);
-
-    group.setAutoSizeChildren(true);
-    final ObservableList<Transform> transforms = group.getTransforms();
+    //final Group group = new Group(land, icosahedron);
+    //final Group group = icosahedron;
+    final Group group = land;
     final Bounds bounds = group.getBoundsInLocal();
-    final double sx = w / bounds.getWidth();
-    final double sy = h / bounds.getHeight();
-    System.out.println(sx + ", " + sy);
-    final Transform yFlip = Transform.scale(sx, -sy, 0, 0);
-    System.out.println(yFlip);
-    transforms.add(yFlip);
+    System.out.println("\nlocal bounds:\n" + bounds);
+    System.out.println("\nlayout bounds:\n" + group.getLayoutBounds());
+    System.out.println("\nparent bounds:\n" + group.getBoundsInParent());
+
     return group;
   }
   //-------------------------------------------------------------------
@@ -161,12 +163,23 @@ public final class IcosahedronS2 extends Application {
 
     final double w = (2 * 360 * 4) / 3.0;
     final double h = (2 * 180 * 4) / 3.0;
-    final Group group = makeGroup(w, h);
+    final Group group = makeGroup();
+    final Bounds bounds = group.getBoundsInLocal();
+    final double sx = w / bounds.getWidth();
+    final double sy = h / bounds.getHeight();
+    System.out.println(sx + ", " + sy);
+    final Transform yFlip = Transform.scale(sx, -sy, 0, 0);
+    //final Transform yFlip = Transform.scale(1, -1, 0, 0);
+    System.out.println(yFlip);
+    final ObservableList<Transform> transforms = group.getTransforms();
+    transforms.add(yFlip);
+//    return new Scene(group, w, h);
+
     final StackPane stackPane = new StackPane(group);
-    final ScrollPane scrollPane = new ScrollPane(stackPane);
-    scrollPane.setFitToWidth(true);
-    scrollPane.setFitToHeight(true);
-    return new Scene(scrollPane, w, h);
+    return new Scene(stackPane, w, h);
+//    System.out.println("\nlocal bounds:\n" + bounds);
+//    System.out.println("\nlayout bounds:\n" + group.getLayoutBounds());
+//    System.out.println("\nparent bounds:\n" + group.getBoundsInParent());
   }
 
   //-------------------------------------------------------------------

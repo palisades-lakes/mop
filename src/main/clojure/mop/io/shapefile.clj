@@ -7,13 +7,13 @@
    <br>
    Convert to JFX shapes, mop meshes?"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-03-76"}
+   :version "2026-03-18"}
   (:require
    [clojure.java.io :as io])
   (:import
    [javafx.scene Group]
    [javafx.scene.paint Color]
-   [javafx.scene.shape StrokeType]
+   [javafx.scene.shape Shape StrokeType]
    [org.geotools.api.data
     DataStore DataStoreFinder]
    [org.geotools.api.feature.simple
@@ -26,20 +26,52 @@
 (defmulti ^javafx.scene.Node jfx-node
           (fn [g _ _] (class g)))
 
-(defmethod jfx-node Polygon [^Polygon jts ^Color fill ^Color stroke]
-  (let [coords (.getCoordinates jts)
-        n (alength coords)
+#_(defmethod jfx-node Polygon [^Polygon jts ^Color fill ^Color stroke]
+    (let [coords (.getCoordinates jts)
+          n (alength coords)
+          ^doubles xys (make-array Double/TYPE (* 2 n))]
+      (dotimes [i n]
+        (let [^Coordinate coord (aget coords i)]
+          (aset xys (* 2 i) (.getX coord))
+          (aset xys (inc (* 2 i)) (.getY coord))))
+      (let [polygon (javafx.scene.shape.Polygon. xys)]
+        (.setFill polygon fill)
+        (.setStroke polygon stroke)
+        (.setStrokeWidth polygon 0.3)
+        (.setStrokeType polygon StrokeType/INSIDE)
+        polygon)))
+
+(defn- ^doubles jts-coords-to-doubles [^"[Lorg.locationtech.jts.geom.Coordinate;" coords]
+  (let [n (alength coords)
         ^doubles xys (make-array Double/TYPE (* 2 n))]
     (dotimes [i n]
       (let [^Coordinate coord (aget coords i)]
         (aset xys (* 2 i) (.getX coord))
         (aset xys (inc (* 2 i)) (.getY coord))))
-    (let [polygon (javafx.scene.shape.Polygon. xys)]
-      (.setFill polygon fill)
-      (.setStroke polygon stroke)
-      (.setStrokeWidth polygon 0.25)
-      (.setStrokeType polygon StrokeType/OUTSIDE)
-      polygon)))
+    xys))
+
+(defmethod jfx-node Polygon [^Polygon jts ^Color fill ^Color stroke]
+  (let [exterior (javafx.scene.shape.Polygon.
+                  (jts-coords-to-doubles
+                   (.getCoordinates
+                    (.getExteriorRing jts))))
+        ;; TODO: assuming all interior rings are holes!
+        n-holes (.getNumInteriorRing jts)
+        ^Shape polygon (loop [^Shape polygon exterior
+                             i 0]
+                         (if (>= i n-holes)
+                          polygon
+                          (let [^Shape hole (javafx.scene.shape.Polygon.
+                                            (jts-coords-to-doubles
+                                             (.getCoordinates
+                                              (.getInteriorRingN jts i))))]
+                            (println "subtract " i)
+                            (recur (Shape/subtract polygon hole) (inc i)))))]
+    (.setFill polygon fill)
+    (.setStroke polygon stroke)
+    (.setStrokeWidth polygon 0.3)
+    (.setStrokeType polygon StrokeType/INSIDE)
+    polygon))
 
 (defmethod jfx-node MultiPolygon [^MultiPolygon jts ^Color fill ^Color stroke]
   (let [group (Group.)
