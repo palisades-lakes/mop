@@ -13,6 +13,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
+import javafx.scene.shape.StrokeType;
 import javafx.scene.transform.Transform;
 import javafx.stage.Stage;
 import mop.java.cmplx.TwoSimplex;
@@ -119,6 +120,11 @@ public final class IcosahedronS2 extends Application {
                     p2.getX(), p2.getY());
       final double area = signedArea(p0, p1, p2);
 //      System.out.println(area);
+      // strokeWidth 0.0 doesn't seem to work.
+      // may need to invert scaling transform to get more-or-less
+      // constant width on screen
+      triangle.setStrokeWidth(0.2);
+      triangle.setStrokeType(StrokeType.CENTERED);
       if (0.0 <= area) {
         triangle.setFill(positiveFill);
         triangle.setStroke(positiveStroke);

@@ -7,12 +7,13 @@
    <br>
    Convert to JFX shapes, mop meshes?"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-03-16"}
+   :version "2026-03-76"}
   (:require
    [clojure.java.io :as io])
   (:import
    [javafx.scene Group]
    [javafx.scene.paint Color]
+   [javafx.scene.shape StrokeType]
    [org.geotools.api.data
     DataStore DataStoreFinder]
    [org.geotools.api.feature.simple
@@ -36,6 +37,8 @@
     (let [polygon (javafx.scene.shape.Polygon. xys)]
       (.setFill polygon fill)
       (.setStroke polygon stroke)
+      (.setStrokeWidth polygon 0.25)
+      (.setStrokeType polygon StrokeType/OUTSIDE)
       polygon)))
 
 (defmethod jfx-node MultiPolygon [^MultiPolygon jts ^Color fill ^Color stroke]
