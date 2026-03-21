@@ -58,17 +58,17 @@
         ;; TODO: Holes in holes? eg islands in lakes?
         n-holes (.getNumInteriorRing jts)
         ^Shape polygon (loop [^Shape polygon exterior
-                             i 0]
+                              i 0]
                          (if (>= i n-holes)
-                          polygon
-                          (let [^Shape hole (javafx.scene.shape.Polygon.
-                                            (jts-coords-to-doubles
-                                             (.getCoordinates
-                                              (.getInteriorRingN jts i))))]
-                            (recur (Shape/subtract polygon hole) (inc i)))))]
+                           polygon
+                           (let [^Shape hole (javafx.scene.shape.Polygon.
+                                              (jts-coords-to-doubles
+                                               (.getCoordinates
+                                                (.getInteriorRingN jts i))))]
+                             (recur (Shape/subtract polygon hole) (inc i)))))]
     (.setFill polygon fill)
     (.setStroke polygon stroke)
-    (.setStrokeWidth polygon 0.3)
+    (.setStrokeWidth polygon 0.4)
     (.setStrokeType polygon StrokeType/INSIDE)
     polygon))
 

@@ -9,6 +9,7 @@ import javafx.application.Application;
 import javafx.geometry.Bounds;
 import javafx.scene.Group;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
@@ -36,7 +37,7 @@ import java.util.List;
  * @version 2026-03-18
  */
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked","unused"})
 public final class IcosahedronS2 extends Application {
 
   // TODO: not sure how much of this is necessary
@@ -149,7 +150,7 @@ public final class IcosahedronS2 extends Application {
       // constant width on screen
       // problem seems to be related to jfx forcing windows dpi scaling
       // on its own coordinates.
-      triangle.setStrokeWidth(0.3);
+      triangle.setStrokeWidth(0.1);
       triangle.setStrokeType(StrokeType.CENTERED);
       if (0.0 <= area) {
         triangle.setFill(positiveFill);
@@ -180,17 +181,25 @@ public final class IcosahedronS2 extends Application {
 
   //-------------------------------------------------------------------
 
-  private static final Scene makeScene (final double w,
-                                        final double h) {
-    final Pane parent = makePane();
-    final Node child = parent.getChildren().getFirst();
-    final Scene scene = new Scene(parent, w, h);
+  private static final void rescale (final Scene scene) {
+    final Parent parent = scene.getRoot();
+    final Node child = parent.getChildrenUnmodifiable().getFirst();
     final Bounds childBounds = child.getLayoutBounds();
     final Bounds parentBounds = parent.getLayoutBounds();
     final double s = Math.min((parentBounds.getWidth())/childBounds.getWidth(),
                               (parentBounds.getHeight())/childBounds.getHeight());
     final Transform scale = new Scale(s, -s, childBounds.getCenterX(), childBounds.getCenterY());
-    child.getTransforms().addAll(scale);//,preTranslate);
+    child.getTransforms().setAll(scale);//,preTranslate);
+    parent.layout();
+  }
+
+  //-------------------------------------------------------------------
+
+  private static final Scene makeScene (final double w,
+                                        final double h) {
+    final Pane parent = makePane();
+    final Scene scene = new Scene(parent, w, h);
+    rescale(scene);
     return scene;
   }
 
@@ -198,11 +207,32 @@ public final class IcosahedronS2 extends Application {
 
   @Override
   public final void start (final Stage stage) {
+    System.out.println(stage.getOwner());
+    stage.setMinWidth(360);
+    stage.setMinHeight(180);
     final Scene scene = makeScene(1280, 768);
     stage.setScene(scene);
+    stage.widthProperty().addListener(
+      (observable, oldValue, newValue)
+        -> rescale(scene));
+    stage.heightProperty().addListener(
+      (observable, oldValue, newValue)
+        -> rescale(scene));
+    stage.sizeToScene();
     stage.setTitle("cut icosahedron (subdivided)");
     stage.show();
-    }
+    System.out.println(stage.getOwner());
+    System.out.println(
+      "render: " + stage.getRenderScaleX() + " " + stage.getRenderScaleY());
+    System.out.println(
+      "Output: " + stage.getOutputScaleX() + " " + stage.getOutputScaleY());
+//    stage.setRenderScaleX(1.0);
+//    stage.setRenderScaleY(1.0);
+//    System.out.println("render: " + stage.getRenderScaleX() + " " +
+//    stage.getRenderScaleY());
+//    System.out.println("Output: " + stage.getOutputScaleX() + " " +
+//    stage.getOutputScaleY());
+  }
 
   //-------------------------------------------------------------------
   // main
