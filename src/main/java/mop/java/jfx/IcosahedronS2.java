@@ -1,18 +1,21 @@
 package mop.java.jfx;
 
-// mvn -q install & jfx mop.java.jfx.IcosahedronS2
+// mvn clean install
+// mvn -q -DskipTests -Dclojure-maven-plugin.clojure.test.skip=true -Dmaven.test.skip=true install & jfx mop.java.jfx.IcosahedronS2
 
 import clojure.java.api.Clojure;
 import clojure.lang.IFn;
 import javafx.application.Application;
-import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
 import javafx.scene.Group;
+import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
 import javafx.scene.shape.StrokeType;
+import javafx.scene.transform.Scale;
 import javafx.scene.transform.Transform;
 import javafx.stage.Stage;
 import mop.java.cmplx.TwoSimplex;
@@ -24,6 +27,7 @@ import org.locationtech.jts.geom.GeometryCollection;
 import java.util.List;
 
 //---------------------------------------------------------------------
+
 /**
  * Experiment with icosahedron and map display via jfx.
  * <p>
@@ -42,14 +46,17 @@ public final class IcosahedronS2 extends Application {
     Clojure.var("clojure.core", "require");
 
   static {
+    require.invoke(Clojure.read("mop.cmplx.complex"));
     require.invoke(Clojure.read("mop.geom.icosahedron"));
     require.invoke(Clojure.read("mop.geom.rn"));
     require.invoke(Clojure.read("mop.geom.s2"));
     require.invoke(Clojure.read("mop.io.shapefile"));
   }
 
-  private static final IFn icosahedronS2 =
-    Clojure.var("mop.geom.icosahedron", "s2-icosahedron");
+  private static final IFn subdivide4Var =
+    Clojure.var("mop.cmplx.complex", "midpoint-subdivide-4");
+//  private static final IFn icosahedronS2 =
+//    Clojure.var("mop.geom.icosahedron", "s2-icosahedron");
   private static final IFn icosahedronU2Cut =
     Clojure.var("mop.geom.icosahedron", "u2-cut-icosahedron");
   private static final IFn toLonLatVar =
@@ -65,12 +72,17 @@ public final class IcosahedronS2 extends Application {
 //    return (TriangleMesh) icosahedronS2.invoke();
 //  }
 
+  private static final TriangleMesh subdivide4 (final TriangleMesh mesh) {
+    return (TriangleMesh) subdivide4Var.invoke(mesh);
+  }
+
   private static final TriangleMesh u2CutIcosahedron () {
     return (TriangleMesh) icosahedronU2Cut.invoke();
   }
 
   private static final Vector2D toLonLat (final Object p) {
-    return (Vector2D) toLonLatVar.invoke(p); }
+    return (Vector2D) toLonLatVar.invoke(p);
+  }
 
   private static final double signedArea (final Vector2D p0,
                                           final Vector2D p1,
@@ -94,11 +106,9 @@ public final class IcosahedronS2 extends Application {
   private static final Group land () {
     final GeometryCollection polygons =
       readJTSGeometries("data/natural-earth/ne_110m_land.shp");
-    final Color fill = Color.web("#ffffff00");
+    final Color fill = Color.web("#22990044");
     final Color stroke = Color.web("#a6611aFF");
-    final Group group = jfxNode(polygons, fill, stroke);
-    System.out.println("\nland:\n" + group.getBoundsInLocal());
-    return group;
+    return jfxNode(polygons, fill, stroke);
   }
 
   //-------------------------------------------------------------------
@@ -110,7 +120,16 @@ public final class IcosahedronS2 extends Application {
     final Color positiveFill = Color.web("#ffffff", 0.0);
     final Color negativeFill = Color.web("#fddbc7", 0.5);
     final Color negativeStroke = Color.web("#b2182b", 1);
-    final TriangleMesh mesh = u2CutIcosahedron();
+    final TriangleMesh mesh =
+     // subdivide4(
+        subdivide4(
+          subdivide4(
+            subdivide4(
+              u2CutIcosahedron()
+                      )
+                    )
+                  //)
+    );
     final List<TwoSimplex> faces = mesh.cmplx().faces();
     final IFn embedding = mesh.embedding();
     for (final TwoSimplex face : faces) {
@@ -120,83 +139,75 @@ public final class IcosahedronS2 extends Application {
       final Vector2D p0 = toLonLat(u0);
       final Vector2D p1 = toLonLat(u1);
       final Vector2D p2 = toLonLat(u2);
-      //System.out.println(face);
-      //System.out.println("u:" + u0 + ", " + u1 + ", " + u2);
-      //System.out.println("p:" + p0 + ", " + p1 + ", " + p2);
       final Polygon triangle =
         new Polygon(p0.getX(), p0.getY(),
                     p1.getX(), p1.getY(),
                     p2.getX(), p2.getY());
       final double area = signedArea(p0, p1, p2);
-//      System.out.println(area);
-      // strokeWidth 0.0 doesn't seem to work.
+//    // strokeWidth 0.0 doesn't seem to work.
       // may need to invert scaling transform to get more-or-less
       // constant width on screen
+      // problem seems to be related to jfx forcing windows dpi scaling
+      // on its own coordinates.
       triangle.setStrokeWidth(0.3);
       triangle.setStrokeType(StrokeType.CENTERED);
       if (0.0 <= area) {
         triangle.setFill(positiveFill);
-        triangle.setStroke(positiveStroke); }
+        triangle.setStroke(positiveStroke);
+      }
       else {
         triangle.setFill(negativeFill);
-        triangle.setStroke(negativeStroke); }
-      group.getChildren().add(triangle); }
-    System.out.println("\nicosahedron:\n" + group.getBoundsInLocal());
-    return group; }
+        triangle.setStroke(negativeStroke);
+      }
+      group.getChildren().add(triangle);
+    }
+    return group;
+  }
 
   private static final Group makeGroup () {
     final Group land = land();
     final Group icosahedron = icosahedron();
-    //final Group group = new Group(land, icosahedron);
-    //final Group group = icosahedron;
-    final Group group = land;
-    final Bounds bounds = group.getBoundsInLocal();
-    System.out.println("\nlocal bounds:\n" + bounds);
-    System.out.println("\nlayout bounds:\n" + group.getLayoutBounds());
-    System.out.println("\nparent bounds:\n" + group.getBoundsInParent());
-
-    return group;
+    return new Group(icosahedron, land);
   }
+
   //-------------------------------------------------------------------
 
-  private static final Scene makeScene () {
-
-    final double w = (2 * 360 * 4) / 3.0;
-    final double h = (2 * 180 * 4) / 3.0;
+  private static final Pane makePane () {
     final Group group = makeGroup();
-    final Bounds bounds = group.getBoundsInLocal();
-    final double sx = w / bounds.getWidth();
-    final double sy = h / bounds.getHeight();
-    System.out.println(sx + ", " + sy);
-    final Transform yFlip = Transform.scale(sx, -sy, 0, 0);
-    //final Transform yFlip = Transform.scale(1, -1, 0, 0);
-    System.out.println(yFlip);
-    final ObservableList<Transform> transforms = group.getTransforms();
-    transforms.add(yFlip);
-//    return new Scene(group, w, h);
+    //return new Pane(group);
+    return new StackPane(group);
+  }
 
-    final StackPane stackPane = new StackPane(group);
-    return new Scene(stackPane, w, h);
-//    System.out.println("\nlocal bounds:\n" + bounds);
-//    System.out.println("\nlayout bounds:\n" + group.getLayoutBounds());
-//    System.out.println("\nparent bounds:\n" + group.getBoundsInParent());
+  //-------------------------------------------------------------------
+
+  private static final Scene makeScene (final double w,
+                                        final double h) {
+    final Pane parent = makePane();
+    final Node child = parent.getChildren().getFirst();
+    final Scene scene = new Scene(parent, w, h);
+    final Bounds childBounds = child.getLayoutBounds();
+    final Bounds parentBounds = parent.getLayoutBounds();
+    final double s = Math.min((parentBounds.getWidth())/childBounds.getWidth(),
+                              (parentBounds.getHeight())/childBounds.getHeight());
+    final Transform scale = new Scale(s, -s, childBounds.getCenterX(), childBounds.getCenterY());
+    child.getTransforms().addAll(scale);//,preTranslate);
+    return scene;
   }
 
   //-------------------------------------------------------------------
 
   @Override
   public final void start (final Stage stage) {
-    final Scene scene = makeScene();
-//    stage.setMinWidth(scene.getWidth());
-//    stage.setMinHeight(scene.getHeight());
+    final Scene scene = makeScene(1280, 768);
     stage.setScene(scene);
-    stage.setResizable(true);
+    stage.setTitle("cut icosahedron (subdivided)");
     stage.show();
-  }
+    }
 
   //-------------------------------------------------------------------
   // main
   //-------------------------------------------------------------------
+
   @SuppressWarnings("unused")
   public final static void main (final String[] args) { launch(); }
 

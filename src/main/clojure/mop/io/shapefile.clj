@@ -53,9 +53,9 @@
 (defmethod jfx-node Polygon [^Polygon jts ^Color fill ^Color stroke]
   (let [exterior (javafx.scene.shape.Polygon.
                   (jts-coords-to-doubles
-                   (.getCoordinates
-                    (.getExteriorRing jts))))
-        ;; TODO: assuming all interior rings are holes!
+                   (.getCoordinates (.getExteriorRing jts))))
+        ;; TODO: assuming all interior rings are holes?
+        ;; TODO: Holes in holes? eg islands in lakes?
         n-holes (.getNumInteriorRing jts)
         ^Shape polygon (loop [^Shape polygon exterior
                              i 0]
@@ -65,7 +65,6 @@
                                             (jts-coords-to-doubles
                                              (.getCoordinates
                                               (.getInteriorRingN jts i))))]
-                            (println "subtract " i)
                             (recur (Shape/subtract polygon hole) (inc i)))))]
     (.setFill polygon fill)
     (.setStroke polygon stroke)
