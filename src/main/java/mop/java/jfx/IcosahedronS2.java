@@ -34,7 +34,7 @@ import java.util.List;
  * <p>
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2026-03-18
+ * @version 2026-03-22
  */
 
 @SuppressWarnings({"unchecked","unused"})
@@ -207,21 +207,19 @@ public final class IcosahedronS2 extends Application {
 
   @Override
   public final void start (final Stage stage) {
-    System.out.println(stage.getOwner());
     stage.setMinWidth(360);
     stage.setMinHeight(180);
     final Scene scene = makeScene(1280, 768);
     stage.setScene(scene);
-    stage.widthProperty().addListener(
-      (observable, oldValue, newValue)
-        -> rescale(scene));
-    stage.heightProperty().addListener(
-      (observable, oldValue, newValue)
-        -> rescale(scene));
+//    stage.widthProperty().addListener(
+//      (observable, oldValue, newValue)
+//        -> rescale(scene));
+//    stage.heightProperty().addListener(
+//      (observable, oldValue, newValue)
+//        -> rescale(scene));
     stage.sizeToScene();
     stage.setTitle("cut icosahedron (subdivided)");
     stage.show();
-    System.out.println(stage.getOwner());
     System.out.println(
       "render: " + stage.getRenderScaleX() + " " + stage.getRenderScaleY());
     System.out.println(
@@ -238,8 +236,11 @@ public final class IcosahedronS2 extends Application {
   // main
   //-------------------------------------------------------------------
 
-  @SuppressWarnings("unused")
-  public final static void main (final String[] args) { launch(); }
+  public final static void run (final String[] args) {
+    System.out.println(System.getProperty("glass.win.uiScale"));
+    System.setProperty("glass.win.uiScale", "1");
+    System.out.println(System.getProperty("glass.win.uiScale"));
+    launch(args); }
 
 }
 //---------------------------------------------------------------------
