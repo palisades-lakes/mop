@@ -10,6 +10,8 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Shape;
+import javafx.scene.transform.NonInvertibleTransformException;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Transform;
 import javafx.scene.transform.Translate;
@@ -154,6 +156,21 @@ public final class JfxUtil {
 
   //-------------------------------------------------------------------
 
+  public static final double pixelStrokeWidth = 1;
+
+  private static final void setWorldStrokeWidth (final Node node,
+                                                 final double w) {
+    if (node instanceof Shape) {
+      final Shape shape = (Shape) node;
+      shape.setStrokeWidth(w);
+    }
+    if (node instanceof Parent) {
+      final Parent parent = (Parent) node;
+      parent.getChildrenUnmodifiable().forEach(
+        (child) -> setWorldStrokeWidth(child, w));
+    }
+  }
+
   public static final void rescale (final Scene scene) {
     final Parent root = scene.getRoot();
     final Bounds rootBounds = root.getBoundsInLocal();
@@ -162,11 +179,13 @@ public final class JfxUtil {
     final double sw = scene.getWidth();
     final double sh = scene.getHeight();
     final double s = Math.min(sw / rw, sh / rh);
+    System.out.println("rescaling scene: " + s);
+    setWorldStrokeWidth(root,1.0/s);
     final Transform preTranslate =
       new Translate(-rootBounds.getMinX(), -rootBounds.getMaxY());
     final Transform scale = new Scale(s, -s);
     root.getTransforms().setAll(scale, preTranslate);
-  }
+    }
 
   //-------------------------------------------------------------------
   // disable construction
@@ -174,7 +193,8 @@ public final class JfxUtil {
 
   private JfxUtil () {
     throw new UnsupportedOperationException(
-      "Can't instantiate " + getClass()); }
+      "Can't instantiate " + getClass());
+  }
 
 //---------------------------------------------------------------------
 }

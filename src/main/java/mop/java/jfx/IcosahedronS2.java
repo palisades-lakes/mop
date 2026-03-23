@@ -34,6 +34,7 @@ import java.util.List;
 @SuppressWarnings({ "unchecked", "unused" })
 public final class IcosahedronS2 extends Application {
 
+
   //-------------------------------------------------------------------
 
   private static final Group land () {
@@ -87,7 +88,7 @@ public final class IcosahedronS2 extends Application {
       // constant width on screen
       // problem seems to be related to jfx forcing windows dpi scaling
       // on its own coordinates.
-      triangle.setStrokeWidth(0.1);
+      triangle.setStrokeWidth(1);
       triangle.setStrokeType(StrokeType.CENTERED);
       if (0.0 <= area) {
         triangle.setFill(positiveFill);

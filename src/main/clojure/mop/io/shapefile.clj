@@ -69,7 +69,7 @@
     (.setId polygon (.getUserData jts))
     (.setFill polygon fill)
     (.setStroke polygon stroke)
-    (.setStrokeWidth polygon 0.4)
+    (.setStrokeWidth polygon 1)
     (.setStrokeType polygon StrokeType/INSIDE)
     polygon))
 
