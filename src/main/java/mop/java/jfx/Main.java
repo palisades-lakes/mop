@@ -9,7 +9,7 @@ package mop.java.jfx;
  * Set system properties before JFX startup.
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2026-03-22
+ * @version 2026-03-23
  */
 
 @SuppressWarnings({"unchecked","unused"})
@@ -20,9 +20,9 @@ public final class Main  {
   //-------------------------------------------------------------------
 
   public final static void main (final String[] args) {
-    System.out.println(System.getProperty("glass.win.uiScale"));
+    //System.out.println(System.getProperty("glass.win.uiScale"));
     System.setProperty("glass.win.uiScale", "1");
-    System.out.println(System.getProperty("glass.win.uiScale"));
+    //System.out.println(System.getProperty("glass.win.uiScale"));
     IcosahedronS2.run(args); }
 
 }

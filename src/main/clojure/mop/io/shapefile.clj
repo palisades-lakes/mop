@@ -66,6 +66,7 @@
                                                (.getCoordinates
                                                 (.getInteriorRingN jts i))))]
                              (recur (Shape/subtract polygon hole) (inc i)))))]
+    (.setId polygon (.getUserData jts))
     (.setFill polygon fill)
     (.setStroke polygon stroke)
     (.setStrokeWidth polygon 0.4)
@@ -76,6 +77,7 @@
   (let [group (Group.)
         children (.getChildren group)
         n (.getNumGeometries jts)]
+    (.setId group (.getUserData jts))
     (dotimes [i n]
       (.add children (jfx-node (.getGeometryN jts i) fill stroke)))
     group))
@@ -90,12 +92,16 @@
         ^"[Lorg.locationtech.jts.geom.Polygon;" polygons (make-array Polygon n)]
     (dotimes [i n]
       (let [^SimpleFeature feature (aget features i)
-            ^MultiPolygon multipolygon (.getDefaultGeometry feature)]
-        ;; TODO: handle multiple polygons in each multipolygon
-        ;; TODO: preserve IDs
-        (assert (= 1 (.getNumGeometries multipolygon))
-                (str (.getID feature) " "
-                     (.getNumGeometries multipolygon)))
-        (aset polygons i (.getGeometryN multipolygon 0))))
+            ^String id (.getID feature)
+            ^MultiPolygon multipolygon (.getDefaultGeometry feature)
+            ;; TODO: handle multiple polygons in each multipolygon
+            ;; TODO: preserve IDs
+            _ (assert (= 1 (.getNumGeometries multipolygon))
+                      (str id " "
+                           (.getNumGeometries multipolygon)))
+            ^Polygon polygon (.getGeometryN multipolygon 0)]
+        (.setUserData polygon id)
+        (aset polygons i polygon)))
     ;; TODO: reuse GeometryFactory's
     (MultiPolygon. polygons (GeometryFactory.))))
+;;---------------------------------------------------------------------
