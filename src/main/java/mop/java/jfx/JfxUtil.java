@@ -3,12 +3,16 @@ package mop.java.jfx;
 import clojure.java.api.Clojure;
 import clojure.lang.IFn;
 import javafx.collections.ObservableList;
+import javafx.geometry.Bounds;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.paint.Color;
+import javafx.scene.transform.Scale;
+import javafx.scene.transform.Transform;
+import javafx.scene.transform.Translate;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import mop.java.geom.mesh.TriangleMesh;
@@ -90,6 +94,8 @@ public final class JfxUtil {
     return (GeometryCollection) readJTSGeometriesVar.invoke(path);
   }
 
+  //-------------------------------------------------------------------
+
   public static final void printBounds (final Node node) {
     System.out.println("\n" + node.getClass().getSimpleName()
                          + ": " + node.getId());
@@ -122,7 +128,9 @@ public final class JfxUtil {
     if (null != scene) { printBounds(scene); }
   }
 
-  public static double areaInch2 (final Screen screen) {
+  //-------------------------------------------------------------------
+
+  private static double areaInch2 (final Screen screen) {
     final double ipd = 1.0 / screen.getDpi();
     final Rectangle2D bounds = screen.getVisualBounds();
     // TODO: scale op for rectangle and other geometry objects
@@ -144,16 +152,32 @@ public final class JfxUtil {
     return largest;
   }
 
-//-------------------------------------------------------------------
-// disable construction
-//-------------------------------------------------------------------
+  //-------------------------------------------------------------------
+
+  public static final void rescale (final Scene scene) {
+    final Parent root = scene.getRoot();
+    final Bounds rootBounds = root.getBoundsInLocal();
+    final double rw = rootBounds.getWidth();
+    final double rh = rootBounds.getHeight();
+    final double sw = scene.getWidth();
+    final double sh = scene.getHeight();
+    final double s = Math.min(sw / rw, sh / rh);
+    final Transform preTranslate =
+      new Translate(-rootBounds.getMinX(), -rootBounds.getMaxY());
+    final Transform scale = new Scale(s, -s);
+    root.getTransforms().setAll(scale, preTranslate);
+  }
+
+  //-------------------------------------------------------------------
+  // disable construction
+  //-------------------------------------------------------------------
 
   private JfxUtil () {
     throw new UnsupportedOperationException(
-      "Can't instantiate " + getClass());
-  }
+      "Can't instantiate " + getClass()); }
 
 //---------------------------------------------------------------------
 }
+//---------------------------------------------------------------------
 
 

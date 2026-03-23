@@ -5,16 +5,13 @@ package mop.java.jfx;
 
 import clojure.lang.IFn;
 import javafx.application.Application;
-import javafx.geometry.Bounds;
+import javafx.beans.value.ChangeListener;
 import javafx.scene.Group;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
 import javafx.scene.shape.StrokeType;
-import javafx.scene.transform.Scale;
-import javafx.scene.transform.Transform;
-import javafx.scene.transform.Translate;
 import javafx.stage.Stage;
 import mop.java.cmplx.TwoSimplex;
 import mop.java.geom.Point2U;
@@ -115,30 +112,20 @@ public final class IcosahedronS2 extends Application {
     return world;
   }
 
-//-------------------------------------------------------------------
-
-  private static final void rescale (final Scene scene) {
-    final Parent root = scene.getRoot();
-    final Bounds rootBounds = root.getBoundsInLocal();
-    final double rw = rootBounds.getWidth();
-    final double rh = rootBounds.getHeight();
-    final double sw = scene.getWidth();
-    final double sh = scene.getHeight();
-    final double s = Math.min(sw / rw, sh / rh);
-    final Transform preTranslate =
-      new Translate(-rootBounds.getMinX(), -rootBounds.getMaxY());
-    final Transform scale = new Scale(s, -s);
-    root.getTransforms().setAll(scale, preTranslate);
-  }
-
-//-------------------------------------------------------------------
+  //-------------------------------------------------------------------
 
   private static final Scene makeScene (final double w,
                                         final double h) {
     final Parent root = makeWorld();
     final Scene scene = new Scene(root, w, h);
     scene.setUserData("cut icosahedronS2");
-    rescale(scene);
+    final ChangeListener rescaleListener =
+      (observableValue, o, t1)
+         -> JfxUtil.rescale(scene);
+//        -> Platform.runLater(() -> JfxUtil.rescale(scene));
+    scene.widthProperty().addListener(rescaleListener);
+    scene.heightProperty().addListener(rescaleListener);
+    JfxUtil.rescale(scene);
     return scene;
   }
 
