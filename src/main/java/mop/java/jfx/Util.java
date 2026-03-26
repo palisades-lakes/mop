@@ -9,9 +9,10 @@ import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Shape;
-import javafx.scene.transform.NonInvertibleTransformException;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Transform;
 import javafx.scene.transform.Translate;
@@ -26,11 +27,11 @@ import org.locationtech.jts.geom.GeometryCollection;
  * <p>
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2026-03-23
+ * @version 2026-03-25
  */
 
 @SuppressWarnings("unused")
-public final class JfxUtil {
+public final class Util {
 
   //-------------------------------------------------------------------
   // TODO: not sure how much of this is necessary
@@ -104,13 +105,13 @@ public final class JfxUtil {
     System.out.println("local:\n" + node.getBoundsInLocal());
     System.out.println("parent:\n" + node.getBoundsInParent());
     System.out.println("layout:\n" + node.getLayoutBounds());
+    System.out.println("toParent:\n" + node.getLocalToParentTransform());
+    System.out.println("toScene:\n" + node.getLocalToSceneTransform());
     // only go one level down from root
     if ((null == node.getParent()) && (node instanceof Parent)) {
       final Parent parent = (Parent) node;
       parent.getChildrenUnmodifiable()
-            .forEach(JfxUtil::printBounds);
-    }
-  }
+            .forEach(Util::printBounds); } }
 
   public static final void printBounds (final Scene scene) {
     System.out.println("\n" + scene.getClass().getSimpleName()
@@ -137,8 +138,7 @@ public final class JfxUtil {
     final Rectangle2D bounds = screen.getVisualBounds();
     // TODO: scale op for rectangle and other geometry objects
     // TODO: partial ordering by width and height
-    return ipd * bounds.getWidth() * ipd * bounds.getHeight();
-  }
+    return ipd * bounds.getWidth() * ipd * bounds.getHeight(); }
 
   public static final Screen chooseScreen () {
     final ObservableList<Screen> screens = Screen.getScreens();
@@ -146,13 +146,8 @@ public final class JfxUtil {
     double maxArea = areaInch2(largest);
     for (final Screen screen : screens) {
       final double area = areaInch2(screen);
-      if (area > maxArea) {
-        maxArea = area;
-        largest = screen;
-      }
-    }
-    return largest;
-  }
+      if (area > maxArea) { maxArea = area; largest = screen; } }
+    return largest; }
 
   //-------------------------------------------------------------------
 
@@ -160,41 +155,38 @@ public final class JfxUtil {
 
   private static final void setWorldStrokeWidth (final Node node,
                                                  final double w) {
-    if (node instanceof Shape) {
-      final Shape shape = (Shape) node;
-      shape.setStrokeWidth(w);
-    }
-    if (node instanceof Parent) {
-      final Parent parent = (Parent) node;
+    switch (node) {
+    case Shape shape -> shape.setStrokeWidth(w);
+    case Parent parent ->
       parent.getChildrenUnmodifiable().forEach(
         (child) -> setWorldStrokeWidth(child, w));
-    }
-  }
+     default -> {/* do nothing */} } }
 
-  public static final void rescale (final Scene scene) {
-    final Parent root = scene.getRoot();
-    final Bounds rootBounds = root.getBoundsInLocal();
+  public static final void rescale (final Parent parent) {
+    final ObservableList<Node> children = parent.getChildrenUnmodifiable();
+    assert 1 == children.size();
+    final Parent root = (Parent) children.getFirst();
+    final Bounds rootBounds = root.getLayoutBounds();
+    final Bounds parentBounds = parent.getLayoutBounds();
     final double rw = rootBounds.getWidth();
     final double rh = rootBounds.getHeight();
-    final double sw = scene.getWidth();
-    final double sh = scene.getHeight();
+    final double sw = parentBounds.getWidth();
+    final double sh = parentBounds.getHeight();
     final double s = Math.min(sw / rw, sh / rh);
-    System.out.println("rescaling scene: " + s);
     setWorldStrokeWidth(root,1.0/s);
     final Transform preTranslate =
       new Translate(-rootBounds.getMinX(), -rootBounds.getMaxY());
     final Transform scale = new Scale(s, -s);
     root.getTransforms().setAll(scale, preTranslate);
-    }
+  }
 
   //-------------------------------------------------------------------
   // disable construction
   //-------------------------------------------------------------------
 
-  private JfxUtil () {
+  private Util () {
     throw new UnsupportedOperationException(
-      "Can't instantiate " + getClass());
-  }
+      "Can't instantiate " + getClass()); }
 
 //---------------------------------------------------------------------
 }

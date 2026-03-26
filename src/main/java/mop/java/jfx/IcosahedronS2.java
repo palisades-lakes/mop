@@ -5,10 +5,14 @@ package mop.java.jfx;
 
 import clojure.lang.IFn;
 import javafx.application.Application;
-import javafx.beans.value.ChangeListener;
+import javafx.application.Platform;
+import javafx.geometry.Insets;
 import javafx.scene.Group;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
 import javafx.scene.shape.StrokeType;
@@ -28,21 +32,26 @@ import java.util.List;
  * <p>
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2026-03-23
+ * @version 2026-03-25
  */
 
 @SuppressWarnings({ "unchecked", "unused" })
 public final class IcosahedronS2 extends Application {
 
+  private final Pane worldPane;
+  private final void rescale () {
+    Platform.runLater(() -> Util.rescale(worldPane)); }
+
+  private final Scene scene;
 
   //-------------------------------------------------------------------
 
   private static final Group land () {
     final GeometryCollection polygons =
-      JfxUtil.readJTSGeometries("data/natural-earth/ne_110m_land.shp");
+      Util.readJTSGeometries("data/natural-earth/ne_110m_land.shp");
     final Color fill = Color.web("#22990044");
     final Color stroke = Color.web("#a6611aFF");
-    final Group group = JfxUtil.jfxNode(polygons, fill, stroke);
+    final Group group = Util.jfxNode(polygons, fill, stroke);
     group.setId("land");
     return group;
   }
@@ -58,31 +67,30 @@ public final class IcosahedronS2 extends Application {
     final Color negativeFill = Color.web("#fddbc7", 0.5);
     final Color negativeStroke = Color.web("#b2182b", 1);
     final TriangleMesh mesh =
-      // subdivide4(
+      Util.subdivide4(
 //        subdivide4(
 //          subdivide4(
-            JfxUtil.subdivide4(
-      JfxUtil.u2CutIcosahedron()
+//            Util.subdivide4(
+        Util.u2CutIcosahedron()
 //                      )
 //                    )
-      //)
-    )
-      ;
+        //)
+                     );
     final List<TwoSimplex> faces = mesh.cmplx().faces();
     final IFn embedding = mesh.embedding();
     for (final TwoSimplex face : faces) {
       final Point2U u0 = (Point2U) embedding.invoke(face.z0());
       final Point2U u1 = (Point2U) embedding.invoke(face.z1());
       final Point2U u2 = (Point2U) embedding.invoke(face.z2());
-      final Vector2D p0 = JfxUtil.toLonLat(u0);
-      final Vector2D p1 = JfxUtil.toLonLat(u1);
-      final Vector2D p2 = JfxUtil.toLonLat(u2);
+      final Vector2D p0 = Util.toLonLat(u0);
+      final Vector2D p1 = Util.toLonLat(u1);
+      final Vector2D p2 = Util.toLonLat(u2);
       final Polygon triangle =
         new Polygon(p0.getX(), p0.getY(),
                     p1.getX(), p1.getY(),
                     p2.getX(), p2.getY());
       triangle.setId(face.toString());
-      final double area = JfxUtil.signedArea(p0, p1, p2);
+      final double area = Util.signedArea(p0, p1, p2);
 //    // strokeWidth 0.0 doesn't seem to work.
       // may need to invert scaling transform to get more-or-less
       // constant width on screen
@@ -105,28 +113,35 @@ public final class IcosahedronS2 extends Application {
 
   //-------------------------------------------------------------------
 
-  private static final Group makeWorld () {
+  private static final Parent makeWorld () {
     final Group land = land();
     final Group icosahedron = icosahedron();
+    // current rescaling fails with Pane
     final Group world = new Group(icosahedron, land);
     world.setId("world");
+    BorderPane.setMargin(world, new Insets(64));
     return world;
+  }
+
+  private final Pane makePane () {
+    final Parent world = makeWorld();
+    final Pane pane = new Pane(world);
+    pane.setBackground(Background.fill(Color.web("#0000cc22")));
+    BorderPane.setMargin(pane, new Insets(32));
+    pane.setId(world.getId() + " pane");
+    return pane;
   }
 
   //-------------------------------------------------------------------
 
-  private static final Scene makeScene (final double w,
-                                        final double h) {
-    final Parent root = makeWorld();
-    final Scene scene = new Scene(root, w, h);
-    scene.setUserData("cut icosahedronS2");
-    final ChangeListener rescaleListener =
-      (observableValue, o, t1)
-         -> JfxUtil.rescale(scene);
-//        -> Platform.runLater(() -> JfxUtil.rescale(scene));
-    scene.widthProperty().addListener(rescaleListener);
-    scene.heightProperty().addListener(rescaleListener);
-    JfxUtil.rescale(scene);
+  private final Scene makeScene (final Pane pane) {
+    final BorderPane wrapper = new BorderPane();
+    wrapper.setCenter(pane);
+    final Scene scene = new Scene(wrapper, Color.web("#cc000033"));
+//    final Scene scene = new Scene(pane, Color.web("#ccaa0033"));
+    scene.setUserData("cut icosahedronS2 scene");
+    scene.addPreLayoutPulseListener(() -> Util.rescale(pane));
+    scene.addPostLayoutPulseListener(() -> Util.rescale(pane));
     return scene;
   }
 
@@ -135,27 +150,33 @@ public final class IcosahedronS2 extends Application {
   @Override
   public final void start (final Stage stage) {
     stage.setTitle("cut icosahedron (subdivided)");
-    final var bounds = JfxUtil.chooseScreen().getVisualBounds();
+    final var bounds = Util.chooseScreen().getVisualBounds();
     final double w = 0.75 * bounds.getWidth();
     final double h = 0.5 * w;
-    stage.setX(
-      (0.5 * (bounds.getMinX() + bounds.getMaxX())) - (0.5 * w));
-    stage.setY(
-      (0.5 * (bounds.getMinY() + bounds.getMaxY())) - (0.5 * h));
     stage.setMinWidth(Math.min(w, 360));
     stage.setMinHeight(Math.min(h, 180));
     stage.setMaxWidth(bounds.getWidth());
     stage.setMaxHeight(bounds.getHeight());
-
-    final Scene scene = makeScene(w, h);
+    stage.setWidth(w);
+    stage.setHeight(h);
     stage.setScene(scene);
-    stage.sizeToScene();
+    stage.centerOnScreen();
     stage.show();
   }
 
-//-------------------------------------------------------------------
-// main
-//-------------------------------------------------------------------
+  //-------------------------------------------------------------------
+  // Construction
+  //-------------------------------------------------------------------
+
+  public IcosahedronS2 () {
+    super();
+    worldPane = makePane();
+    scene = makeScene(worldPane);
+  }
+
+  //-------------------------------------------------------------------
+  // main
+  //-------------------------------------------------------------------
 
   public final static void run (final String[] args) { launch(args); }
 

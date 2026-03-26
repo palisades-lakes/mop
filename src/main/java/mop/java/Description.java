@@ -36,23 +36,18 @@ public final class Description {
   //===================================================================
 
   public static final String toString (final Object x) {
-    if (x instanceof byte[]) {
-      return java.util.Arrays.toString((byte[]) x); }
-    if (x instanceof boolean[]) {
-      return java.util.Arrays.toString((boolean[]) x); }
-    if (x instanceof char[]) {
-      return java.util.Arrays.toString((char[]) x); }
-    if (x instanceof int[]) {
-      return java.util.Arrays.toString((int[]) x); }
-    if (x instanceof long[]) {
-      return java.util.Arrays.toString((long[]) x); }
-    if (x instanceof float[]) {
-      return java.util.Arrays.toString((float[]) x); }
-    if (x instanceof double[]) {
-      return java.util.Arrays.toString((double[]) x); }
-    if (x instanceof Object[]) {
-      return Arrays.toString((Object[]) x); }
-    return Objects.toString(x); }
+    return
+      switch (x) {
+      case byte[] xx -> java.util.Arrays.toString(xx);
+      case boolean[] xx -> java.util.Arrays.toString(xx);
+      case char[] xx -> java.util.Arrays.toString(xx);
+      case short[] xx -> java.util.Arrays.toString(xx);
+      case int[] xx -> java.util.Arrays.toString(xx);
+      case long[] xx -> java.util.Arrays.toString(xx);
+      case float[] xx -> java.util.Arrays.toString(xx);
+      case double[] xx -> java.util.Arrays.toString(xx);
+      case Object[] xx -> java.util.Arrays.toString(xx);
+      default -> Objects.toString(x); }; }
 
   //-------------------------------------------------------------------
   // description
