@@ -134,11 +134,12 @@ public final class IcosahedronS2 extends Application {
 
   //-------------------------------------------------------------------
 
-  private final Scene makeScene (final Pane pane) {
+  private final Scene makeScene (final Pane pane,
+                                 final double w,
+                                 final double h) {
     final BorderPane wrapper = new BorderPane();
     wrapper.setCenter(pane);
-    final Scene scene = new Scene(wrapper, Color.web("#cc000033"));
-//    final Scene scene = new Scene(pane, Color.web("#ccaa0033"));
+    final Scene scene = new Scene(wrapper, w,h,Color.web("#cc000033"));
     scene.setUserData("cut icosahedronS2 scene");
     scene.addPreLayoutPulseListener(() -> Util.rescale(pane));
     scene.addPostLayoutPulseListener(() -> Util.rescale(pane));
@@ -150,17 +151,15 @@ public final class IcosahedronS2 extends Application {
   @Override
   public final void start (final Stage stage) {
     stage.setTitle("cut icosahedron (subdivided)");
-    final var bounds = Util.chooseScreen().getVisualBounds();
-    final double w = 0.75 * bounds.getWidth();
-    final double h = 0.5 * w;
-    stage.setMinWidth(Math.min(w, 360));
-    stage.setMinHeight(Math.min(h, 180));
-    stage.setMaxWidth(bounds.getWidth());
-    stage.setMaxHeight(bounds.getHeight());
-    stage.setWidth(w);
-    stage.setHeight(h);
-    stage.setScene(scene);
+//    stage.setMinWidth(Math.min(w, 360));
+//    stage.setMinHeight(Math.min(h, 180));
+//    stage.setMaxWidth(bounds.getWidth());
+//    stage.setMaxHeight(bounds.getHeight());
+//    stage.setWidth(w);
+//    stage.setHeight(h);
+    stage.sizeToScene();
     stage.centerOnScreen();
+    stage.setScene(scene);
     stage.show();
   }
 
@@ -171,7 +170,10 @@ public final class IcosahedronS2 extends Application {
   public IcosahedronS2 () {
     super();
     worldPane = makePane();
-    scene = makeScene(worldPane);
+    final var bounds = Util.chooseScreen().getVisualBounds();
+    final double w = 0.75 * bounds.getWidth();
+    final double h = 0.5 * w;
+    scene = makeScene(worldPane,w,h);
   }
 
   //-------------------------------------------------------------------
