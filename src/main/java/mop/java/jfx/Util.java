@@ -25,7 +25,7 @@ import org.locationtech.jts.geom.GeometryCollection;
  * <p>
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2026-03-25
+ * @version 2026-03-26
  */
 
 @SuppressWarnings("unused")
@@ -179,9 +179,9 @@ public final class Util {
     root.getTransforms().setAll(scale, preTranslate);
     //System.out.println("rescaled");
     }
-    else {
-      System.out.println("not rescaled");
-    }
+//    else {
+//      System.out.println("not rescaled");
+//    }
   }
 
   //-------------------------------------------------------------------

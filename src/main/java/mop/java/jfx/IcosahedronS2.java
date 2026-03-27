@@ -33,7 +33,7 @@ import java.util.List;
  * <p>
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2026-03-25
+ * @version 2026-03-26
  */
 
 @SuppressWarnings({ "unchecked", "unused" })
@@ -161,6 +161,14 @@ public final class IcosahedronS2 extends Application {
   public final void start (final Stage stage) {
     stage.setTitle("cut icosahedron (subdivided)");
     stage.sizeToScene();
+    final var bounds = Util.chooseScreen().getVisualBounds();
+    final double w = 0.75 * bounds.getWidth();
+    final double h = 0.5 * w;
+    stage.setX(
+      (0.5 * (bounds.getMinX() + bounds.getMaxX())) - (0.5 * w));
+    stage.setY(
+      (0.5 * (bounds.getMinY() + bounds.getMaxY())) - (0.5 * h));
+
     stage.centerOnScreen();
     stage.setScene(scene);
     stage.show();
