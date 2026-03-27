@@ -105,11 +105,15 @@ public final class Util {
     System.out.println("layout:\n" + node.getLayoutBounds());
     System.out.println("toParent:\n" + node.getLocalToParentTransform());
     System.out.println("toScene:\n" + node.getLocalToSceneTransform());
+    System.out.println("transform:\n" + node.getTransforms());
+    System.out.println("translate:" + node.getTranslateX() + ", " + node.getTranslateY());
+    System.out.println("scale:" + node.getScaleX() + ", " + node.getScaleY());
     // only go one level down from root
-    if ((null == node.getParent()) && (node instanceof Parent)) {
-      final Parent parent = (Parent) node;
-      parent.getChildrenUnmodifiable()
-            .forEach(Util::printBounds); } }
+//    if ((null == node.getParent()) && (node instanceof Parent)) {
+//      final Parent parent = (Parent) node;
+//      parent.getChildrenUnmodifiable()
+//            .forEach(Util::printBounds); }
+  }
 
   public static final void printBounds (final Scene scene) {
     System.out.println("\n" + scene.getClass().getSimpleName()
@@ -138,11 +142,21 @@ public final class Util {
     // TODO: partial ordering by width and height
     return ipd * bounds.getWidth() * ipd * bounds.getHeight(); }
 
+  public static final String description (final Screen screen) {
+    return screen.toString(); }
+//      screen.toString() +
+//        "\ndpi:" + screen.getDpi() +
+//        "\noutput scale: " + screen.getOutputScaleX() + ", " +
+//        screen.getOutputScaleY() +
+//        "\nbounds:\n" + screen.getBounds() +
+//        "\nvisual:\n" + screen.getVisualBounds(); }
+
   public static final Screen chooseScreen () {
     final ObservableList<Screen> screens = Screen.getScreens();
     Screen largest = Screen.getPrimary();
     double maxArea = areaInch2(largest);
     for (final Screen screen : screens) {
+      System.out.println(description(screen));
       final double area = areaInch2(screen);
       if (area > maxArea) { maxArea = area; largest = screen; } }
     return largest; }
@@ -160,24 +174,48 @@ public final class Util {
         (child) -> setWorldStrokeWidth(child, w));
      default -> {/* do nothing */} } }
 
-  public static final void rescale (final Parent parent) {
-    final ObservableList<Node> children = parent.getChildrenUnmodifiable();
+  // TODO: this is approximate, because changing the stroke width
+  //  changes the bounds used to compute it.
+  private static final void scaleStrokeWidth (final Parent parent,
+                                              final double pixelWidth) {
+    final ObservableList<Node> children =
+      parent.getChildrenUnmodifiable();
+    // TODO: handle multiple children
     assert 1 == children.size();
     final Parent root = (Parent) children.getFirst();
-    final Bounds rootBounds = root.getLayoutBounds();
-    final Bounds parentBounds = parent.getLayoutBounds();
+    final Bounds rootBounds = root.getBoundsInLocal();
     final double rw = rootBounds.getWidth();
     final double rh = rootBounds.getHeight();
+    final Bounds parentBounds = parent.getLayoutBounds();
     final double sw = parentBounds.getWidth();
     final double sh = parentBounds.getHeight();
-    if ((0.0<rw) && (0.0<rh) && (0.0<sw) && (0.0<sh)) {
-    final double s = Math.min(sw / rw, sh / rh);
-    setWorldStrokeWidth(root,pixelStrokeWidth/s);
-    final Transform preTranslate =
-      new Translate(-rootBounds.getMinX(), -rootBounds.getMaxY());
-    final Transform scale = new Scale(s, -s);
-    root.getTransforms().setAll(scale, preTranslate);
-    //System.out.println("rescaled");
+    if ((0.0 < rw) && (0.0 < rh) && (0.0 < sw) && (0.0 < sh)) {
+      final double s = Math.min(sw / rw, sh / rh);
+      // NOTE: changing strokeWidth changes local/layout bounds
+      setWorldStrokeWidth(root, pixelWidth / s); } }
+
+  public static final void rescale (final Parent parent) {
+    // NOTE: changing strokeWidth changes local/layout bounds
+    scaleStrokeWidth(parent, pixelStrokeWidth);
+    final ObservableList<Node> children =
+      parent.getChildrenUnmodifiable();
+    // TODO: handle multiple children
+    assert 1 == children.size();
+    final Parent child = (Parent) children.getFirst();
+    final Bounds childBounds = child.getBoundsInLocal();
+    final double cw = childBounds.getWidth();
+    final double ch = childBounds.getHeight();
+    final Bounds parentBounds = parent.getLayoutBounds();
+    final double sw = parentBounds.getWidth();
+    final double sh = parentBounds.getHeight();
+    if ((0.0 < cw) && (0.0 < ch) && (0.0 < sw) && (0.0 < sh)) {
+      final Transform preTranslate =
+        new Translate(-childBounds.getMinX(),
+                      -childBounds.getMaxY());
+      final double s = Math.min(sw / cw, sh / ch);
+      final Transform scale = new Scale(s, -s);
+      child.getTransforms().setAll(scale, preTranslate);
+      //System.out.println("rescaled");
     }
 //    else {
 //      System.out.println("not rescaled");

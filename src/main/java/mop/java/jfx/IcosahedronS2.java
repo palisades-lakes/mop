@@ -1,7 +1,8 @@
 package mop.java.jfx;
 
-// mvn clean install
-// mvn -q -o -DskipTests -Dclojure-maven-plugin.clojure.test.skip=true -Dmaven.test.skip=true install & jfx mop.java.jfx.Main
+// mvn -nsu clean install
+// mvn -q -o -nsu -DskipTests -Dclojure-maven-plugin.clojure.test
+// .skip=true -Dmaven.test.skip=true install & jfx mop.java.jfx.Main
 
 import clojure.lang.IFn;
 import javafx.application.Application;
@@ -40,8 +41,10 @@ import java.util.List;
 public final class IcosahedronS2 extends Application {
 
   private final Pane worldPane;
+
   private final void rescale () {
-    Platform.runLater(() -> Util.rescale(worldPane)); }
+    Platform.runLater(() -> Util.rescale(worldPane));
+  }
 
   private final Scene scene;
 
@@ -120,7 +123,6 @@ public final class IcosahedronS2 extends Application {
     // current rescaling fails with Pane
     final Group world = new Group(icosahedron, land);
     world.setId("world");
-    BorderPane.setMargin(world, new Insets(64));
     return world;
   }
 
@@ -128,15 +130,12 @@ public final class IcosahedronS2 extends Application {
     final Parent world = makeWorld();
     final Pane pane = new Pane(world);
     pane.setBackground(Background.fill(Color.web("#0000cc22")));
-    BorderPane.setMargin(pane, new Insets(32));
     pane.setId(world.getId() + " pane");
     final ChangeListener changeListener =
       (obs, oldVal, newVal) -> {
-        if (! oldVal.equals(newVal)) { Util.rescale(pane); } };
-    // runLater causes initial glitch render without rescaling
-//      (obs, oldVal, newVal) -> Platform.runLater(()-> Util.rescale(pane));
-    pane.widthProperty().addListener(changeListener);
-    pane.heightProperty().addListener(changeListener);
+        if (!oldVal.equals(newVal)) { Util.rescale(pane); }
+      };
+    pane.layoutBoundsProperty().addListener(changeListener);
     return pane;
   }
 
@@ -145,13 +144,11 @@ public final class IcosahedronS2 extends Application {
   private static Scene makeScene (final Pane pane,
                                   final double w,
                                   final double h) {
+    BorderPane.setMargin(pane, new Insets(32));
     final BorderPane wrapper = new BorderPane(pane);
-    final Scene scene = new Scene(wrapper, w,h,Color.web("#cc000033"));
+    final Scene scene =
+      new Scene(wrapper, w, h, Color.web("#cc000033"));
     scene.setUserData("cut icosahedronS2 scene");
-    // TODO: LayoutPulseListeners create infinite loop
-    //scene.addPreLayoutPulseListener(() -> Util.rescale(pane));
-    //scene.addPostLayoutPulseListener(() -> Util.rescale(pane));
-    Util.rescale(pane);
     return scene;
   }
 
@@ -171,7 +168,12 @@ public final class IcosahedronS2 extends Application {
 
     stage.centerOnScreen();
     stage.setScene(scene);
+    final Pane wrapper = (Pane) scene.getRoot();
+    final Pane pane = (Pane) wrapper.getChildren().getFirst();
     stage.show();
+    Util.printBounds(wrapper);
+    Util.printBounds(pane);
+    Util.printBounds(pane.getChildren().getFirst());
   }
 
   //-------------------------------------------------------------------
@@ -184,7 +186,7 @@ public final class IcosahedronS2 extends Application {
     final var bounds = Util.chooseScreen().getVisualBounds();
     final double w = 0.75 * bounds.getWidth();
     final double h = 0.5 * w;
-    scene = makeScene(worldPane,w,h);
+    scene = makeScene(worldPane, w, h);
   }
 
   //-------------------------------------------------------------------

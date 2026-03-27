@@ -9,11 +9,18 @@ package mop.java.jfx;
  * Set system properties before JFX startup.
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2026-03-23
+ * @version 2026-03-27
  */
 
-@SuppressWarnings({"unchecked","unused"})
 public final class Main  {
+
+  //-------------------------------------------------------------------
+  // disable construction
+  //-------------------------------------------------------------------
+
+  private Main () {
+    throw new UnsupportedOperationException(
+      "Can't instantiate " + getClass()); }
 
   //-------------------------------------------------------------------
   // main
