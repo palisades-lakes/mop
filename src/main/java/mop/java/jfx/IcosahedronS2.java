@@ -12,6 +12,7 @@ import javafx.geometry.Insets;
 import javafx.scene.Group;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.input.*;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
@@ -131,10 +132,39 @@ public final class IcosahedronS2 extends Application {
     final Pane pane = new Pane(world);
     pane.setBackground(Background.fill(Color.web("#0000cc22")));
     pane.setId(world.getId() + " pane");
+
+    pane.setFocusTraversable(true);
+
+    pane.setOnKeyPressed((final KeyEvent e) -> {
+      //System.out.println(pane + " keyPressed " + e.getCode());
+      if (KeyCode.R == e.getCode()) {
+        pane.setTranslateX(0.0);
+        pane.setTranslateY(0.0);
+        pane.setScaleX(1.0);
+        pane.setScaleY(1.0); } } );
+
+    pane.setOnZoom((final ZoomEvent e) -> {
+      final double zoom = e.getTotalZoomFactor();
+      pane.setScaleX(zoom);
+      pane.setScaleY(zoom); } );
+
+    pane.setOnScroll((final ScrollEvent e) -> {
+                         //      final double zoom = e.getTotalDeltaY();
+      System.out.println(pane + " scroll " + e.getDeltaY() + " : " + e.getTotalDeltaY());
+//      pane.setScaleX(zoom);
+//      pane.setScaleY(zoom);
+    } );
+
+    pane.setOnMouseDragged((final MouseEvent e) -> {
+      //System.out.println(pane + " dragged " + e.getX() + "," + e.getY());
+      if (!e.isSynthesized()) {
+        pane.setTranslateX(e.getX());
+        pane.setTranslateY(e.getY());
+      }});
+
     final ChangeListener changeListener =
       (obs, oldVal, newVal) -> {
-        if (!oldVal.equals(newVal)) { Util.rescale(pane); }
-      };
+        if (!oldVal.equals(newVal)) { Util.rescale(pane); } };
     pane.layoutBoundsProperty().addListener(changeListener);
     return pane;
   }
@@ -149,6 +179,10 @@ public final class IcosahedronS2 extends Application {
     final Scene scene =
       new Scene(wrapper, w, h, Color.web("#cc000033"));
     scene.setUserData("cut icosahedronS2 scene");
+
+    System.out.println(wrapper + ": traversable :" + pane.isFocusTraversable());
+    System.out.println(pane + ": traversable :" + pane.isFocusTraversable());
+
     return scene;
   }
 
@@ -160,20 +194,12 @@ public final class IcosahedronS2 extends Application {
     stage.sizeToScene();
     final var bounds = Util.chooseScreen().getVisualBounds();
     final double w = 0.75 * bounds.getWidth();
-    final double h = 0.5 * w;
-    stage.setX(
-      (0.5 * (bounds.getMinX() + bounds.getMaxX())) - (0.5 * w));
-    stage.setY(
-      (0.5 * (bounds.getMinY() + bounds.getMaxY())) - (0.5 * h));
-
+    final double h = 0.50 * w;
+    stage.setX(0.5 * (bounds.getMinX() + bounds.getMaxX() - w));
+    stage.setY(0.5 * (bounds.getMinY() + bounds.getMaxY() - h));
     stage.centerOnScreen();
     stage.setScene(scene);
-    final Pane wrapper = (Pane) scene.getRoot();
-    final Pane pane = (Pane) wrapper.getChildren().getFirst();
     stage.show();
-    Util.printBounds(wrapper);
-    Util.printBounds(pane);
-    Util.printBounds(pane.getChildren().getFirst());
   }
 
   //-------------------------------------------------------------------
