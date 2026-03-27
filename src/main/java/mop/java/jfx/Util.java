@@ -9,8 +9,6 @@ import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Shape;
 import javafx.scene.transform.Scale;
@@ -156,8 +154,8 @@ public final class Util {
   private static final void setWorldStrokeWidth (final Node node,
                                                  final double w) {
     switch (node) {
-    case Shape shape -> shape.setStrokeWidth(w);
-    case Parent parent ->
+    case final Shape shape -> shape.setStrokeWidth(w);
+    case final Parent parent ->
       parent.getChildrenUnmodifiable().forEach(
         (child) -> setWorldStrokeWidth(child, w));
      default -> {/* do nothing */} } }
@@ -172,12 +170,18 @@ public final class Util {
     final double rh = rootBounds.getHeight();
     final double sw = parentBounds.getWidth();
     final double sh = parentBounds.getHeight();
+    if ((0.0<rw) && (0.0<rh) && (0.0<sw) && (0.0<sh)) {
     final double s = Math.min(sw / rw, sh / rh);
-    setWorldStrokeWidth(root,1.0/s);
+    setWorldStrokeWidth(root,pixelStrokeWidth/s);
     final Transform preTranslate =
       new Translate(-rootBounds.getMinX(), -rootBounds.getMaxY());
     final Transform scale = new Scale(s, -s);
     root.getTransforms().setAll(scale, preTranslate);
+    //System.out.println("rescaled");
+    }
+    else {
+      System.out.println("not rescaled");
+    }
   }
 
   //-------------------------------------------------------------------

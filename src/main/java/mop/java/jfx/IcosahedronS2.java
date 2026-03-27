@@ -6,6 +6,7 @@ package mop.java.jfx;
 import clojure.lang.IFn;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
 import javafx.scene.Group;
 import javafx.scene.Parent;
@@ -123,26 +124,34 @@ public final class IcosahedronS2 extends Application {
     return world;
   }
 
-  private final Pane makePane () {
+  private static Pane makePane () {
     final Parent world = makeWorld();
     final Pane pane = new Pane(world);
     pane.setBackground(Background.fill(Color.web("#0000cc22")));
     BorderPane.setMargin(pane, new Insets(32));
     pane.setId(world.getId() + " pane");
+    final ChangeListener changeListener =
+      (obs, oldVal, newVal) -> {
+        if (! oldVal.equals(newVal)) { Util.rescale(pane); } };
+    // runLater causes initial glitch render without rescaling
+//      (obs, oldVal, newVal) -> Platform.runLater(()-> Util.rescale(pane));
+    pane.widthProperty().addListener(changeListener);
+    pane.heightProperty().addListener(changeListener);
     return pane;
   }
 
   //-------------------------------------------------------------------
 
-  private final Scene makeScene (final Pane pane,
-                                 final double w,
-                                 final double h) {
-    final BorderPane wrapper = new BorderPane();
-    wrapper.setCenter(pane);
+  private static Scene makeScene (final Pane pane,
+                                  final double w,
+                                  final double h) {
+    final BorderPane wrapper = new BorderPane(pane);
     final Scene scene = new Scene(wrapper, w,h,Color.web("#cc000033"));
     scene.setUserData("cut icosahedronS2 scene");
-    scene.addPreLayoutPulseListener(() -> Util.rescale(pane));
-    scene.addPostLayoutPulseListener(() -> Util.rescale(pane));
+    // TODO: LayoutPulseListeners create infinite loop
+    //scene.addPreLayoutPulseListener(() -> Util.rescale(pane));
+    //scene.addPostLayoutPulseListener(() -> Util.rescale(pane));
+    Util.rescale(pane);
     return scene;
   }
 
@@ -151,12 +160,6 @@ public final class IcosahedronS2 extends Application {
   @Override
   public final void start (final Stage stage) {
     stage.setTitle("cut icosahedron (subdivided)");
-//    stage.setMinWidth(Math.min(w, 360));
-//    stage.setMinHeight(Math.min(h, 180));
-//    stage.setMaxWidth(bounds.getWidth());
-//    stage.setMaxHeight(bounds.getHeight());
-//    stage.setWidth(w);
-//    stage.setHeight(h);
     stage.sizeToScene();
     stage.centerOnScreen();
     stage.setScene(scene);
