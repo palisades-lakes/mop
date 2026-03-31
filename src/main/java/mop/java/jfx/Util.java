@@ -3,17 +3,11 @@ package mop.java.jfx;
 import clojure.java.api.Clojure;
 import clojure.lang.IFn;
 import javafx.collections.ObservableList;
-import javafx.geometry.Bounds;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Group;
 import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Shape;
-import javafx.scene.transform.Scale;
-import javafx.scene.transform.Transform;
-import javafx.scene.transform.Translate;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import mop.java.geom.mesh.TriangleMesh;
@@ -25,7 +19,7 @@ import org.locationtech.jts.geom.GeometryCollection;
  * <p>
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2026-03-26
+ * @version 2026-03-31
  */
 
 @SuppressWarnings("unused")
@@ -156,71 +150,10 @@ public final class Util {
     Screen largest = Screen.getPrimary();
     double maxArea = areaInch2(largest);
     for (final Screen screen : screens) {
-      System.out.println(description(screen));
+      //System.out.println(description(screen));
       final double area = areaInch2(screen);
       if (area > maxArea) { maxArea = area; largest = screen; } }
     return largest; }
-
-  //-------------------------------------------------------------------
-
-  public static final double pixelStrokeWidth = 1;
-
-  private static final void setWorldStrokeWidth (final Node node,
-                                                 final double w) {
-    switch (node) {
-    case final Shape shape -> shape.setStrokeWidth(w);
-    case final Parent parent ->
-      parent.getChildrenUnmodifiable().forEach(
-        (child) -> setWorldStrokeWidth(child, w));
-     default -> {/* do nothing */} } }
-
-  // TODO: this is approximate, because changing the stroke width
-  //  changes the bounds used to compute it.
-  private static final void scaleStrokeWidth (final Parent parent,
-                                              final double pixelWidth) {
-    final ObservableList<Node> children =
-      parent.getChildrenUnmodifiable();
-    // TODO: handle multiple children
-    assert 1 == children.size();
-    final Parent root = (Parent) children.getFirst();
-    final Bounds rootBounds = root.getBoundsInLocal();
-    final double rw = rootBounds.getWidth();
-    final double rh = rootBounds.getHeight();
-    final Bounds parentBounds = parent.getLayoutBounds();
-    final double sw = parentBounds.getWidth();
-    final double sh = parentBounds.getHeight();
-    if ((0.0 < rw) && (0.0 < rh) && (0.0 < sw) && (0.0 < sh)) {
-      final double s = Math.min(sw / rw, sh / rh);
-      // NOTE: changing strokeWidth changes local/layout bounds
-      setWorldStrokeWidth(root, pixelWidth / s); } }
-
-  public static final void rescale (final Parent parent) {
-    // NOTE: changing strokeWidth changes local/layout bounds
-    scaleStrokeWidth(parent, pixelStrokeWidth);
-    final ObservableList<Node> children =
-      parent.getChildrenUnmodifiable();
-    // TODO: handle multiple children
-    assert 1 == children.size();
-    final Parent child = (Parent) children.getFirst();
-    final Bounds childBounds = child.getBoundsInLocal();
-    final double cw = childBounds.getWidth();
-    final double ch = childBounds.getHeight();
-    final Bounds parentBounds = parent.getLayoutBounds();
-    final double sw = parentBounds.getWidth();
-    final double sh = parentBounds.getHeight();
-    if ((0.0 < cw) && (0.0 < ch) && (0.0 < sw) && (0.0 < sh)) {
-      final Transform preTranslate =
-        new Translate(-childBounds.getMinX(),
-                      -childBounds.getMaxY());
-      final double s = Math.min(sw / cw, sh / ch);
-      final Transform scale = new Scale(s, -s);
-      child.getTransforms().setAll(scale, preTranslate);
-      //System.out.println("rescaled");
-    }
-//    else {
-//      System.out.println("not rescaled");
-//    }
-  }
 
   //-------------------------------------------------------------------
   // disable construction

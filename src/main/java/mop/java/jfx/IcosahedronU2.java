@@ -19,14 +19,10 @@ public final class IcosahedronU2 extends Application {
 
   private static final TriangleMesh s2Icosahedron () {
     final IFn require = Clojure.var("clojure.core", "require");
-    System.out.println(require);
     require.invoke(Clojure.read("mop.geom.icosahedron"));
     final IFn icosahedronS2 =
       Clojure.var("mop.geom.icosahedron", "u2-cut-icosahedron");
-    System.out.println(icosahedronS2);
-
-    return (TriangleMesh) icosahedronS2.invoke();
-  }
+     return (TriangleMesh) icosahedronS2.invoke(); }
 
   @Override
   public final void start (final javafx.stage.Stage stage) {
@@ -39,7 +35,6 @@ public final class IcosahedronU2 extends Application {
     final javafx.scene.paint.Color stroke =
       javafx.scene.paint.Color.web("BROWN");
     final TriangleMesh mesh = s2Icosahedron();
-    System.out.println(mesh);
     final List<TwoSimplex> faces = mesh.cmplx().faces();
     final IFn embedding = mesh.embedding();
     for (final TwoSimplex face : faces) {
