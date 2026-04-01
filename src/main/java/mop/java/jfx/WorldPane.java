@@ -61,7 +61,9 @@ public final class WorldPane extends Pane {
 
   private static final Group land () {
     final GeometryCollection polygons =
-      Util.readJTSGeometries("data/natural-earth/ne_110m_land.shp");
+//      Util.readJTSGeometries("data/natural-earth/10m_physical/ne_10m_land.shp");
+    Util.readJTSGeometries("data/natural-earth/50m_physical/ne_50m_land.shp");
+//    Util.readJTSGeometries("data/natural-earth/ne_110m_land.shp");
     final Color fill = Color.web("#22990044");
     final Color stroke = Color.web("#a6611aFF");
     final Group group = Util.jfxNode(polygons, fill, stroke);
@@ -223,6 +225,7 @@ public final class WorldPane extends Pane {
         this.setScaleX(1.0);
         this.setScaleY(1.0); } } );
 
+    // TODO: zoom holding mouse point fixed
     this.setOnScroll((final ScrollEvent e) -> {
       e.consume();
       if (!e.isDirect()) { // ignore touch events?

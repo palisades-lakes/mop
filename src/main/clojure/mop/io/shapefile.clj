@@ -15,9 +15,10 @@
    [javafx.scene.paint Color]
    [javafx.scene.shape Shape StrokeType]
    [org.geotools.api.data
-    DataStore DataStoreFinder]
+    DataStore DataStoreFinder SimpleFeatureSource]
    [org.geotools.api.feature.simple
     SimpleFeature]
+   [org.geotools.data.simple SimpleFeatureCollection SimpleFeatureIterator]
    [org.locationtech.jts.geom
     Coordinate GeometryCollection GeometryFactory MultiPolygon Polygon]))
 ;;---------------------------------------------------------------------
@@ -82,26 +83,57 @@
       (.add children (jfx-node (.getGeometryN jts i) fill stroke)))
     group))
 ;;---------------------------------------------------------------------
+#_(defn read-jts-geometries ^GeometryCollection [shp]
+    (let [shp (.toURL (.toURI (io/file shp)))
+          ^DataStore store (DataStoreFinder/getDataStore {"url" shp})
+          ;; TODO: handle multiple type names
+          ^String name (first (into [] (.getTypeNames store)))
+          features (.toArray (.getFeatures (.getFeatureSource store name)))
+          nFeatures (alength features)
+          ^"[Lorg.locationtech.jts.geom.Polygon;" polygons (make-array Polygon nFeatures)]
+      (dotimes [i nFeatures]
+        (let [^SimpleFeature feature (aget features i)
+              ^String id (.getID feature)
+              ^MultiPolygon multipolygon (.getDefaultGeometry feature)
+              ;; TODO: handle multiple polygons in each multipolygon
+              ;; TODO: preserve IDs
+              _ (assert (= 1 (.getNumGeometries multipolygon))
+                        (str id " "
+                             (.getNumGeometries multipolygon)))
+              ^Polygon polygon (.getGeometryN multipolygon 0)]
+          (.setUserData polygon id)
+          (aset polygons i polygon)))
+      ;; TODO: reuse GeometryFactory's
+      (MultiPolygon. polygons (GeometryFactory.))))
+
+(defn- extract-polygons [^SimpleFeature feature]
+  (let [^String id (.getID feature)
+        ^MultiPolygon multipolygon (.getDefaultGeometry feature)
+        nGeometries (.getNumGeometries multipolygon)
+        ^"[Lorg.locationtech.jts.geom.Polygon;" polygons (make-array Polygon nGeometries)]
+    (dotimes [i nGeometries]
+      (let [^Polygon polygon (.getGeometryN multipolygon i)]
+        (.setUserData polygon id)
+        (aset polygons i polygon)))
+    (seq polygons)))
+
+(defn- collect-polygons [^SimpleFeatureIterator iterator]
+  (loop [polygons (transient [])]
+    (if (.hasNext iterator)
+      (recur (conj! polygons (extract-polygons (.next iterator))))
+      ;; else
+      (persistent! polygons))))
+
 (defn read-jts-geometries ^GeometryCollection [shp]
   (let [shp (.toURL (.toURI (io/file shp)))
         ^DataStore store (DataStoreFinder/getDataStore {"url" shp})
         ;; TODO: handle multiple type names
         ^String name (first (into [] (.getTypeNames store)))
-        features (.toArray (.getFeatures (.getFeatureSource store name)))
-        n (alength features)
-        ^"[Lorg.locationtech.jts.geom.Polygon;" polygons (make-array Polygon n)]
-    (dotimes [i n]
-      (let [^SimpleFeature feature (aget features i)
-            ^String id (.getID feature)
-            ^MultiPolygon multipolygon (.getDefaultGeometry feature)
-            ;; TODO: handle multiple polygons in each multipolygon
-            ;; TODO: preserve IDs
-            _ (assert (= 1 (.getNumGeometries multipolygon))
-                      (str id " "
-                           (.getNumGeometries multipolygon)))
-            ^Polygon polygon (.getGeometryN multipolygon 0)]
-        (.setUserData polygon id)
-        (aset polygons i polygon)))
-    ;; TODO: reuse GeometryFactory's
+        ^SimpleFeatureSource featureSource (.getFeatureSource store name)
+        ^SimpleFeatureCollection featureCollection (.getFeatures featureSource)
+        ^SimpleFeatureIterator iterator (.features featureCollection)
+        ^"[Lorg.locationtech.jts.geom.Polygon;"
+        polygons (into-array org.locationtech.jts.geom.Polygon
+                             (flatten (collect-polygons iterator)))]
     (MultiPolygon. polygons (GeometryFactory.))))
 ;;---------------------------------------------------------------------

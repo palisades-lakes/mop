@@ -6,7 +6,8 @@
   {:doc     "Icosahedra with various embeddings"
    :author  "palisades dot lakes at gmail dot com"
    :version "2026-03-16"}
-  (:require [mop.cmplx.complex :as cmplx]
+  (:require [clojure.math :as math]
+            [mop.cmplx.complex :as cmplx]
             [mop.geom.mesh :as mesh]
             [mop.geom.rn :as rn]
             [mop.geom.s2 :as s2])
@@ -43,9 +44,9 @@
       (TriangleMesh/make cmplx embedding))))
 
 (defn ^TriangleMesh s2-icosahedron []
-  (let [da (double (* 0.2 Math/PI))
-        p1 (double (/ Math/PI 3.0))
-        p2 (double (* 2 p1))
+  (let [da (double (* Math/PI 0.2))
+        p1 (double (math/atan 2.0))
+        p2 (double (- Math/PI p1))
         a (cmplx/simplex "a") b (cmplx/simplex "b") c (cmplx/simplex "c") d (cmplx/simplex "d")
         e (cmplx/simplex "e") f (cmplx/simplex "f") g (cmplx/simplex "g") h (cmplx/simplex "h")
         i (cmplx/simplex "i") j (cmplx/simplex "j") k (cmplx/simplex "k") l (cmplx/simplex "l")
@@ -85,8 +86,8 @@
 ;; TODO: check if this is a regular icosahedron
 
 (let [da (double (* Math/PI 0.2))
-      p1 (double (/ Math/PI 3.0))
-      p2 (double (* 2 p1))]
+      p1 (double (math/atan 2.0))
+      p2 (double (- Math/PI p1))]
   (defn ^TriangleMesh s2-cut-icosahedron []
     (let [a (cmplx/simplex "a")
           b (cmplx/simplex "b") c (cmplx/simplex "c") d (cmplx/simplex "d")
@@ -132,8 +133,8 @@
 
 (let [a0 (- -0.1 Math/PI) ;;0.0;; (* Math/PI -0.1)
       da (double (* Math/PI 0.2))
-      p1 (double (/ Math/PI 3.0))
-      p2 (double (* 2 p1))]
+      p1 (double (math/atan 2.0))
+      p2 (double (- Math/PI p1))]
   (defn ^TriangleMesh u2-cut-icosahedron []
     (let [a (cmplx/simplex "a")
           b (cmplx/simplex "b") c (cmplx/simplex "c") d (cmplx/simplex "d")
