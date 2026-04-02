@@ -25,6 +25,8 @@ import org.locationtech.jts.geom.GeometryCollection;
 
 import java.util.List;
 
+import static mop.java.jfx.Util.subdivide4;
+
 
 //---------------------------------------------------------------------
 
@@ -81,15 +83,11 @@ public final class WorldPane extends Pane {
     final Color negativeFill = Color.web("#fddbc7", 0.5);
     final Color negativeStroke = Color.web("#b2182b", 1);
     final TriangleMesh mesh =
-      Util.subdivide4(
-//        subdivide4(
-//          subdivide4(
-//            Util.subdivide4(
-        Util.u2CutIcosahedron()
-//                      )
-//                    )
-        //)
-                     );
+      subdivide4(subdivide4(subdivide4(
+      subdivide4(subdivide4(Util.u2CutIcosahedron()
+      )))
+      ));
+    System.out.println("n faces: " + mesh.cmplx().faces().size());
     final List<TwoSimplex> faces = mesh.cmplx().faces();
     final IFn embedding = mesh.embedding();
     for (final TwoSimplex face : faces) {
@@ -133,7 +131,19 @@ public final class WorldPane extends Pane {
     land.setFocusTraversable(false);
     icosahedron.setFocusTraversable(false);
     world.setFocusTraversable(false);
+    world.setMouseTransparent(true);
     return world; }
+
+//  private static final Group makeWorldGroup () {
+//    final Group icosahedron = icosahedron();
+//    // current rescaling fails with Pane rather than generic group
+//    final Group world = new Group(icosahedron);
+//    world.setId("world");
+//    // parent Pane handles events
+//    icosahedron.setFocusTraversable(false);
+//    world.setFocusTraversable(false);
+//    world.setMouseTransparent(true);
+//    return world; }
 
   //-------------------------------------------------------------------
   // instance slots
@@ -229,7 +239,7 @@ public final class WorldPane extends Pane {
     this.setOnScroll((final ScrollEvent e) -> {
       e.consume();
       if (!e.isDirect()) { // ignore touch events?
-        final double relativeZoom = (e.getDeltaY() < 0) ? 0.95 : 1.05;
+        final double relativeZoom = (e.getDeltaY() < 0) ? 0.9 : 1.1;
         final double s = relativeZoom * getScaleX();
         setScaleX(s);
         setScaleY(s);

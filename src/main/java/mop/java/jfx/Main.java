@@ -28,7 +28,10 @@ public final class Main  {
 
   public final static void main (final String[] args) {
     //System.out.println(System.getProperty("glass.win.uiScale"));
+    //System.setProperty("javafx.pulseLogger","true");
     System.setProperty("glass.win.uiScale", "1");
+    //System.setProperty("prism.verbose", "true");
+    //System.setProperty("prism.order", "d3d");
     //System.out.println(System.getProperty("glass.win.uiScale"));
     IcosahedronS2.run(args); }
 

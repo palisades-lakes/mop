@@ -15,7 +15,7 @@
    [javafx.scene.paint Color]
    [javafx.scene.shape Shape StrokeType]
    [org.geotools.api.data
-    DataStore DataStoreFinder SimpleFeatureSource]
+    DataStore DataStoreFinder FileDataStoreFinder SimpleFeatureSource]
    [org.geotools.api.feature.simple
     SimpleFeature]
    [org.geotools.data.simple SimpleFeatureCollection SimpleFeatureIterator]
@@ -68,7 +68,7 @@
                                                 (.getInteriorRingN jts i))))]
                              (recur (Shape/subtract polygon hole) (inc i)))))]
     (.setId polygon (.getUserData jts))
-    (.setFill polygon fill)
+    (when fill (.setFill polygon fill))
     (.setStroke polygon stroke)
     (.setStrokeWidth polygon 1)
     (.setStrokeType polygon StrokeType/INSIDE)
@@ -125,15 +125,15 @@
       (persistent! polygons))))
 
 (defn read-jts-geometries ^GeometryCollection [shp]
-  (let [shp (.toURL (.toURI (io/file shp)))
-        ^DataStore store (DataStoreFinder/getDataStore {"url" shp})
+  (let [;;^DataStore store (DataStoreFinder/getDataStore {"url" (.toURL (.toURI (io/file shp)))})
+        ^DataStore store (FileDataStoreFinder/getDataStore (io/file shp))
         ;; TODO: handle multiple type names
         ^String name (first (into [] (.getTypeNames store)))
         ^SimpleFeatureSource featureSource (.getFeatureSource store name)
-        ^SimpleFeatureCollection featureCollection (.getFeatures featureSource)
-        ^SimpleFeatureIterator iterator (.features featureCollection)
-        ^"[Lorg.locationtech.jts.geom.Polygon;"
-        polygons (into-array org.locationtech.jts.geom.Polygon
-                             (flatten (collect-polygons iterator)))]
-    (MultiPolygon. polygons (GeometryFactory.))))
+        ^SimpleFeatureCollection featureCollection (.getFeatures featureSource)]
+    (with-open [^SimpleFeatureIterator iterator (.features featureCollection)]
+      (let [^"[Lorg.locationtech.jts.geom.Polygon;"
+            polygons (into-array org.locationtech.jts.geom.Polygon
+                                 (flatten (collect-polygons iterator)))]
+        (MultiPolygon. polygons (GeometryFactory.))))))
 ;;---------------------------------------------------------------------

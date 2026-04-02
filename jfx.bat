@@ -18,8 +18,9 @@
 :: a single main class.
 
 ::set XMX=-Xms56g -Xmx56g
-::set XMX=-Xms31g -Xmx31g -Xmn12g 
-set XMX=-Xms12g -Xmx12g -Xmn5g 
+::set XMX=-Xms31g -Xmx31g -Xmn12g
+::set XMX=-Xms12g -Xmx12g -Xmn5g
+set XMX=
 
 set OPENS=--add-opens java.base/java.lang=ALL-UNNAMED
 
