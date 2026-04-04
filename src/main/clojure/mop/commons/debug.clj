@@ -7,7 +7,7 @@
   obvious place elsewhere in Mop."
 
   {:author  "palisades dot lakes at gmail dot com"
-   :version "2025-12-04"}
+   :version "2026-04-04"}
 
   (:require [mop.commons.string :as mcs]))
 ;;---------------------------------------------------------------------

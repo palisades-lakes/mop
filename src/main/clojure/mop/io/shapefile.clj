@@ -124,7 +124,8 @@
       ;; else
       (persistent! polygons))))
 
-(defn read-jts-geometries ^GeometryCollection [shp]
+(defn ^GeometryCollection read-jts-geometries
+  ([shp ^GeometryFactory gfactory]
   (let [;;^DataStore store (DataStoreFinder/getDataStore {"url" (.toURL (.toURI (io/file shp)))})
         ^DataStore store (FileDataStoreFinder/getDataStore (io/file shp))
         ;; TODO: handle multiple type names
@@ -135,5 +136,6 @@
       (let [^"[Lorg.locationtech.jts.geom.Polygon;"
             polygons (into-array org.locationtech.jts.geom.Polygon
                                  (flatten (collect-polygons iterator)))]
-        (MultiPolygon. polygons (GeometryFactory.))))))
+        (MultiPolygon. polygons gfactory)))))
+  ([shp] (read-jts-geometries shp (GeometryFactory.))))
 ;;---------------------------------------------------------------------

@@ -27,7 +27,6 @@ import java.util.List;
 
 import static mop.java.jfx.Util.subdivide4;
 
-
 //---------------------------------------------------------------------
 
 /**
@@ -35,7 +34,7 @@ import static mop.java.jfx.Util.subdivide4;
  * <p>
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2026-03-31
+ * @version 2026-04-04
  */
 
 @SuppressWarnings({ "unchecked", "unused" })
@@ -82,11 +81,7 @@ public final class WorldPane extends Pane {
     final Color positiveFill = Color.web("#ffffff", 0.0);
     final Color negativeFill = Color.web("#fddbc7", 0.5);
     final Color negativeStroke = Color.web("#b2182b", 1);
-    final TriangleMesh mesh =
-      subdivide4(subdivide4(subdivide4(
-      subdivide4(subdivide4(Util.u2CutIcosahedron()
-      )))
-      ));
+    final TriangleMesh mesh = subdivide4(Util.u2CutIcosahedron());
     System.out.println("n faces: " + mesh.cmplx().faces().size());
     final List<TwoSimplex> faces = mesh.cmplx().faces();
     final IFn embedding = mesh.embedding();
@@ -128,22 +123,12 @@ public final class WorldPane extends Pane {
     final Group world = new Group(icosahedron, land);
     world.setId("world");
     // parent Pane handles events
+    // TODO: is this necessary or useful?
     land.setFocusTraversable(false);
     icosahedron.setFocusTraversable(false);
     world.setFocusTraversable(false);
     world.setMouseTransparent(true);
     return world; }
-
-//  private static final Group makeWorldGroup () {
-//    final Group icosahedron = icosahedron();
-//    // current rescaling fails with Pane rather than generic group
-//    final Group world = new Group(icosahedron);
-//    world.setId("world");
-//    // parent Pane handles events
-//    icosahedron.setFocusTraversable(false);
-//    world.setFocusTraversable(false);
-//    world.setMouseTransparent(true);
-//    return world; }
 
   //-------------------------------------------------------------------
   // instance slots
@@ -260,8 +245,11 @@ public final class WorldPane extends Pane {
     this.layoutBoundsProperty().addListener(changeListener);
   }
 
+  public static final WorldPane make (final Group worldGroup) {
+    return new WorldPane(worldGroup); }
+
   public static final WorldPane make () {
-    return new WorldPane(makeWorldGroup()); }
+    return make(makeWorldGroup()); }
 
 //---------------------------------------------------------------------
 }
