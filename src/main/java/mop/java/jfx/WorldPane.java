@@ -1,6 +1,5 @@
 package mop.java.jfx;
 
-import clojure.lang.IFn;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
@@ -11,30 +10,18 @@ import javafx.scene.input.*;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Shape;
-import javafx.scene.shape.StrokeType;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Transform;
 import javafx.scene.transform.Translate;
-import mop.java.cmplx.TwoSimplex;
-import mop.java.geom.Point2U;
-import mop.java.geom.mesh.TriangleMesh;
-import org.apache.commons.geometry.euclidean.twod.Vector2D;
-import org.locationtech.jts.geom.GeometryCollection;
-
-import java.util.List;
-
-import static mop.java.jfx.Util.subdivide4;
 
 //---------------------------------------------------------------------
 
-/**
- * Pane containing geographic layers, with standardized event handling.
+/**  Pane containing geographic layers, with standardized event handling.
  * <p>
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2026-04-04
+ * @version 2026-04-05
  */
 
 @SuppressWarnings({ "unchecked", "unused" })
@@ -56,79 +43,6 @@ public final class WorldPane extends Pane {
         parent.getChildrenUnmodifiable().forEach(
           (child) -> setWorldStrokeWidth(child, w));
       default -> {/* do nothing */} } }
-
-  //-------------------------------------------------------------------
-  // TODO: more general layer definitions
-
-  private static final Group land () {
-    final GeometryCollection polygons =
-//      Util.readJTSGeometries("data/natural-earth/10m_physical/ne_10m_land.shp");
-    Util.readJTSGeometries("data/natural-earth/50m_physical/ne_50m_land.shp");
-//    Util.readJTSGeometries("data/natural-earth/ne_110m_land.shp");
-    final Color fill = Color.web("#22990044");
-    final Color stroke = Color.web("#a6611aFF");
-    final Group group = Util.jfxNode(polygons, fill, stroke);
-    group.setId("land");
-    return group; }
-
-  //-------------------------------------------------------------------
-
-  private static final Group icosahedron () {
-    final Group group = new Group();
-    group.setId("icosahedron");
-    final Color positiveStroke = Color.web("#2166ac", 0.5);
-    //final Color positiveFill = Color.web("#d1e5f0", 0.2);
-    final Color positiveFill = Color.web("#ffffff", 0.0);
-    final Color negativeFill = Color.web("#fddbc7", 0.5);
-    final Color negativeStroke = Color.web("#b2182b", 1);
-    final TriangleMesh mesh = subdivide4(Util.u2CutIcosahedron());
-    System.out.println("n faces: " + mesh.cmplx().faces().size());
-    final List<TwoSimplex> faces = mesh.cmplx().faces();
-    final IFn embedding = mesh.embedding();
-    for (final TwoSimplex face : faces) {
-      final Point2U u0 = (Point2U) embedding.invoke(face.z0());
-      final Point2U u1 = (Point2U) embedding.invoke(face.z1());
-      final Point2U u2 = (Point2U) embedding.invoke(face.z2());
-      final Vector2D p0 = Util.toLonLat(u0);
-      final Vector2D p1 = Util.toLonLat(u1);
-      final Vector2D p2 = Util.toLonLat(u2);
-      final Polygon triangle =
-        new Polygon(p0.getX(), p0.getY(),
-                    p1.getX(), p1.getY(),
-                    p2.getX(), p2.getY());
-      triangle.setId(face.toString());
-      final double area = Util.signedArea(p0, p1, p2);
-//    // strokeWidth 0.0 doesn't seem to work.
-      // may need to invert scaling transform to get more-or-less
-      // constant width on screen
-      // problem seems to be related to jfx forcing windows dpi scaling
-      // on its own coordinates.
-      triangle.setStrokeWidth(1);
-      triangle.setStrokeType(StrokeType.CENTERED);
-      if (0.0 <= area) {
-        triangle.setFill(positiveFill);
-        triangle.setStroke(positiveStroke); }
-      else {
-        triangle.setFill(negativeFill);
-        triangle.setStroke(negativeStroke); }
-      group.getChildren().add(triangle); }
-    return group; }
-
-  //-------------------------------------------------------------------
-
-  private static final Group makeWorldGroup () {
-    final Group land = land();
-    final Group icosahedron = icosahedron();
-    // current rescaling fails with Pane rather than generic group
-    final Group world = new Group(icosahedron, land);
-    world.setId("world");
-    // parent Pane handles events
-    // TODO: is this necessary or useful?
-    land.setFocusTraversable(false);
-    icosahedron.setFocusTraversable(false);
-    world.setFocusTraversable(false);
-    world.setMouseTransparent(true);
-    return world; }
 
   //-------------------------------------------------------------------
   // instance slots
@@ -194,22 +108,16 @@ public final class WorldPane extends Pane {
                       -childBounds.getMaxY());
       final double s = Math.min(sw / cw, sh / ch);
       final Transform scale = new Scale(s, -s);
-      child.getTransforms().setAll(scale, preTranslate);
-      //System.out.println("rescaled");
-    }
-//    else {
-//      System.out.println("not rescaled");
-//    }
-  }
+      child.getTransforms().setAll(scale, preTranslate); } }
 
   //-------------------------------------------------------------------
   // hidden constructor
   //-------------------------------------------------------------------
 
-  private WorldPane (final Group worldGroup) {
-    super(worldGroup);
+  private WorldPane (final Group layers) {
+    super(layers);
     this.setBackground(Background.fill(Color.web("#0000cc22")));
-    this.setId(worldGroup.getId() + " pane");
+    this.setId(layers.getId() + " pane");
     this.setFocusTraversable(true);
 
     this.setOnKeyPressed((final KeyEvent e) -> {
@@ -245,11 +153,8 @@ public final class WorldPane extends Pane {
     this.layoutBoundsProperty().addListener(changeListener);
   }
 
-  public static final WorldPane make (final Group worldGroup) {
-    return new WorldPane(worldGroup); }
-
-  public static final WorldPane make () {
-    return make(makeWorldGroup()); }
+  public static final WorldPane make (final Group layers) {
+    return new WorldPane(layers); }
 
 //---------------------------------------------------------------------
 }

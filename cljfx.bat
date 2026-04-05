@@ -1,17 +1,15 @@
 @echo off
 :: palisades dot lakes at gmail dot com
-:: 2025-10-12
+:: 206-04-05
 
-::set GC=-XX:+AggressiveHeap -XX:+UseStringDeduplication 
-set GC=
 
 set TRACE=
 ::set TRACE=-XX:+PrintGCDetails -XX:+TraceClassUnloading -XX:+TraceClassLoading
 
 set UNWARN=--enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow
 
-::set XMX=
-set XMX=-Xms29g -Xmx29g -Xmn11g
+set XMX=
+::set XMX=-Xms29g -Xmx29g -Xmn11g
 ::set XMX=-Xms48g -Xmx48g -Xmn16g
 
 set OPENS=--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.desktop/javax.imageio=ALL-UNNAMED --add-opens java.desktop/javax.imageio.plugins.tiff=ALL-UNNAMED --add-opens java.desktop/com.sun.imageio.plugins.tiff=ALL-UNNAMED --add-opens java.desktop/com.sun.imageio.plugins.png=ALL-UNNAMED

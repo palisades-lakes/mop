@@ -22,14 +22,14 @@
 ::set XMX=-Xms12g -Xmx12g -Xmn5g
 set XMX=
 
-set OPENS=--add-opens java.base/java.lang=ALL-UNNAMED  --add-opens java.desktop/javax.imageio=ALL-UNNAMED --add-opens java.desktop/javax.imageio.plugins.tiff=ALL-UNNAMED --add-opens java.desktop/com.sun.imageio.plugins.tiff=ALL-UNNAMED
+set OPENS=--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.desktop/javax.imageio=ALL-UNNAMED --add-opens java.desktop/javax.imageio.plugins.tiff=ALL-UNNAMED --add-opens java.desktop/com.sun.imageio.plugins.tiff=ALL-UNNAMED --add-opens java.desktop/com.sun.imageio.plugins.png=ALL-UNNAMED
 
 set CP=-cp lib\*
 
 ::set MODULE_PATH=--module-path lib\*
 set JAVA="%JAVA_HOME%\bin\java"
 
-set CMD=%JAVA% -ea -dsa  %XMX% %OPENS% %CP% --sun-misc-unsafe-memory-access=allow --enable-native-access=javafx.graphics %MODULE_PATH% %MODULES% %*
+set CMD=%JAVA% -ea -dsa  %XMX% %OPENS% %CP% --sun-misc-unsafe-memory-access=allow %MODULE_PATH% %MODULES%  --enable-native-access=javafx.graphics %*
 
 ::echo %CMD%
 %CMD%
