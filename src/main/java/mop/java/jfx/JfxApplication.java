@@ -30,7 +30,7 @@ public final class JfxApplication extends Application {
   public static final Screen chooseScreen () {
     final ObservableList<Screen> screens = Screen.getScreens();
     Screen largest = Screen.getPrimary();
-    double maxArea = areaInch2(largest);
+    double maxArea = Double.NEGATIVE_INFINITY;
     for (final Screen screen : screens) {
       final double area = areaInch2(screen);
       if (area > maxArea) { maxArea = area; largest = screen; } }

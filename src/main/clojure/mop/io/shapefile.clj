@@ -6,7 +6,7 @@
    "Read shapefiles into jts geometries, using geotools.
     Convert to JFX shapes, mop meshes?"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-04-05"}
+   :version "2026-04-06"}
   (:require
    [clojure.java.io :as io])
   (:import
@@ -17,7 +17,8 @@
     DataStore FileDataStoreFinder SimpleFeatureSource]
    [org.geotools.api.feature.simple
     SimpleFeature]
-   [org.geotools.data.simple SimpleFeatureCollection SimpleFeatureIterator]
+   [org.geotools.data.simple
+    SimpleFeatureCollection SimpleFeatureIterator]
    [org.locationtech.jts.geom
     Coordinate GeometryCollection GeometryFactory MultiPolygon Polygon]))
 ;;---------------------------------------------------------------------
@@ -67,6 +68,15 @@
     (dotimes [i n]
       (.add children (jfx-node (.getGeometryN jts i) fill stroke)))
     group))
+
+(defmethod jfx-node GeometryCollection [^GeometryCollection jts ^Color fill ^Color stroke]
+  (let [group (Group.)
+        children (.getChildren group)
+        n (.getNumGeometries jts)]
+    (.setId group (.getUserData jts))
+    (dotimes [i n]
+      (.add children (jfx-node (.getGeometryN jts i) fill stroke)))
+    group))
 ;;---------------------------------------------------------------------
 
 (defn- extract-polygons [^SimpleFeature feature]
@@ -89,7 +99,7 @@
         (persistent! polygons)))))
 
 (defn ^GeometryCollection read-jts-geometries
-  ([shp ^GeometryFactory gfactory]
+  ([shp ^GeometryFactory factory]
    (let [^DataStore store (FileDataStoreFinder/getDataStore (io/file shp))
          ;; TODO: handle multiple type names
          ^String name (first (into [] (.getTypeNames store)))
@@ -99,11 +109,9 @@
          polygons (into-array
                    org.locationtech.jts.geom.Polygon
                    (flatten (collect-polygons featureCollection)))
-         multipolygon (MultiPolygon. polygons gfactory)]
-     (println shp)
-     (println "n grometries: " (.getNumGeometries multipolygon))
-     (println "n points: " (.getNumPoints multipolygon))
+         geometries (.createGeometryCollection factory polygons)]
+     #_(assert (.isValid geometries))
      (.dispose store)
-     multipolygon))
+     geometries))
   ([shp] (read-jts-geometries shp (GeometryFactory.))))
 ;;---------------------------------------------------------------------

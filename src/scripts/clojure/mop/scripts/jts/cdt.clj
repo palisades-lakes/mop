@@ -21,9 +21,9 @@
 ;;----------------------------------------------------------------
 (let [gfactory (GeometryFactory.)
       land (miosh/read-jts-geometries
-            "data/natural-earth/10m_physical/ne_10m_land.shp"
+            #_"data/natural-earth/10m_physical/ne_10m_land.shp"
             #_"data/natural-earth/50m_physical/ne_50m_land.shp"
-            #_"data/natural-earth/ne_110m_land.shp"
+            "data/natural-earth/ne_110m_land.shp"
             gfactory)
       _ (println "land: " (.getNumGeometries land))
       tolerance 0.75
