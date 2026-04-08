@@ -3,10 +3,10 @@
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-(ns mop.scripts.jts.cdt
-  {:doc     "Conforming delaunay triangulation.
+(ns mop.scripts.jts.stereographic
+  {:doc "Conforming delaunay triangulation.
   Natural earth boundaries and regular icosahedral triangulation
-  as constraints."
+  as constraints, in stereographic projection."
    :author  "palisades dot lakes at gmail dot com"
    :version "2026-04-08"}
   (:require
@@ -22,12 +22,12 @@
    [javafx.scene.layout BorderPane]
    [mop.java.geom.mesh TriangleMesh]
    [mop.java.jfx JfxApplication WorldPane]
-   [org.locationtech.jts.geom Geometry GeometryFactory PrecisionModel]))
+   [org.locationtech.jts.geom GeometryFactory PrecisionModel]))
 ;;----------------------------------------------------------------
 (defn make-world []
-  (let [tolerance 1.0
-        ;;precision (PrecisionModel. tolerance)
-        factory (GeometryFactory.)
+  (let [tolerance 1.0e-6
+        precision (PrecisionModel. tolerance)
+        factory (GeometryFactory. precision)
         ^TriangleMesh u2-mesh ((comp
                                 #_cmplx/midpoint-subdivide-4
                                 #_cmplx/midpoint-subdivide-4)
@@ -40,16 +40,16 @@
         polygons-group (jts/jfx polygons "#FFFFFF00" "#FF0000FF")
         edges (jts/mesh-linestrings mesh factory)
         _ (jts/write-wkt edges "edges.wkt")
-        ;;points (jts/mesh-points mesh factory)
-        points (jts/centroids polygons)
+        points (jts/mesh-points mesh factory)
         _ (jts/write-wkt points "points.wkt")
-        ^Geometry triangles (jts/cdt points edges tolerance)
-        _ (.setUserData triangles "triangulation")
-        _ (jts/assert-valid triangles)
+        ;;points (jts/centroids polygons)
+        ;^Geometry triangles (jts/cdt points edges tolerance)
+        ;_ (.setUserData triangles "triangulation")
+        ;_ (jts/assert-valid triangles)
         triangulation-group (jts/jfx edges "#FFFFFF00" "#0000FF88")
         ;; 'children' binding with type hint seems necessary to avoid
         ;; reflection warnings; inline type hint gives warning?
-        ^Collection children [polygons-group triangulation-group]
+        ^Collection children [#_polygons-group triangulation-group]
         world (Group. children)]
     (.setId world "world")
     ;; parent Pane handles events

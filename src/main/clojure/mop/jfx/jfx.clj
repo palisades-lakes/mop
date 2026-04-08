@@ -7,12 +7,11 @@
    :author  "palisades dot lakes at gmail dot com"
    :version "2026-04-07"}
   (:import
-   [java.util Objects]
    [javafx.scene Group]
    [javafx.scene.paint Color]
-   [javafx.scene.shape Shape StrokeType]
+   [javafx.scene.shape Polyline Shape StrokeType]
    [org.locationtech.jts.geom
-    Coordinate GeometryCollection MultiPolygon Polygon]))
+    Coordinate GeometryCollection LineString MultiPolygon Polygon]))
 ;;---------------------------------------------------------------------
 ;; TODO: or java compile/run-time dispatch based on type of input
 
@@ -51,6 +50,18 @@
     (.setStrokeWidth polygon 1)
     (.setStrokeType polygon StrokeType/INSIDE)
     polygon))
+
+(defmethod node LineString [^LineString jts ^Color fill ^Color stroke]
+  (let [^Polyline polyline (javafx.scene.shape.Polyline.
+                            (jts-coords-to-doubles
+                             (.getCoordinates jts)))]
+    (.setId polyline (str (.getUserData jts)))
+    ;; ignore fill
+    ;;(when fill (.setFill polyline fill))
+    (.setStroke polyline stroke)
+    (.setStrokeWidth polyline 1)
+    (.setStrokeType polyline StrokeType/CENTERED)
+    polyline))
 
 (defmethod node MultiPolygon [^MultiPolygon jts ^Color fill ^Color stroke]
   (let [group (Group.)

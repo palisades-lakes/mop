@@ -1,51 +1,52 @@
-;; mvn -q -skipTests install & cljfx src\scripts\clojure\mop\scripts\jts\icosahedron.clj
+;; mvn -q install & cljfx src\scripts\clojure\mop\scripts\jts\neland.clj
 ;;----------------------------------------------------------------
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-(ns mop.scripts.jts.icosahedron
-  {:doc     "Conformal delaunay triangulation of a cut, projected icosahedron."
+(ns mop.scripts.jts.neland
+  {:doc     "Use JavaFX to display a conformal delaunay triangles of
+  natural earth boundaries."
    :author  "palisades dot lakes at gmail dot com"
    :version "2026-04-08"}
+
   (:require
-   [mop.cmplx.complex :as cmplx]
-   [mop.geom.icosahedron :as icosahedron]
-   [mop.geom.mesh :as mesh]
-   [mop.geom.s2 :as s2]
+   [mop.io.shapefile :as miosh]
    [mop.jts.jts :as jts])
   (:import
    [java.util Collection]
    [javafx.geometry Insets]
    [javafx.scene Group Scene]
    [javafx.scene.layout BorderPane]
-   [mop.java.geom.mesh TriangleMesh]
    [mop.java.jfx JfxApplication WorldPane]
-   [org.locationtech.jts.geom Geometry GeometryFactory]))
+   [org.locationtech.jts.geom
+    GeometryCollection GeometryFactory]))
+;;----------------------------------------------------------------
+(defn ^GeometryCollection land-polygons [^GeometryFactory factory]
+  (let [geometries (miosh/read-jts-geometries
+                    #_"data/natural-earth/10m_physical/ne_10m_land.shp"
+                    #_"data/natural-earth/50m_physical/ne_50m_land.shp"
+                    "data/natural-earth/110m_physical/ne_110m_land.shp"
+                    factory)
+        ;is-valid (IsValidOp. geometries)
+        ;geometries (if (.isValid is-valid)
+        ;               geometries
+        ;               (GeometryFixer/fix geometries))
+        ;is-valid (IsValidOp. geometries)
+        ]
+    ;(assert (.isSimple geometries))
+    ;(assert (.isValid is-valid) (str (.getValidationError is-valid)))
+    geometries))
 ;;----------------------------------------------------------------
 (defn make-world []
   (let [factory (GeometryFactory.)
-        ^TriangleMesh u2-mesh ((comp
-                                #_cmplx/midpoint-subdivide-4
-                                cmplx/midpoint-subdivide-4)
-                               (icosahedron/u2-cut-icosahedron))
-        embedding (into {} (map
-                            (fn [[k v]] [k (jts/coordinate (s2/to-ll v))])
-                            (.embedding u2-mesh)))
-        mesh (mesh/triangle-mesh (.cmplx u2-mesh) embedding)
-        polygons (jts/mesh-polygons mesh factory)
-        polygons-group (jts/jfx polygons "#FFFFFF00" "#FF0000FF")
-        edges (jts/mesh-linestrings mesh factory)
-        points (jts/mesh-points mesh factory)
-        ;;points (jts/centroids polygons)
-        ;; midpoint produces invalid geometry
-        ;; triangles (jts/midpoint-cdt points edges 5.0e-1)
-        ^Geometry triangles (jts/cdt points edges 1.0)
-        _ (.setUserData triangles "triangulation")
-        _ (jts/assert-valid triangles)
-        triangulation-group (jts/jfx triangles "#FFFFFF00" "#0000FF88")
+        land (land-polygons factory)
+        land-group (jts/jfx land "#22990044" "#000088FF")
+        triangles (jts/cdt land land 1.0)
+        ;;triangles (jts/nonencroaching-cdt land land 1.0)
+        triangles-group (jts/jfx triangles "#FFFFFF00" "#000088FF")
         ;; 'children' binding with type hint seems necessary to avoid
         ;; reflection warnings; inline type hint gives warning?
-        ^Collection children [polygons-group triangulation-group]
+        ^Collection children [land-group triangles-group]
         world (Group. children)]
     (.setId world "world")
     ;; parent Pane handles events
@@ -59,7 +60,7 @@
         _ (BorderPane/setMargin pane (Insets. 32))
         wrapper (BorderPane. pane)
         scene (Scene. wrapper w h)]
-    (.setUserData scene "cut icosahedronS2 scene")
+    (.setUserData scene "natural earth cdt scene")
     scene))
 ;;----------------------------------------------------------------
 ;;(println (System/getProperty "glass.win.uiScale"))

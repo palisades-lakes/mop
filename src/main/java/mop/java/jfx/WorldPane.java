@@ -21,7 +21,7 @@ import javafx.scene.transform.Translate;
  * <p>
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2026-04-05
+ * @version 2026-04-08
  */
 
 @SuppressWarnings({ "unchecked", "unused" })
@@ -116,7 +116,7 @@ public final class WorldPane extends Pane {
 
   private WorldPane (final Group layers) {
     super(layers);
-    this.setBackground(Background.fill(Color.web("#0000cc22")));
+    this.setBackground(Background.fill(Color.web("#cccccc11")));
     this.setId(layers.getId() + " pane");
     this.setFocusTraversable(true);
 

@@ -2,10 +2,10 @@
 (set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
 (ns mop.scripts.jfx.triangulate
-  {:doc     "Use JavaFX to display a conformal triangulation of
+  {:doc     "Use JavaFX to display a conformal delaunay triangulation of
   natural earth boundaries."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-04-07"}
+   :version "2026-04-08"}
 
   (:require
    [mop.cmplx.complex :as cmplx]
