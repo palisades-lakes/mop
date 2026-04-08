@@ -5,13 +5,14 @@
   {:doc     "Use JavaFX to display cut icosahedron and natural earth boundaries
   in planar lon,lat coordinates."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-04-05"}
+   :version "2026-04-07"}
 
   (:require
    [mop.cmplx.complex :as cmplx]
    [mop.geom.icosahedron :as icosahedron]
    [mop.geom.rn :as rn]
    [mop.geom.s2 :as s2]
+   [mop.jfx.jfx :as jfx]
    [mop.io.shapefile :as miosh])
   (:import
    [java.util Collection List]
@@ -35,7 +36,7 @@
                   gfactory)
         fill (Color/web "#22990044")
         stroke (Color/web "#a6611aFF")
-        group (miosh/jfx-node polygons fill stroke)]
+        group (jfx/node polygons fill stroke)]
     (.setId group "land")
     (.setFocusTraversable group false)
     group))
@@ -65,7 +66,7 @@
                                            [(.getX p0) (.getY p0)
                                             (.getX p1) (.getY p1)
                                             (.getX p2) (.getY p2)]))
-                                _ (.setId triangle (.toString face))
+                                _ (.setId triangle (str face))
                                 area (rn/signed-area p0 p1 p2)]
                             ;; strokeWidth 0.0 doesn't seem to work.
                             ;; may need to invert scaling transform to get more-or-less

@@ -5,13 +5,14 @@
   {:doc     "Use JavaFX to display a conformal triangulation of
   natural earth boundaries."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-04-06"}
+   :version "2026-04-07"}
 
   (:require
    [mop.cmplx.complex :as cmplx]
    [mop.commons.time :as mct]
    [mop.geom.icosahedron :as icosahedron]
    [mop.geom.s2 :as s2]
+   [mop.jfx.jfx :as jfx]
    [mop.io.shapefile :as miosh])
   (:import
    [java.util Collection]
@@ -170,7 +171,7 @@
                      ^String id]
   (println id " geometries: " (.getNumGeometries polygons))
   (println id " points: " (.getNumGeometries polygons))
-  (let [group (miosh/jfx-node polygons fill stroke)]
+  (let [group (jfx/node polygons fill stroke)]
     (.setId group id)
     ;; events handled by parents
     (.setFocusTraversable group false)

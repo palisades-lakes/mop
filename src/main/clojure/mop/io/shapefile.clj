@@ -1,18 +1,15 @@
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 ;;------------------------------------------------------------------
+;; TODO: move to geotools package/namespace(s)
 (ns mop.io.shapefile
   {:doc
-   "Read shapefiles into jts geometries, using geotools.
-    Convert to JFX shapes, mop meshes?"
+   "Read shapefiles into jts geometries, using geotools."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-04-06"}
+   :version "2026-04-07"}
   (:require
    [clojure.java.io :as io])
   (:import
-   [javafx.scene Group]
-   [javafx.scene.paint Color]
-   [javafx.scene.shape Shape StrokeType]
    [org.geotools.api.data
     DataStore FileDataStoreFinder SimpleFeatureSource]
    [org.geotools.api.feature.simple
@@ -20,65 +17,8 @@
    [org.geotools.data.simple
     SimpleFeatureCollection SimpleFeatureIterator]
    [org.locationtech.jts.geom
-    Coordinate GeometryCollection GeometryFactory MultiPolygon Polygon]))
+    GeometryCollection GeometryFactory MultiPolygon Polygon]))
 ;;---------------------------------------------------------------------
-;; TODO: or java compile/run-time dispatch based on type of input
-
-(defmulti ^javafx.scene.Node jfx-node
-          (fn [g _ _] (class g)))
-
-(defn- ^doubles
-  jts-coords-to-doubles [^"[Lorg.locationtech.jts.geom.Coordinate;" coords]
-  (let [n (alength coords)
-        ^doubles xys (make-array Double/TYPE (* 2 n))]
-    (dotimes [i n]
-      (let [^Coordinate coord (aget coords i)]
-        (aset xys (* 2 i) (.getX coord))
-        (aset xys (inc (* 2 i)) (.getY coord))))
-    xys))
-
-(defmethod jfx-node Polygon [^Polygon jts ^Color fill ^Color stroke]
-  (let [exterior (javafx.scene.shape.Polygon.
-                  (jts-coords-to-doubles
-                   (.getCoordinates (.getExteriorRing jts))))
-        ;; TODO: assuming all interior rings are holes?
-        ;; TODO: Holes in holes? eg islands in lakes?
-        n-holes (.getNumInteriorRing jts)
-        ^Shape polygon (loop [^Shape polygon exterior
-                              i 0]
-                         (if (>= i n-holes)
-                           polygon
-                           (let [^Shape hole (javafx.scene.shape.Polygon.
-                                              (jts-coords-to-doubles
-                                               (.getCoordinates
-                                                (.getInteriorRingN jts i))))]
-                             (recur (Shape/subtract polygon hole) (inc i)))))]
-    (.setId polygon (.getUserData jts))
-    (when fill (.setFill polygon fill))
-    (.setStroke polygon stroke)
-    (.setStrokeWidth polygon 1)
-    (.setStrokeType polygon StrokeType/INSIDE)
-    polygon))
-
-(defmethod jfx-node MultiPolygon [^MultiPolygon jts ^Color fill ^Color stroke]
-  (let [group (Group.)
-        children (.getChildren group)
-        n (.getNumGeometries jts)]
-    (.setId group (.getUserData jts))
-    (dotimes [i n]
-      (.add children (jfx-node (.getGeometryN jts i) fill stroke)))
-    group))
-
-(defmethod jfx-node GeometryCollection [^GeometryCollection jts ^Color fill ^Color stroke]
-  (let [group (Group.)
-        children (.getChildren group)
-        n (.getNumGeometries jts)]
-    (.setId group (.getUserData jts))
-    (dotimes [i n]
-      (.add children (jfx-node (.getGeometryN jts i) fill stroke)))
-    group))
-;;---------------------------------------------------------------------
-
 (defn- extract-polygons [^SimpleFeature feature]
   (let [^String id (.getID feature)
         ^MultiPolygon multipolygon (.getDefaultGeometry feature)
