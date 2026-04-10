@@ -1,4 +1,4 @@
-;; mvn -q -skipTests install & cljfx src\scripts\clojure\mop\scripts\jts\icosahedron.clj
+;; mvn -q -DskipTests -Dmaven.test.skip=true install & cljfx src\scripts\clojure\mop\scripts\jts\icosahedron.clj
 ;;----------------------------------------------------------------
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
@@ -6,7 +6,7 @@
 (ns mop.scripts.jts.icosahedron
   {:doc     "Conformal delaunay triangulation of a cut, projected icosahedron."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-04-08"}
+   :version "2026-04-09"}
   (:require
    [mop.cmplx.complex :as cmplx]
    [mop.geom.icosahedron :as icosahedron]
@@ -20,7 +20,7 @@
    [javafx.scene.layout BorderPane]
    [mop.java.geom.mesh TriangleMesh]
    [mop.java.jfx JfxApplication WorldPane]
-   [org.locationtech.jts.geom Geometry GeometryFactory]))
+   [org.locationtech.jts.geom GeometryFactory]))
 ;;----------------------------------------------------------------
 (defn make-world []
   (let [factory (GeometryFactory.)
@@ -33,19 +33,21 @@
                             (.embedding u2-mesh)))
         mesh (mesh/triangle-mesh (.cmplx u2-mesh) embedding)
         polygons (jts/mesh-polygons mesh factory)
-        polygons-group (jts/jfx polygons "#FFFFFF00" "#FF0000FF")
+        _ (jts/print-aspect-ratios polygons)
+        ;polygons-group (jts/jfx polygons "#FFFFFF00" "#FF0000FF")
         edges (jts/mesh-linestrings mesh factory)
+        edges-group (jts/jfx edges "#FFFFFF00" "#FF0000FF")
         points (jts/mesh-points mesh factory)
         ;;points (jts/centroids polygons)
         ;; midpoint produces invalid geometry
         ;; triangles (jts/midpoint-cdt points edges 5.0e-1)
-        ^Geometry triangles (jts/cdt points edges 1.0)
-        _ (.setUserData triangles "triangulation")
-        _ (jts/assert-valid triangles)
-        triangulation-group (jts/jfx triangles "#FFFFFF00" "#0000FF88")
+        ;^Geometry triangles (jts/cdt points edges 1.0)
+        ;_ (.setUserData triangles "triangulation")
+        ;_ (jts/assert-valid triangles)
+        ;triangulation-group (jts/jfx triangles "#FFFFFF00" "#0000FFAA")
         ;; 'children' binding with type hint seems necessary to avoid
         ;; reflection warnings; inline type hint gives warning?
-        ^Collection children [polygons-group triangulation-group]
+        ^Collection children [edges-group #_triangulation-group]
         world (Group. children)]
     (.setId world "world")
     ;; parent Pane handles events

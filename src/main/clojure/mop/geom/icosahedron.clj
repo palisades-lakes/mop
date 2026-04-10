@@ -5,7 +5,7 @@
 
   {:doc     "Icosahedra with various embeddings"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-03-16"}
+   :version "2026-04-09"}
   (:require [clojure.math :as math]
             [mop.cmplx.complex :as cmplx]
             [mop.geom.mesh :as mesh]
@@ -128,8 +128,6 @@
 ;; 2d projections. Return wrapped u2 embedding.
 ;; TODO: automate the cut. Key question: what to do when it's not spherical?
 ;; TODO: check if this is a regular icosahedron
-
-
 
 (let [a0 (- -0.1 Math/PI) ;;0.0;; (* Math/PI -0.1)
       da (double (* Math/PI 0.2))
