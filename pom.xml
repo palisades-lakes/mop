@@ -17,7 +17,7 @@
   </parent>
   <properties>
     <maven.compiler.release>25</maven.compiler.release>
-    <gt.version>34.0</gt.version>
+    <gt.version>34.3</gt.version>
     <maven.deploy.skip>true</maven.deploy.skip>
   </properties>
   <build>
@@ -198,7 +198,7 @@
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
-      <artifactId>gt-image</artifactId>
+      <artifactId>gt-epsg-hsql</artifactId>
       <exclusions>
         <exclusion>
           <groupId>com.google.guava</groupId>
@@ -206,16 +206,26 @@
         </exclusion>
       </exclusions>
     </dependency>
-    <dependency>
-      <groupId>org.geotools</groupId>
-      <artifactId>gt-geotiff</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.guava</groupId>
-          <artifactId>guava</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
+<!--    <dependency>-->
+<!--      <groupId>org.geotools</groupId>-->
+<!--      <artifactId>gt-image</artifactId>-->
+<!--      <exclusions>-->
+<!--        <exclusion>-->
+<!--          <groupId>com.google.guava</groupId>-->
+<!--          <artifactId>guava</artifactId>-->
+<!--        </exclusion>-->
+<!--      </exclusions>-->
+<!--    </dependency>-->
+<!--    <dependency>-->
+<!--      <groupId>org.geotools</groupId>-->
+<!--      <artifactId>gt-geotiff</artifactId>-->
+<!--      <exclusions>-->
+<!--        <exclusion>-->
+<!--          <groupId>com.google.guava</groupId>-->
+<!--          <artifactId>guava</artifactId>-->
+<!--        </exclusion>-->
+<!--      </exclusions>-->
+<!--    </dependency>-->
 
     <dependency>
       <groupId>com.drewnoakes</groupId>

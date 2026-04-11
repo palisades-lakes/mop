@@ -79,7 +79,7 @@
       (let [^Polygon triangle (.getGeometryN triangles i)]
         (println (.getUserData triangle) " : "
                  (aspect-ratio triangle))
-        (println (Arrays/toString (.getCoordinates triangle)))))))
+        #_(println (Arrays/toString (.getCoordinates triangle)))))))
 ;;----------------------------------------------------------------
 (defn ^CoordinateXY coordinate [^Vector2D xy]
   (CoordinateXY. (.getX xy) (.getY xy)))

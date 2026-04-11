@@ -4,16 +4,18 @@
 (set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
 (ns mop.scripts.jts.stereo
-  {:doc     "Conforming delaunay triangulation.
-  Natural earth boundaries and regular icosahedral triangulation
-  as constraints, in stereographic projection."
+  {:doc
+   "Conforming delaunay triangulation.
+    Natural earth boundaries and regular icosahedral triangulation
+    as constraints, in stereographic projection."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-04-09"}
+   :version "2026-04-10"}
   (:require
    [clojure.math :as math]
    [mop.cmplx.complex :as cmplx]
    [mop.geom.mesh :as mesh]
    [mop.geom.s2 :as s2]
+   [mop.gt.gt :as gt]
    [mop.jts.jts :as jts])
   (:import
    [java.util Collection]
@@ -57,10 +59,10 @@
                        [a b c]
                        [a c d]
                        [a d e] [a e f]
-                       #_[a f g]
+                       [a f g]
                        [b i c] [c j d] [d k e] [e l f] [f m g]
                        [b h i] [c i j] [d j k] [e k l] [f l m]
-                       #_[n i h]
+                       [n i h]
                        [n j i]
                        [n k j]
                        [n l k]
@@ -75,23 +77,28 @@
 (defn make-world []
   (let [factory (GeometryFactory.)
         ^TriangleMesh u2-mesh (icosa)
-        embedding (into {} (map (fn [[k v]] [k (jts/coordinate (s2/to-ll v))])
+        embedding (into {} (map (fn [[k v]]
+                                  [k (jts/coordinate
+                                       (s2/to-ll v))])
                                 (.embedding u2-mesh)))
         mesh (mesh/triangle-mesh (.cmplx u2-mesh) embedding)
         polygons (jts/mesh-polygons mesh factory)
+        polygons (gt/wgs84-to-stereographic polygons)
         _ (jts/print-aspect-ratios polygons)
         ;polygons-group (jts/jfx polygons "#FFFFFF00" "#FF0000FF")
         edges (jts/mesh-linestrings mesh factory)
+        edges (gt/wgs84-to-stereographic edges)
         edges-group (jts/jfx edges "#FFFFFF00" "#FF0000FF")
         points (jts/mesh-points mesh factory)
+        points (gt/wgs84-to-stereographic points)
         ;;points (jts/centroids polygons)
-        ^Geometry triangles (jts/cdt points edges 0.0)
-        _ (.setUserData triangles "triangulation")
-        _ (jts/assert-valid triangles)
-        triangulation-group (jts/jfx triangles "#FFFFFF00" "#0000FF88")
+        ;^Geometry triangles (jts/cdt points edges 0.0)
+        ;_ (.setUserData triangles "triangulation")
+        ;_ (jts/assert-valid triangles)
+        ;;triangulation-group (jts/jfx triangles "#FFFFFF00" "#0000FF88")
         ;; 'children' binding with type hint seems necessary to avoid
         ;; reflection warnings; inline type hint gives warning?
-        ^Collection children [edges-group triangulation-group]
+        ^Collection children [edges-group #_triangulation-group]
         world (Group. children)]
     (.setId world "world")
     ;; parent Pane handles events

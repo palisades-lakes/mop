@@ -1,15 +1,16 @@
-;; mvn -q install & cljfx src\scripts\clojure\mop\scripts\jts\neland.clj
+;; mvn -q install & cljfx src\scripts\clojure\mop\scripts\jts\land.clj
 ;;----------------------------------------------------------------
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-(ns mop.scripts.jts.neland
+(ns mop.scripts.jts.land
   {:doc     "Use JavaFX to display a conformal delaunay triangles of
   natural earth boundaries."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-04-08"}
+   :version "2026-04-10"}
 
   (:require
+   [mop.gt.gt :as gt]
    [mop.io.shapefile :as miosh]
    [mop.jts.jts :as jts])
   (:import
@@ -40,13 +41,13 @@
 (defn make-world []
   (let [factory (GeometryFactory.)
         land (land-polygons factory)
+        land (gt/wgs84-to-stereographic land)
         land-group (jts/jfx land "#22990044" "#000088FF")
-        triangles (jts/cdt land land 1.0)
-        ;;triangles (jts/nonencroaching-cdt land land 1.0)
-        triangles-group (jts/jfx triangles "#FFFFFF00" "#000088FF")
+        ;triangles (jts/cdt land land 1.0)
+        ;triangles-group (jts/jfx triangles "#FFFFFF00" "#000088FF")
         ;; 'children' binding with type hint seems necessary to avoid
         ;; reflection warnings; inline type hint gives warning?
-        ^Collection children [land-group triangles-group]
+        ^Collection children [land-group #_triangles-group]
         world (Group. children)]
     (.setId world "world")
     ;; parent Pane handles events
