@@ -11,6 +11,7 @@
    [clojure.math :as math]
    [mop.cmplx.complex :as cmplx]
    [mop.geom.mesh :as mesh]
+   [mop.geom.rn :as rn]
    [mop.geom.s2 :as s2]
    [mop.jts.jts :as jts])
   (:import
@@ -32,6 +33,10 @@
           h (cmplx/simplex "h") i (cmplx/simplex "i") j (cmplx/simplex "j")
           k (cmplx/simplex "k") l (cmplx/simplex "l") m (cmplx/simplex "m")
           n (cmplx/simplex "n")
+          hn (cmplx/simplex "hn")
+          mn (cmplx/simplex "mn")
+          ab (cmplx/simplex "ab")
+          ag (cmplx/simplex "ag")
           ;; TODO: problem with txt coordinates when cut at exactly 0 and 2PI
           u2-embedding {a Point2U/PLUS_K
                         b (Point2U/of (+ a0 (* 0 da)) p1)
@@ -41,53 +46,72 @@
                         f (Point2U/of (+ a0 (* 8 da)) p1)
                         g (Point2U/of (+ a0 (* 10 da)) p1)
                         h (Point2U/of (+ a0 (* -1 da)) p2)
-                        i (Point2U/of (+ a0 (* 1 da)) p2)
+                        i (Point2U/of (+ a0 (* 1 da))  p2)
                         j (Point2U/of (+ a0 (* 3 da)) p2)
                         k (Point2U/of (+ a0 (* 5 da)) p2)
                         l (Point2U/of (+ a0 (* 7 da)) p2)
                         m (Point2U/of (+ a0 (* 9 da)) p2)
                         n Point2U/MINUS_K}
+          ll-embedding (into {} (map (fn [[k v]] [k (s2/to-ll v)]) u2-embedding))
+         ;; ll-embedding
+          #_(merge
+             ll-embedding
+             {hn (rn/interpolate (ll-embedding h) 0.4 (ll-embedding n))
+              mn (rn/interpolate (ll-embedding m) 0.4 (ll-embedding n))
+              ab (rn/interpolate (ll-embedding b) 0.35 (ll-embedding a))
+              ag (rn/interpolate (ll-embedding g) 0.35 (ll-embedding a))})
           cmplx (cmplx/simplicial-complex-2d
                  (map #(apply cmplx/simplex %)
                       [
                        [a b c]
+                       ;[a ab c]
+                       ;[b c ab]
                        [a c d]
                        [a d e] [a e f]
                        [a f g]
+                       ;[a f ag]
+                       ;[ag f g]
                        [b i c] [c j d] [d k e] [e l f] [f m g]
                        [b h i] [c i j] [d j k] [e k l] [f l m]
                        [n i h]
+                       ;[h hn i]
+                       ;#_[hn n i]
                        [n j i]
+                       ;[hn n j]
+                       ;[hn j i]
                        [n k j]
                        [n l k]
                        [n m l]
+                       ;[mn n l]
+                       ;[m mn l]
                        ]))
           ]
-      (mesh/triangle-mesh cmplx u2-embedding)
+      (mesh/triangle-mesh cmplx ll-embedding)
       )))
 ;;----------------------------------------------------------------
 (defn make-world []
   (let [factory (GeometryFactory.)
-        ^TriangleMesh u2-mesh ((comp
+        ^TriangleMesh ll-mesh ((comp
                                 #_cmplx/midpoint-subdivide-4
                                 #_cmplx/midpoint-subdivide-4)
                                (icosacap))
-        embedding (into {} (map (fn [[k v]] [k (jts/coordinate (s2/to-ll v))])
-                                (.embedding u2-mesh)))
-        mesh (mesh/triangle-mesh (.cmplx u2-mesh) embedding)
+        embedding (into {} (map (fn [[k v]] [k (jts/coordinate v)])
+                                (.embedding ll-mesh)))
+        mesh (mesh/triangle-mesh (.cmplx ll-mesh) embedding)
         polygons (jts/mesh-polygons mesh factory)
         _ (jts/print-aspect-ratios polygons)
         ;polygons-group (jts/jfx polygons "#FFFFFF00" "#FF0000FF")
         edges (jts/mesh-linestrings mesh factory)
         edges-group (jts/jfx edges "#FFFFFF00" "#FF0000FF")
         points (jts/mesh-points mesh factory)
-        ^Geometry triangles (jts/cdt points edges 0.0e1)
+        ^Geometry triangles (jts/cdt points nil 0.0e1)
+        _ (jts/print-aspect-ratios triangles)
         _ (.setUserData triangles "triangulation")
-        ;;_ (jts/assert-valid triangles)
+        _ (jts/assert-valid triangles)
         triangulation-group (jts/jfx triangles "#FFFFFF00" "#0000FF88")
         ;; 'children' binding with type hint seems necessary to avoid
         ;; reflection warnings; inline type hint gives warning?
-        ^Collection children [edges-group triangulation-group]
+        ^Collection children [#_edges-group triangulation-group]
         world (Group. children)]
     (.setId world "world")
     world))

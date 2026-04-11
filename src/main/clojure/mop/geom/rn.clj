@@ -6,7 +6,7 @@
   {:doc     "Geometry utilities for Rn, especially R2 abd R3.
   Hide 3rd party library is used, if any."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-11-01"}
+   :version "2026-04-11"}
 
   (:refer-clojure :exclude [vector])
 
@@ -14,6 +14,7 @@
   (:import
    [java.util List]
    [org.apache.commons.geometry.core Vector]
+   [org.apache.commons.geometry.euclidean EuclideanVector]
    [org.apache.commons.geometry.euclidean.threed Vector3D Vector3D$Sum Vector3D$Unit]
    [org.apache.commons.geometry.euclidean.threed.rotation QuaternionRotation]
    [org.apache.commons.geometry.euclidean.twod Vector2D Vector2D$Sum Vector2D$Unit]
@@ -21,6 +22,11 @@
 
 ;;----------------------------------------------------------------
 ;; TODO: composition of embedding functions
+;;----------------------------------------------------------------
+;; TODO: defmulti
+(defn interpolate [^EuclideanVector v0 ^double a ^EuclideanVector v1]
+  "(1-a)*v0 + a*v1"
+  (.lerp v0 v1 a))
 ;;----------------------------------------------------------------
 
 (defn ^Vector add [^Vector v0 ^Vector v1] (.add v0 v1))

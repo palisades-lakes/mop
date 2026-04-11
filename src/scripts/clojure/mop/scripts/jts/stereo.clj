@@ -83,7 +83,7 @@
         polygons (jts/mesh-polygons mesh factory)
         polygons (gt/wgs84-to-stereographic polygons)
         _ (jts/print-aspect-ratios polygons)
-        ;polygons-group (jts/jfx polygons "#FFFFFF00" "#FF0000FF")
+        polygons-group (jts/jfx polygons "#FFFFFF00" "#FF0000FF")
         edges (jts/mesh-linestrings mesh factory)
         edges (gt/wgs84-to-stereographic edges)
         edges-group (jts/jfx edges "#FFFFFF00" "#FF0000FF")

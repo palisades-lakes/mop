@@ -4,15 +4,14 @@
 (ns mop.cmplx.complex
   {:doc     "(Abstract) simplicial and cell complexes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-02-18"}
+   :version "2026-04-11"}
   (:require
    [clojure.set :as set]
    [mop.commons.string :as mcs])
   (:import
-   [java.util List]
    [mop.java.cmplx
     Cell CellComplex
-    SimplicialComplex2D ZeroSimplex OneSimplex TwoSimplex]))
+    OneSimplex SimplicialComplex2D TwoSimplex ZeroSimplex]))
 
 ;;---------------------------------------------------------------
 
@@ -29,34 +28,6 @@
 (defn equivalent [^Cell c0 ^Cell c1]
   "Do the 2 cells have the same vertices in the same order?"
   (.equivalent c0 c1))
-
-;;---------------------------------------------------------------
-;; Abstract 2d simplicial complex.
-;; <code>deftype</code over <code>defrecord</code> to avoid
-;; clojure generated equals and hashCode --- want identity
-;; based equality and corresponding hash codes.
-;; TODO: check whether this is really necessary
-;; TODO: immutable internal collections
-
-#_(deftype SimplicialComplex2D
-  [^List _vertices
-   ^List _faces]
-  :load-ns true
-
-  #_Object
-  #_(toString [_]
-              (str "SimplicialCmplx2D(" counter "; "
-                   (.counter z0) ","
-                   (.counter z1) ","
-                   (.counter z2) ","
-                   (.counter z3) ")"))
-  #_(hashCode [this] (System/identityHashCode this))
-  #_(equals [this that] (identical? this that))
-
-  CellComplex
-  (vertices [this] (._vertices this))
-  (faces [this] (._faces this))
-  )
 
 (defn vertices [^CellComplex complex] (.vertices complex))
 (defn faces [^CellComplex complex] (.faces complex))
@@ -75,37 +46,6 @@
 
 (defn simplicial-complex-2d [faces]
     (SimplicialComplex2D/make faces))
-
-;;---------------------------------------------------------------
-;; icosahedral 2d simplicial complex with spherical topology
-
-#_(defn ^SimplicialComplex2D icosahedron []
-    (let [a (simplex "a") b (simplex "b") c (simplex "c") d (simplex "d")
-          e (simplex "e") f (simplex "f") g (simplex "g") h (simplex "h")
-          i (simplex "i") j (simplex "j") k (simplex "k") l (simplex "l")]
-      (simplicial-complex-2d
-       (map #(apply simplex %)
-            [[a b c] [a d b] [a c f] [a e d] [a f e]
-             [b d g] [b g h] [b h c] [c i f] [c h i]
-             [d e j] [d j g] [e f k] [e k j] [f i k]
-             [g j l] [g l h] [h l i] [k i l] [k l j]]))))
-
-;; Cut icosahedron to simplify texture mapping and other
-;; 2d projections.
-
-#_(defn ^SimplicialComplex2D cut-icosahedron []
-    (let [a (simplex "a") b (simplex "b") c (simplex "c") d (simplex "d")
-          e (simplex "e") f (simplex "f") g (simplex "g") h (simplex "h")
-          i (simplex "i") j (simplex "j") k (simplex "k") l (simplex "l")
-          m (simplex "m") n (simplex "n") o (simplex "o")
-          p (simplex "p") q (simplex "q") r (simplex "r") s (simplex "s") t (simplex "t")
-          u (simplex "u") v (simplex "v")]
-      (simplicial-complex-2d
-       (map #(apply simplex %)
-            [[a f g] [b g h] [c h i] [d i j] [e j k]
-             [f l g] [g m h] [h n i] [i o j] [j p k]
-             [g l m] [h m n] [i n o] [j o p] [k p q]
-             [l r m] [m s n] [n t o] [o u p] [p v q]]))))
 
 ;;---------------------------------------------------------------
 ;; Not a simplex. No independent identity.

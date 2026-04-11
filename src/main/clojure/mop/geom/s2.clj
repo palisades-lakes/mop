@@ -4,14 +4,14 @@
 (ns mop.geom.s2
 
   {:doc "Geometry utilities for the 2-dimensional sphere, S_2.
-
-  Hide 3rd party library is used, if any.
-
+  <br>
+  Hide 3rd party library use, if any.
+  <br>
   NOTE: commons geometry seems to de-dupe instances of
   <code>Point2S</code>, a possible performance hit."
 
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-03-14"}
+   :version "2026-04-11"}
 
   (:require
    [mop.commons.debug :as debug]
@@ -198,7 +198,13 @@
   [^R3Embedding s ^Point2S p]
   (.add ^Vector (.center s) (.radius s) (s2-to-r3 p)))
 
-;----------------------------------------------------------------
+;;----------------------------------------------------------------
+;; TODO: generic op in generic geometry namespace
+
+(defn interpolate [^Point2U p0 ^double a ^Point2U p1]
+  "return (1-a)*p0 + a*p1"
+  (s2-to-u2 (.slerp (u2-to-s2 p0) (u2-to-s2 p1) a)))
+;;----------------------------------------------------------------
 
 (defn- ^Point2S s2-midpoint
   ([^Point2S p0 ^Point2S p1]

@@ -70,7 +70,7 @@
    (assert-triangle triangle)
    (let [^"[Lorg.locationtech.jts.geom.Coordinate;"
          coords (.getCoordinates triangle)]
-     (aspect-ratio (aget coords 0)  (aget coords 1)  (aget coords 2))) ) )
+     (aspect-ratio (aget coords 0) (aget coords 1) (aget coords 2)))))
 
 ;;----------------------------------------------------------------
 (defn print-aspect-ratios [^MultiPolygon triangles]
@@ -189,7 +189,7 @@
    (let [cdtb (MopConformingDelaunayTriangulationBuilder. cspf)]
      (.setTolerance cdtb tolerance)
      (.setSites cdtb sites)
-     (.setConstraints cdtb constraints)
+     (when constraints (.setConstraints cdtb constraints))
      (mct/seconds "triangulate"
                   (.getTriangles cdtb (.getFactory sites)))))
 

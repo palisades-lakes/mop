@@ -21,20 +21,11 @@
     GeometryCollection GeometryFactory]))
 ;;----------------------------------------------------------------
 (defn ^GeometryCollection land-polygons [^GeometryFactory factory]
-  (let [geometries (miosh/read-jts-geometries
-                    #_"data/natural-earth/10m_physical/ne_10m_land.shp"
-                    #_"data/natural-earth/50m_physical/ne_50m_land.shp"
-                    "data/natural-earth/110m_physical/ne_110m_land.shp"
-                    factory)
-        ;is-valid (IsValidOp. geometries)
-        ;geometries (if (.isValid is-valid)
-        ;               geometries
-        ;               (GeometryFixer/fix geometries))
-        ;is-valid (IsValidOp. geometries)
-        ]
-    ;(assert (.isSimple geometries))
-    ;(assert (.isValid is-valid) (str (.getValidationError is-valid)))
-    geometries))
+  (miosh/read-jts-geometries
+   #_"data/natural-earth/10m_physical/ne_10m_land.shp"
+   #_"data/natural-earth/50m_physical/ne_50m_land.shp"
+   "data/natural-earth/110m_physical/ne_110m_land.shp"
+   factory))
 ;;----------------------------------------------------------------
 (defn make-world []
   (let [factory (GeometryFactory.)
@@ -48,15 +39,9 @@
         ^Collection children [land-group #_triangles-group]
         world (Group. children)]
     (.setId world "world")
-    ;; parent Pane handles events
-    ;; TODO: is this necessary or useful?
-    (.setFocusTraversable world false)
-    (.setMouseTransparent world true)
     world))
 ;;----------------------------------------------------------------
-;;(println (System/getProperty "glass.win.uiScale"))
 (System/setProperty "glass.win.uiScale" "1")
-;;(println (System/getProperty "glass.win.uiScale"))
 ;;(System/setProperty "javafx.pulseLogger" "true")
 ;;(System/setProperty "prism.verbose" "true")
 ;;(System/setProperty "prism.order" "d3d")
