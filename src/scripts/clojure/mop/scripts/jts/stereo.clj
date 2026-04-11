@@ -9,7 +9,7 @@
     Natural earth boundaries and regular icosahedral triangulation
     as constraints, in stereographic projection."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-04-10"}
+   :version "2026-04-11"}
   (:require
    [clojure.math :as math]
    [mop.cmplx.complex :as cmplx]
@@ -19,13 +19,11 @@
    [mop.jts.jts :as jts])
   (:import
    [java.util Collection]
-   [javafx.geometry Insets]
-   [javafx.scene Group Scene]
-   [javafx.scene.layout BorderPane]
+   [javafx.scene Group]
    [mop.java.geom Point2U]
    [mop.java.geom.mesh TriangleMesh]
-   [mop.java.jfx JfxApplication WorldPane]
-   [org.locationtech.jts.geom Geometry GeometryFactory]))
+   [mop.java.jfx JfxWorld]
+   [org.locationtech.jts.geom GeometryFactory]))
 ;;----------------------------------------------------------------
 (let [a0 (- -0.1 Math/PI)
       da (double (* Math/PI 0.2))
@@ -89,9 +87,8 @@
         edges (jts/mesh-linestrings mesh factory)
         edges (gt/wgs84-to-stereographic edges)
         edges-group (jts/jfx edges "#FFFFFF00" "#FF0000FF")
-        points (jts/mesh-points mesh factory)
-        points (gt/wgs84-to-stereographic points)
-        ;;points (jts/centroids polygons)
+        ;points (jts/mesh-points mesh factory)
+        ;points (gt/wgs84-to-stereographic points)
         ;^Geometry triangles (jts/cdt points edges 0.0)
         ;_ (.setUserData triangles "triangulation")
         ;_ (jts/assert-valid triangles)
@@ -101,19 +98,7 @@
         ^Collection children [edges-group #_triangulation-group]
         world (Group. children)]
     (.setId world "world")
-    ;; parent Pane handles events
-    ;; TODO: is this necessary or useful?
-    (.setFocusTraversable world false)
-    (.setMouseTransparent world true)
     world))
-;;----------------------------------------------------------------
-(defn make-scene ^Scene [^double w ^double h]
-  (let [pane (WorldPane/make (make-world))
-        _ (BorderPane/setMargin pane (Insets. 16))
-        wrapper (BorderPane. pane)
-        scene (Scene. wrapper w h)]
-    (.setUserData scene "cut icosahedronS2 scene")
-    scene))
 ;;----------------------------------------------------------------
 ;;(println (System/getProperty "glass.win.uiScale"))
 (System/setProperty "glass.win.uiScale" "1")
@@ -121,5 +106,5 @@
 ;;(System/setProperty "javafx.pulseLogger" "true")
 ;;(System/setProperty "prism.verbose" "true")
 ;;(System/setProperty "prism.order" "d3d")
-(JfxApplication/setSceneBuilder make-scene)
-(JfxApplication/launch JfxApplication (make-array String 0))
+(JfxWorld/setWorldBuilder make-world)
+(JfxWorld/launch JfxWorld (make-array String 0))

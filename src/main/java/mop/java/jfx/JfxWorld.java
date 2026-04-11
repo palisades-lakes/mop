@@ -3,8 +3,12 @@ package mop.java.jfx;
 import clojure.lang.IFn;
 import javafx.application.Application;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Group;
 import javafx.scene.Scene;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 
@@ -13,10 +17,10 @@ import javafx.stage.Stage;
  * <p>
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2026-04-05
+ * @version 2026-04-11
  */
 
-public final class JfxApplication extends Application {
+public final class JfxWorld extends Application {
 
   //-------------------------------------------------------------------
 
@@ -39,21 +43,36 @@ public final class JfxApplication extends Application {
   //-------------------------------------------------------------------
 
   // TODO: very bad! public mutable class slot!
-  // Is there some point at which I can put a preconstructed scene
+  // Is there some point at which I can put a preconstructed world
   // into an instance slot?
-  private static IFn _sceneBuilder;
-  public static final IFn getSceneBuilder () {
-    return _sceneBuilder; }
-  public static final void setSceneBuilder (final IFn sceneBuilder) {
-    _sceneBuilder = sceneBuilder; }
-  public static final Scene makeScene (final double w, final double h) {
-    return (Scene) getSceneBuilder().invoke(w,h); }
+  private static IFn _worldBuilder;
+  public static final IFn getWorldBuilder () {
+    return _worldBuilder; }
+  public static final void setWorldBuilder (final IFn worldBuilder) {
+    _worldBuilder = worldBuilder; }
+  public static final Group makeWorld () {
+    return (Group) getWorldBuilder().invoke(); }
 
-  //-------------------------------------------------------------------
+  //----------------------------------------------------------------
+
+  private static final Scene makeScene (final double w,
+                                        final double h) {
+    final Group world = makeWorld();
+    // parent Pane handles events
+      // TODO: is this necessary or useful?
+    world.setFocusTraversable(false);
+    world.setMouseTransparent(true);
+    final Pane pane = WorldPane.make(world);
+    BorderPane.setMargin(pane, new Insets(16));
+    final Pane wrapper = new BorderPane(pane);
+    final Scene scene = new Scene(wrapper, w, h);
+    scene.setUserData(world.getId());
+    return scene;
+  }
+//-------------------------------------------------------------------
 
   @Override
   public final void start (final Stage stage) {
-    stage.setTitle("cut icosahedron (subdivided)");
     stage.sizeToScene();
     final var bounds = chooseScreen().getVisualBounds();
     final double w = 0.75 * bounds.getWidth();
@@ -61,14 +80,16 @@ public final class JfxApplication extends Application {
     stage.setX(0.5 * (bounds.getMinX() + bounds.getMaxX() - w));
     stage.setY(0.5 * (bounds.getMinY() + bounds.getMaxY() - h));
     stage.centerOnScreen();
-    stage.setScene(makeScene(w, h));
+    final Scene scene = makeScene(w, h);
+    stage.setScene(scene);
+    stage.setTitle(scene.getUserData().toString());
     stage.show();
   }
 
   //-------------------------------------------------------------------
   // Construction
   //-------------------------------------------------------------------
-  public JfxApplication () { super(); }
+  public JfxWorld () { super(); }
 //---------------------------------------------------------------------
 }
 //---------------------------------------------------------------------

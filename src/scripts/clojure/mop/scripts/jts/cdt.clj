@@ -8,7 +8,7 @@
   Natural earth boundaries and regular icosahedral triangulation
   as constraints."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-04-08"}
+   :version "2026-04-11"}
   (:require
    [mop.cmplx.complex :as cmplx]
    [mop.geom.icosahedron :as icosahedron]
@@ -17,12 +17,10 @@
    [mop.jts.jts :as jts])
   (:import
    [java.util Collection]
-   [javafx.geometry Insets]
-   [javafx.scene Group Scene]
-   [javafx.scene.layout BorderPane]
+   [javafx.scene Group]
    [mop.java.geom.mesh TriangleMesh]
-   [mop.java.jfx JfxApplication WorldPane]
-   [org.locationtech.jts.geom Geometry GeometryFactory PrecisionModel]))
+   [mop.java.jfx JfxWorld]
+   [org.locationtech.jts.geom Geometry GeometryFactory]))
 ;;----------------------------------------------------------------
 (defn make-world []
   (let [tolerance 1.0
@@ -58,19 +56,11 @@
     (.setMouseTransparent world true)
     world))
 ;;----------------------------------------------------------------
-(defn make-scene ^Scene [^double w ^double h]
-  (let [pane (WorldPane/make (make-world))
-        _ (BorderPane/setMargin pane (Insets. 16))
-        wrapper (BorderPane. pane)
-        scene (Scene. wrapper w h)]
-    (.setUserData scene "cut icosahedronS2 scene")
-    scene))
-;;----------------------------------------------------------------
 ;;(println (System/getProperty "glass.win.uiScale"))
 (System/setProperty "glass.win.uiScale" "1")
 ;;(println (System/getProperty "glass.win.uiScale"))
 ;;(System/setProperty "javafx.pulseLogger" "true")
 ;;(System/setProperty "prism.verbose" "true")
 ;;(System/setProperty "prism.order" "d3d")
-(JfxApplication/setSceneBuilder make-scene)
-(JfxApplication/launch JfxApplication (make-array String 0))
+(JfxWorld/setWorldBuilder make-world)
+(JfxWorld/launch JfxWorld (make-array String 0))

@@ -7,7 +7,7 @@
   {:doc     "Use JavaFX to display a conformal delaunay triangles of
   natural earth boundaries."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-04-10"}
+   :version "2026-04-11"}
 
   (:require
    [mop.gt.gt :as gt]
@@ -15,10 +15,8 @@
    [mop.jts.jts :as jts])
   (:import
    [java.util Collection]
-   [javafx.geometry Insets]
-   [javafx.scene Group Scene]
-   [javafx.scene.layout BorderPane]
-   [mop.java.jfx JfxApplication WorldPane]
+   [javafx.scene Group]
+   [mop.java.jfx JfxWorld]
    [org.locationtech.jts.geom
     GeometryCollection GeometryFactory]))
 ;;----------------------------------------------------------------
@@ -56,19 +54,11 @@
     (.setMouseTransparent world true)
     world))
 ;;----------------------------------------------------------------
-(defn make-scene ^Scene [^double w ^double h]
-  (let [pane (WorldPane/make (make-world))
-        _ (BorderPane/setMargin pane (Insets. 32))
-        wrapper (BorderPane. pane)
-        scene (Scene. wrapper w h)]
-    (.setUserData scene "natural earth cdt scene")
-    scene))
-;;----------------------------------------------------------------
 ;;(println (System/getProperty "glass.win.uiScale"))
 (System/setProperty "glass.win.uiScale" "1")
 ;;(println (System/getProperty "glass.win.uiScale"))
 ;;(System/setProperty "javafx.pulseLogger" "true")
 ;;(System/setProperty "prism.verbose" "true")
 ;;(System/setProperty "prism.order" "d3d")
-(JfxApplication/setSceneBuilder make-scene)
-(JfxApplication/launch JfxApplication (make-array String 0))
+(JfxWorld/setWorldBuilder make-world)
+(JfxWorld/launch JfxWorld (make-array String 0))

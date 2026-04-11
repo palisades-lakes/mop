@@ -5,25 +5,23 @@
   {:doc     "Use JavaFX to display a conformal delaunay triangulation of
   natural earth boundaries."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-04-08"}
+   :version "2026-04-11"}
 
   (:require
    [mop.cmplx.complex :as cmplx]
    [mop.commons.time :as mct]
    [mop.geom.icosahedron :as icosahedron]
    [mop.geom.s2 :as s2]
-   [mop.jfx.jfx :as jfx]
-   [mop.io.shapefile :as miosh])
+   [mop.io.shapefile :as miosh]
+   [mop.jfx.jfx :as jfx])
   (:import
    [java.util Collection]
-   [javafx.geometry Insets]
-   [javafx.scene Group Scene]
-   [javafx.scene.layout BorderPane]
+   [javafx.scene Group]
    [javafx.scene.paint Color Paint]
    [mop.cmplx.complex VertexPair]
    [mop.java.cmplx TwoSimplex ZeroSimplex]
    [mop.java.geom.mesh TriangleMesh]
-   [mop.java.jfx JfxApplication WorldPane]
+   [mop.java.jfx JfxWorld]
    [org.apache.commons.geometry.euclidean.twod Vector2D]
    [org.locationtech.jts.geom
     CoordinateXY Geometry GeometryCollection GeometryFactory LineString Point Polygon]
@@ -182,8 +180,8 @@
         land (land-polygons factory)
         ;combined land
         icosahedron (icosahedron-polygons factory)
-        icosahedron-edges (icosahedron-edges factory)
-        icosahedron-points (icosahedron-points factory)
+        _icosahedron-edges (icosahedron-edges factory)
+        _icosahedron-points (icosahedron-points factory)
         ;;combined icosahedron-points
         ;combined-group (to-jfx combined
         ;                       (Color/web "#22990044")
@@ -201,19 +199,7 @@
         ^Collection children [#_combined-group triangulation-group]
         world (Group. children)]
     (.setId world "world")
-    ;; parent Pane handles events
-    ;; TODO: is this necessary or useful?
-    (.setFocusTraversable world false)
-    (.setMouseTransparent world true)
     world))
-;;----------------------------------------------------------------
-(defn make-scene ^Scene [^double w ^double h]
-  (let [pane (WorldPane/make (make-world))
-        _ (BorderPane/setMargin pane (Insets. 32))
-        wrapper (BorderPane. pane)
-        scene (Scene. wrapper w h)]
-    (.setUserData scene "cut icosahedronS2 scene")
-    scene))
 ;;----------------------------------------------------------------
 ;;(println (System/getProperty "glass.win.uiScale"))
 (System/setProperty "glass.win.uiScale" "1")
@@ -221,5 +207,5 @@
 ;;(System/setProperty "javafx.pulseLogger" "true")
 ;;(System/setProperty "prism.verbose" "true")
 ;;(System/setProperty "prism.order" "d3d")
-(JfxApplication/setSceneBuilder make-scene)
-(JfxApplication/launch JfxApplication (make-array String 0))
+(JfxWorld/setWorldBuilder make-world)
+(JfxWorld/launch JfxWorld (make-array String 0))

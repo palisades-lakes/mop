@@ -5,7 +5,7 @@
   {:doc
    "Java FX utilities"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-04-07"}
+   :version "2026-04-11"}
   (:import
    [javafx.scene Group]
    [javafx.scene.paint Color]
@@ -51,7 +51,7 @@
     (.setStrokeType polygon StrokeType/INSIDE)
     polygon))
 
-(defmethod node LineString [^LineString jts ^Color fill ^Color stroke]
+(defmethod node LineString [^LineString jts ^Color _fill ^Color stroke]
   (let [^Polyline polyline (javafx.scene.shape.Polyline.
                             (jts-coords-to-doubles
                              (.getCoordinates jts)))]

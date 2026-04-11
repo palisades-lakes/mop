@@ -5,25 +5,23 @@
   {:doc     "Use JavaFX to display cut icosahedron and natural earth boundaries
   in planar lon,lat coordinates."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-04-07"}
+   :version "2026-04-11"}
 
   (:require
    [mop.cmplx.complex :as cmplx]
    [mop.geom.icosahedron :as icosahedron]
    [mop.geom.rn :as rn]
    [mop.geom.s2 :as s2]
-   [mop.jfx.jfx :as jfx]
-   [mop.io.shapefile :as miosh])
+   [mop.io.shapefile :as miosh]
+   [mop.jfx.jfx :as jfx])
   (:import
    [java.util Collection List]
-   [javafx.geometry Insets]
-   [javafx.scene Group Scene]
-   [javafx.scene.layout BorderPane]
+   [javafx.scene Group]
    [javafx.scene.paint Color]
    [javafx.scene.shape Polygon StrokeType]
    [mop.java.cmplx TwoSimplex]
    [mop.java.geom.mesh TriangleMesh]
-   [mop.java.jfx JfxApplication WorldPane]
+   [mop.java.jfx JfxWorld]
    [org.locationtech.jts.geom GeometryFactory]))
 ;;----------------------------------------------------------------
 ;; mvn -q install & cljfx src\scripts\clojure\mop\scripts\jfx\icosahedronS2.clj
@@ -87,30 +85,15 @@
                         faces)]
     (.addAll (.getChildren group) ^List triangles)
     ;; parent handles events
-    (.setFocusTraversable group false)
     group))
 
 (defn make-world []
-  ;;
   (let [;; 'children' binding with type hint seems necessary to avoid
         ;; reflection warnings; inline type gives warning?
         ^Collection children [(icosahedron) (land (GeometryFactory.))]
         world (Group. children)]
     (.setId world "world")
-    ;; parent Pane handles events
-    ;; TODO: is this necessary or useful?
-    (.setFocusTraversable world false)
-    (.setMouseTransparent world true)
     world))
-
-;;----------------------------------------------------------------
-(defn make-scene ^Scene [^double w ^double h]
-  (let [pane (WorldPane/make (make-world))
-        _ (BorderPane/setMargin pane (Insets. 32))
-        wrapper (BorderPane. pane)
-        scene (Scene. wrapper w h)]
-    (.setUserData scene "cut icosahedronS2 scene")
-    scene))
 ;;----------------------------------------------------------------
 
 ;;(println (System/getProperty "glass.win.uiScale"))
@@ -119,5 +102,5 @@
 ;;(System/setProperty "javafx.pulseLogger" "true")
 ;;(System/setProperty "prism.verbose" "true")
 ;;(System/setProperty "prism.order" "d3d")
-(JfxApplication/setSceneBuilder make-scene)
-(JfxApplication/launch JfxApplication (make-array String 0))
+(JfxWorld/setWorldBuilder make-world)
+(JfxWorld/launch JfxWorld (make-array String 0))

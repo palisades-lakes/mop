@@ -6,7 +6,7 @@
 (ns mop.scripts.jts.debug
   {:doc     "Conformal delaunay triangulation of a cut, projected icosahedron."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-04-09"}
+   :version "2026-04-11"}
   (:require
    [clojure.math :as math]
    [mop.cmplx.complex :as cmplx]
@@ -15,12 +15,10 @@
    [mop.jts.jts :as jts])
   (:import
    [java.util Collection]
-   [javafx.geometry Insets]
-   [javafx.scene Group Scene]
-   [javafx.scene.layout BorderPane]
+   [javafx.scene Group]
    [mop.java.geom Point2U]
    [mop.java.geom.mesh TriangleMesh]
-   [mop.java.jfx JfxApplication WorldPane]
+   [mop.java.jfx JfxWorld]
    [org.locationtech.jts.geom Geometry GeometryFactory]))
 ;;----------------------------------------------------------------
 (let [a0 (- -0.1 Math/PI)
@@ -83,29 +81,16 @@
         edges (jts/mesh-linestrings mesh factory)
         edges-group (jts/jfx edges "#FFFFFF00" "#FF0000FF")
         points (jts/mesh-points mesh factory)
-        ;;points (jts/centroids polygons)
-        ^Geometry triangles (jts/cdt points edges 0.0)
+        ^Geometry triangles (jts/cdt points edges 0.0e1)
         _ (.setUserData triangles "triangulation")
-        _ (jts/assert-valid triangles)
+        ;;_ (jts/assert-valid triangles)
         triangulation-group (jts/jfx triangles "#FFFFFF00" "#0000FF88")
         ;; 'children' binding with type hint seems necessary to avoid
         ;; reflection warnings; inline type hint gives warning?
         ^Collection children [edges-group triangulation-group]
         world (Group. children)]
     (.setId world "world")
-    ;; parent Pane handles events
-    ;; TODO: is this necessary or useful?
-    (.setFocusTraversable world false)
-    (.setMouseTransparent world true)
     world))
-;;----------------------------------------------------------------
-(defn make-scene ^Scene [^double w ^double h]
-  (let [pane (WorldPane/make (make-world))
-        _ (BorderPane/setMargin pane (Insets. 16))
-        wrapper (BorderPane. pane)
-        scene (Scene. wrapper w h)]
-    (.setUserData scene "cut icosahedronS2 scene")
-    scene))
 ;;----------------------------------------------------------------
 ;;(println (System/getProperty "glass.win.uiScale"))
 (System/setProperty "glass.win.uiScale" "1")
@@ -113,5 +98,5 @@
 ;;(System/setProperty "javafx.pulseLogger" "true")
 ;;(System/setProperty "prism.verbose" "true")
 ;;(System/setProperty "prism.order" "d3d")
-(JfxApplication/setSceneBuilder make-scene)
-(JfxApplication/launch JfxApplication (make-array String 0))
+(JfxWorld/setWorldBuilder make-world)
+(JfxWorld/launch JfxWorld (make-array String 0))
