@@ -126,7 +126,7 @@
     </dependency>
 
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
+      <groupId>tools.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
       <version>${fasterxml-jackson-version}</version>
       <scope>compile</scope>
@@ -154,78 +154,6 @@
         </exclusion>
       </exclusions>
     </dependency>
-
-    <dependency>
-      <groupId>org.locationtech.jts</groupId>
-      <artifactId>jts-core</artifactId>
-      <version>${jts-version}</version>
-      <scope>compile</scope>
-    </dependency>
-    <!--
-        <dependency>
-          <groupId>com.twelvemonkeys.imageio</groupId>
-          <artifactId>imageio-core</artifactId>
-          <version>3.12.0</version>
-        </dependency>
-    -->
-    <dependency>
-      <groupId>org.geotools</groupId>
-      <artifactId>gt-main</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.guava</groupId>
-          <artifactId>guava</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.fasterxml.jackson.core</groupId>
-          <artifactId>jackson-core</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.geotools</groupId>
-      <artifactId>gt-shapefile</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.guava</groupId>
-          <artifactId>guava</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.fasterxml.jackson.core</groupId>
-          <artifactId>jackson-core</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.geotools</groupId>
-      <artifactId>gt-epsg-hsql</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.guava</groupId>
-          <artifactId>guava</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-<!--    <dependency>-->
-<!--      <groupId>org.geotools</groupId>-->
-<!--      <artifactId>gt-image</artifactId>-->
-<!--      <exclusions>-->
-<!--        <exclusion>-->
-<!--          <groupId>com.google.guava</groupId>-->
-<!--          <artifactId>guava</artifactId>-->
-<!--        </exclusion>-->
-<!--      </exclusions>-->
-<!--    </dependency>-->
-<!--    <dependency>-->
-<!--      <groupId>org.geotools</groupId>-->
-<!--      <artifactId>gt-geotiff</artifactId>-->
-<!--      <exclusions>-->
-<!--        <exclusion>-->
-<!--          <groupId>com.google.guava</groupId>-->
-<!--          <artifactId>guava</artifactId>-->
-<!--        </exclusion>-->
-<!--      </exclusions>-->
-<!--    </dependency>-->
 
     <dependency>
       <groupId>com.drewnoakes</groupId>
@@ -294,6 +222,85 @@
       <classifier>${lwjgl.natives}</classifier>
       <version>${lwjgl.version}</version>
     </dependency>
+
+    <dependency>
+      <groupId>org.tinfour</groupId>
+      <artifactId>TinfourCore</artifactId>
+      <version>${tinfour-version}</version>
+    </dependency>
+    <!--
+    <dependency>
+      <groupId>org.tinfour</groupId>
+      <artifactId>TinfourDemo</artifactId>
+      <version>${tinfour-version}</version>
+    </dependency>
+    -->
+
+    <dependency>
+      <groupId>org.locationtech.jts</groupId>
+      <artifactId>jts-core</artifactId>
+      <version>${jts-version}</version>
+      <scope>compile</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-main</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-core</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-shapefile</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>tools.jackson.core</groupId>
+          <artifactId>jackson-core</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-epsg-hsql</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+<!--    <dependency>-->
+<!--      <groupId>org.geotools</groupId>-->
+<!--      <artifactId>gt-image</artifactId>-->
+<!--      <exclusions>-->
+<!--        <exclusion>-->
+<!--          <groupId>com.google.guava</groupId>-->
+<!--          <artifactId>guava</artifactId>-->
+<!--        </exclusion>-->
+<!--      </exclusions>-->
+<!--    </dependency>-->
+<!--    <dependency>-->
+<!--      <groupId>org.geotools</groupId>-->
+<!--      <artifactId>gt-geotiff</artifactId>-->
+<!--      <exclusions>-->
+<!--        <exclusion>-->
+<!--          <groupId>com.google.guava</groupId>-->
+<!--          <artifactId>guava</artifactId>-->
+<!--        </exclusion>-->
+<!--      </exclusions>-->
+<!--    </dependency>-->
 
     <dependency>
       <groupId>org.openjfx</groupId>

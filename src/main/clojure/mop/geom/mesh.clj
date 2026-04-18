@@ -72,6 +72,18 @@
    (.cmplx x)
    (update-vals (.embedding x) #(rn/transform f %))))
 
+;;----------------------------------------------------------------
+(defn ^TriangleMesh filter-mesh [predicate ^TriangleMesh mesh]
+  (triangle-mesh
+   (cmplx/simplicial-complex-2d
+    (filter predicate (cmplx/faces (.cmplx mesh))))
+   (.embedding mesh)))
+(defn not-containing-vertex-by-name [^TwoSimplex face name]
+  (not (or (= name (.name (.z0 face)))
+           (= name (.name (.z1 face)))
+           (= name (.name (.z2 face))))))
+(defn ^TriangleMesh remove-faces-w-vtx [^TriangleMesh mesh z]
+  (filter-mesh #(not-containing-vertex-by-name % z) mesh))
 ;;---------------------------------------------------------------
 ;; TODO: force embedding to return points of some kind.
 

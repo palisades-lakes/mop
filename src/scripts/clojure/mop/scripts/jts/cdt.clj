@@ -20,23 +20,10 @@
   (:import
    [java.util Collection]
    [javafx.scene Group]
-   [mop.java.cmplx TwoSimplex]
    [mop.java.geom Point2U]
    [mop.java.geom.mesh TriangleMesh]
    [mop.java.jfx JfxWorld]
    [org.locationtech.jts.geom Geometry GeometryCollection GeometryFactory]))
-;;----------------------------------------------------------------
-(defn filter-mesh [predicate ^TriangleMesh mesh]
-  (mesh/triangle-mesh
-   (cmplx/simplicial-complex-2d
-    (filter predicate (cmplx/faces (.cmplx mesh))))
-   (.embedding mesh)))
-(defn not-containing-vertex-by-name [^TwoSimplex face name]
-  (not (or (= name (.name (.z0 face)))
-           (= name (.name (.z1 face)))
-           (= name (.name (.z2 face))))))
-(defn remove-faces-w-vtx [^TriangleMesh mesh z]
-  (filter-mesh #(not-containing-vertex-by-name % z) mesh))
 ;;----------------------------------------------------------------
 (defn ^GeometryCollection land-polygons [^GeometryFactory factory]
   (let [geometries (miosh/read-jts-geometries
@@ -109,15 +96,15 @@
                                 cmplx/midpoint-subdivide-4
                                 cmplx/midpoint-subdivide-4)
                                (icosacap))
-        ^TriangleMesh u2-mesh (remove-faces-w-vtx u2-mesh "a")
-        ;^TriangleMesh u2-mesh (remove-faces-w-vtx u2-mesh "n")
+        ^TriangleMesh u2-mesh (mesh/remove-faces-w-vtx u2-mesh "a")
+        ^TriangleMesh u2-mesh (mesh/remove-faces-w-vtx u2-mesh "n")
         embedding (into {} (map
                             (fn [[k v]] [k (jts/coordinate v)])
                             (.embedding u2-mesh)))
         mesh (mesh/triangle-mesh (.cmplx u2-mesh) embedding)
-        polygons (jts/mesh-polygons mesh factory)
-        polygons (gt/wgs84-to-stereographic polygons)
-        polygons-group (jts/jfx polygons "#FFFFFF00" "#FF0000FF")
+        ;;polygons (jts/mesh-polygons mesh factory)
+        ;;polygons (gt/wgs84-to-stereographic polygons)
+        ;;polygons-group (jts/jfx polygons "#FFFFFF00" "#FF0000FF")
         points (jts/mesh-points mesh factory)
         points (gt/wgs84-to-stereographic points)
         ^Geometry triangles (jts/cdt points land 1.0)

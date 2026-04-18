@@ -18,8 +18,7 @@
 (defmulti ^javafx.scene.Node node
           (fn [g _ _] (class g)))
 
-(defn- ^doubles
-  jts-coords-to-doubles [^"[Lorg.locationtech.jts.geom.Coordinate;" coords]
+(defn- ^doubles jts-coords-to-doubles [^Coordinate/1 coords]
   (let [n (alength coords)
         ^doubles xys (make-array Double/TYPE (* 2 n))]
     (dotimes [i n]

@@ -44,8 +44,7 @@
                             ^Vector2D p1]
   (let [c0 (jts-coordinate p0)
         c1 (jts-coordinate p1)
-        ^"[Lorg.locationtech.jts.geom.CoordinateXY;"
-        coordinates (into-array CoordinateXY [c0 c1])
+        ^CoordinateXY/1 coordinates (into-array CoordinateXY [c0 c1])
         edge (.createLineString factory coordinates)
         is-valid (IsValidOp. edge)]
     (assert (.isValid is-valid) (str (.getValidationError is-valid)))
@@ -58,8 +57,8 @@
   (let [c0 (jts-coordinate p0)
         c1 (jts-coordinate p1)
         c2 (jts-coordinate p2)
-        ^"[Lorg.locationtech.jts.geom.CoordinateXY;"
-        coordinates (into-array CoordinateXY [c0 c1 c2 c0])
+        ^CoordinateXY/1
+        coordinates (into-array CoordinateXY [c0 c1 c2 #_c0])
         polygon (.createPolygon factory coordinates)
         is-valid (IsValidOp. polygon)]
     (assert (.isValid is-valid) (str (.getValidationError is-valid)))

@@ -23,7 +23,7 @@
   (let [^String id (.getID feature)
         ^MultiPolygon multipolygon (.getDefaultGeometry feature)
         nGeometries (.getNumGeometries multipolygon)
-        ^"[Lorg.locationtech.jts.geom.Polygon;" polygons (make-array Polygon nGeometries)]
+        ^Polygon/1 polygons (make-array Polygon nGeometries)]
     (dotimes [i nGeometries]
       (let [^Polygon polygon (.getGeometryN multipolygon i)]
         (.setUserData polygon id)
@@ -45,7 +45,7 @@
          ^String name (first (into [] (.getTypeNames store)))
          ^SimpleFeatureSource featureSource (.getFeatureSource store name)
          ^SimpleFeatureCollection featureCollection (.getFeatures featureSource)
-         ^"[Lorg.locationtech.jts.geom.Polygon;"
+         ^Polygon/1
          polygons (into-array
                    org.locationtech.jts.geom.Polygon
                    (flatten (collect-polygons featureCollection)))
