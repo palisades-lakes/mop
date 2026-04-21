@@ -125,12 +125,19 @@
       <version>${guava-version}</version>
     </dependency>
 
+<!--    <dependency>-->
+<!--      <groupId>tools.jackson.core</groupId>-->
+<!--      <artifactId>jackson-core</artifactId>-->
+<!--      <version>${fasterxml-jackson-version}</version>-->
+<!--      <scope>compile</scope>-->
+<!--    </dependency>-->
     <dependency>
-      <groupId>tools.jackson.core</groupId>
+      <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
       <version>${fasterxml-jackson-version}</version>
       <scope>compile</scope>
     </dependency>
+
 
     <dependency>
       <groupId>org.clojure</groupId>
@@ -255,6 +262,10 @@
           <groupId>com.fasterxml.jackson.core</groupId>
           <artifactId>jackson-core</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>tools.jackson.core</groupId>
+          <artifactId>jackson-core</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -264,6 +275,10 @@
         <exclusion>
           <groupId>com.google.guava</groupId>
           <artifactId>guava</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-core</artifactId>
         </exclusion>
         <exclusion>
           <groupId>tools.jackson.core</groupId>
@@ -278,6 +293,14 @@
         <exclusion>
           <groupId>com.google.guava</groupId>
           <artifactId>guava</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-core</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>tools.jackson.core</groupId>
+          <artifactId>jackson-core</artifactId>
         </exclusion>
       </exclusions>
     </dependency>

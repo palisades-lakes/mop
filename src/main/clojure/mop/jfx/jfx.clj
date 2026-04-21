@@ -5,13 +5,19 @@
   {:doc
    "Java FX utilities"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-04-11"}
+   :version "2026-04-20"}
   (:import
    [javafx.scene Group]
    [javafx.scene.paint Color]
    [javafx.scene.shape Polyline Shape StrokeType]
    [org.locationtech.jts.geom
     Coordinate GeometryCollection LineString MultiPolygon Polygon]))
+;;---------------------------------------------------------------------
+
+(defmulti ^javafx.scene.paint.Color color class)
+
+(defmethod color Color [^Color c] c)
+(defmethod color String [^String c] (Color/web c))
 ;;---------------------------------------------------------------------
 ;; TODO: or java compile/run-time dispatch based on type of input
 

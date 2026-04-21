@@ -15,7 +15,7 @@
    [mop.geom.mesh :as mesh]
    [mop.geom.s2 :as s2]
    [mop.gt.gt :as gt]
-   [mop.io.shapefile :as miosh]
+   [mop.gt.gt :as gt]
    [mop.jts.jts :as jts])
   (:import
    [java.util Collection]
@@ -26,7 +26,7 @@
    [org.locationtech.jts.geom Geometry GeometryCollection GeometryFactory]))
 ;;----------------------------------------------------------------
 (defn ^GeometryCollection land-polygons [^GeometryFactory factory]
-  (let [geometries (miosh/read-jts-geometries
+  (let [geometries (gt/read-jts-geometries
                     #_"data/natural-earth/10m_physical/ne_10m_land.shp"
                     #_"data/natural-earth/50m_physical/ne_50m_land.shp"
                     "data/natural-earth/110m_physical/ne_110m_land.shp"

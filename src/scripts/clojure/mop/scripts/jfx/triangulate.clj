@@ -12,7 +12,7 @@
    [mop.commons.time :as mct]
    [mop.geom.icosahedron :as icosahedron]
    [mop.geom.s2 :as s2]
-   [mop.io.shapefile :as miosh]
+   [mop.gt.gt :as gt]
    [mop.jfx.jfx :as jfx])
   (:import
    [java.util Collection]
@@ -135,7 +135,7 @@
     geometries))
 ;;----------------------------------------------------------------
 (defn ^GeometryCollection land-polygons [^GeometryFactory factory]
-  (let [geometries (miosh/read-jts-geometries
+  (let [geometries (gt/read-jts-geometries
                     #_"data/natural-earth/10m_physical/ne_10m_land.shp"
                     #_"data/natural-earth/50m_physical/ne_50m_land.shp"
                     "data/natural-earth/ne_110m_land.shp"

@@ -5,14 +5,14 @@
   {:doc     "Use JavaFX to display cut icosahedron and natural earth boundaries
   in planar lon,lat coordinates."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-04-11"}
+   :version "2026-04-20"}
 
   (:require
    [mop.cmplx.complex :as cmplx]
    [mop.geom.icosahedron :as icosahedron]
    [mop.geom.rn :as rn]
    [mop.geom.s2 :as s2]
-   [mop.io.shapefile :as miosh]
+   [mop.gt.gt :as gt]
    [mop.jfx.jfx :as jfx])
   (:import
    [java.util Collection List]
@@ -27,7 +27,7 @@
 ;; mvn -q install & cljfx src\scripts\clojure\mop\scripts\jfx\icosahedronS2.clj
 ;;----------------------------------------------------------------
 (defn ^Group land [gfactory]
-  (let [polygons (miosh/read-jts-geometries
+  (let [polygons (gt/read-jts-geometries
                   #_"data/natural-earth/10m_physical/ne_10m_land.shp"
                   #_"data/natural-earth/50m_physical/ne_50m_land.shp"
                   "data/natural-earth/ne_110m_land.shp"

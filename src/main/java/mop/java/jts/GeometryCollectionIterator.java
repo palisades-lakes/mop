@@ -1,18 +1,22 @@
 package mop.java.jts;
 
-import org.locationtech.jts.geom.LinearRing;
-import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryCollection;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 //---------------------------------------------------------------------
 
-/** Iterator over the LinearRings of a JTS Polygon.
- * First ring returned is the exterior, followed by the
- * interior ones, if any.
+/** <code>org.locationtech.jts.geom.GeometryCollectionIterator</code>
+ * walks the geometry tree, returning the collection itself,
+ * subcollections, recursively down to the leaves, the non-collection
+ * geoemtries.
  * <br>
- * WARNING: Polygons and LinearRings are mutable.
+ * This is a simpler, top level iterator over the values returned by
+ * <code>getGeometryN(i)</code>.
+ * <br>
+ * WARNING: GeometryCollections are mutable.
  * Shared mutable objects are common throughout JTS,
  * so the cost of a deep copy, or even a shallow copy,
  * is probably not worthwhile.
@@ -24,39 +28,37 @@ import java.util.NoSuchElementException;
  * @author palisades dot lakes at gmail dot com
  * @version 2026-04-20
  */
-public final class PolygonRingIterator
-  implements Iterator<LinearRing> {
+public final class GeometryCollectionIterator
+  implements Iterator<Geometry> {
 
-  private final Polygon _polygon;
-  private int _next = -1;
+  private final GeometryCollection _geometryCollection;
+  private int _next = 0;
 
   //--------------------------------------------------------------------
   // Iterator methods
   //--------------------------------------------------------------------
 
   @Override
-  public boolean hasNext () {
-    return _next < _polygon.getNumInteriorRing(); }
+  public final boolean hasNext () {
+    return _next < _geometryCollection.getNumGeometries(); }
 
   @Override
-  public LinearRing next () {
+  public Geometry next () {
     if (hasNext()) {
-      if (-1 == _next) {
-        _next++; return _polygon.getExteriorRing(); }
-      return _polygon.getInteriorRingN(_next++); }
+      return _geometryCollection.getGeometryN(_next++); }
     throw new NoSuchElementException(); }
 
   //--------------------------------------------------------------------
   // construction
   //--------------------------------------------------------------------
 
-  private PolygonRingIterator (final Polygon polygon) {
+  private GeometryCollectionIterator (final GeometryCollection gc) {
     super();
-    _polygon = polygon; }
+    _geometryCollection = gc; }
 
-  public static final PolygonRingIterator
-  make (final Polygon polygon) {
-    return new PolygonRingIterator(polygon); }
+  public static final GeometryCollectionIterator
+  make (final GeometryCollection gc) {
+    return new GeometryCollectionIterator(gc); }
 
   //--------------------------------------------------------------------
 } // end class

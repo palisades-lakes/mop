@@ -1,18 +1,18 @@
-;; mvn -q install & cljfx src\scripts\clojure\mop\scripts\jts\land.clj
+;; mvn -q install & cljfx src\scripts\clojure\mop\scripts\tinfour\land.clj
 ;;----------------------------------------------------------------
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-(ns mop.scripts.jts.land
-  {:doc     "Use JavaFX to display a conformal delaunay triangles of
-  natural earth boundaries."
+(ns mop.scripts.tinfour.land
+  {:doc "Use JavaFX to display a conformal delaunay triangles of
+         natural earth boundaries."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-04-11"}
+   :version "2026-04-20"}
 
   (:require
    [mop.gt.gt :as gt]
-   [mop.gt.gt :as gt]
-   [mop.jts.jts :as jts])
+   [mop.jts.jts :as jts]
+   [mop.tinfour.tinfour :as tinfour])
   (:import
    [java.util Collection]
    [javafx.scene Group]
@@ -30,13 +30,13 @@
 (defn make-world []
   (let [factory (GeometryFactory.)
         land (land-polygons factory)
-        land (gt/wgs84-to-stereographic land)
-        land-group (jts/jfx land "#22990044" "#000088FF")
-        ;triangles (jts/cdt land land 1.0)
-        ;triangles-group (jts/jfx triangles "#FFFFFF00" "#000088FF")
+        ;;land (gt/wgs84-to-stereographic land)
+        land-group (jts/jfx land "#22990044" "#FF0000FF")
+        triangles (tinfour/cdt land land 1.0e-6)
+        triangles-group (tinfour/jfx-group triangles "#FFFFFF00" "#88888888")
         ;; 'children' binding with type hint seems necessary to avoid
         ;; reflection warnings; inline type hint gives warning?
-        ^Collection children [land-group #_triangles-group]
+        ^Collection children [land-group triangles-group]
         world (Group. children)]
     (.setId world "world")
     world))
