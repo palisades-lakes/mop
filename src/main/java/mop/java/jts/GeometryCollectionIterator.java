@@ -7,7 +7,6 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 //---------------------------------------------------------------------
-
 /** <code>org.locationtech.jts.geom.GeometryCollectionIterator</code>
  * walks the geometry tree, returning the collection itself,
  * subcollections, recursively down to the leaves, the non-collection
