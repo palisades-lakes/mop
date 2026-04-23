@@ -1,9 +1,9 @@
-;; mvn -q install & cljfx src\scripts\clojure\mop\scripts\tinfour\icosaland.clj
+;; mvn -q install & cljfx src\scripts\clojure\mop\scripts\jts\icosaland.clj
 ;;----------------------------------------------------------------
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-(ns mop.scripts.tinfour.icosaland
+(ns mop.scripts.jts.icosaland
   {:doc     "Use JavaFX to display a conformal delaunay triangles of
          natural earth boundaries."
    :author  "palisades dot lakes at gmail dot com"
@@ -15,8 +15,7 @@
    [mop.geom.mesh :as mesh]
    [mop.geom.s2 :as s2]
    [mop.gt.gt :as gt]
-   [mop.jts.jts :as jts]
-   [mop.tinfour.tinfour :as tinfour])
+   [mop.jts.jts :as jts])
   (:import
    [java.util Collection]
    [javafx.scene Group]
@@ -24,7 +23,7 @@
    [mop.java.jfx JfxWorld]
    [org.locationtech.jts.geom
     GeometryCollection GeometryFactory PrecisionModel]
-   [org.locationtech.jts.geom.util GeometryCombiner]
+   [org.locationtech.jts.geom.util GeometryCombiner LinearComponentExtracter]
    [org.locationtech.jts.operation.overlayng OverlayNGRobust]))
 ;;----------------------------------------------------------------
 (defn ^GeometryCollection land-polygons [^GeometryFactory factory]
@@ -52,11 +51,14 @@
         meshland (OverlayNGRobust/union meshland)
         _ (assert (.isSimple meshland))
         _ (assert (.isValid meshland))
-        triangles (tinfour/cdt meshland meshland tolerance true)
+        points (jts/unique-points meshland tolerance)
+        lines (LinearComponentExtracter/getGeometry meshland true)
+        lines (OverlayNGRobust/union lines)
+        triangles (jts/cdt points lines tolerance true)
         ;;land (gt/wgs84-to-stereographic land)
         mesh-group (jts/jfx mesh "#00000000" "#0000FF88")
         land-group (jts/jfx land "#22990044" "#00FF0088")
-        triangles-group (tinfour/jfx-group triangles "#00000000" "#FF000088")
+        triangles-group (jts/jfx triangles "#00000000" "#FF000088")
         ;; 'children' binding with type hint seems necessary to avoid
         ;; reflection warnings; inline type hint gives warning?
         ^Collection children [mesh-group land-group triangles-group]

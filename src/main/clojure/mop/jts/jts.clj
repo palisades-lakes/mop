@@ -114,10 +114,10 @@
      t)))
 ;;----------------------------------------------------------------
 
-(defn assert-triangle [^Polygon polygon]
-  (assert (zero? (.getNumInteriorRing polygon)))
-  ;; TODO: check zeroth and last coordinates are the same?
-  (assert (= 4 (.getNumPoints polygon))))
+(defn triangle? [^Polygon polygon]
+  (and (zero? (.getNumInteriorRing polygon))
+       ;; TODO: check zeroth and last coordinates are the same?
+       (= 4 (.getNumPoints polygon))))
 
 ;;----------------------------------------------------------------
 ;; https://stackoverflow.com/questions/10289752/aspect-ratio-of-a-triangle-of-a-meshed-surface
@@ -140,7 +140,7 @@
      (/ circumradius (* 2 inradius))))
 
   ([^Polygon triangle]
-   (assert-triangle triangle)
+   (assert (triangle? triangle))
    (let [^Coordinate/1
          coords (.getCoordinates triangle)]
      (aspect-ratio (aget coords 0) (aget coords 1) (aget coords 2)))))
@@ -163,7 +163,7 @@
 ;;----------------------------------------------------------------
 ;; triangulation
 ;;----------------------------------------------------------------
-(defn ^MultiPoint unique-points [^Geometry g ^double tolerance]
+(defn ^Coordinate/1 unique-coordinates [^Geometry g ^double tolerance]
   "Extract the points in <code>g</code>, sort, and remove  "
   (let [^Coordinate/1 in (.getCoordinates g)
         ;; _ (println (Arrays/toString in))
@@ -181,9 +181,13 @@
             ;; else
             (do (.add out c1)
                 (recur (inc i) c1))))))
-    (.createMultiPointFromCoords
-     (.getFactory g)
-     (.toArray out ^Coordinate/1 (make-array Coordinate 0)))))
+    (.toArray out ^Coordinate/1 (make-array Coordinate 0))))
+;;----------------------------------------------------------------
+(defn ^MultiPoint unique-points [^Geometry g ^double tolerance]
+  "Extract the points in <code>g</code>, sort, and remove  "
+  (.createMultiPointFromCoords
+   (.getFactory g)
+   (unique-coordinates g tolerance)))
 ;;----------------------------------------------------------------
 ;; noded unions of constraint geometries
 ;;----------------------------------------------------------------
@@ -192,11 +196,37 @@
     #_(GeometryFixer/fix lines)
     (OverlayNGRobust/union lines)))
 ;;----------------------------------------------------------------
+(defn delaunay?
+
+  ([^Polygon t vertices tolerance]
+   (and (triangle? t)
+        (let [coords (.getCoordinates t)
+              a (aget coords 0)
+              b (aget coords 1)
+              c (aget coords 2)
+              center (Triangle/circumcentre a b c)
+              ;; TODO: faster to compute radius^2
+              radius (- (Triangle/circumradius a b c) tolerance)]
+          (and (>= radius tolerance)
+               (every? (fn [^Coordinate v]
+                         (or (.equals2D v a tolerance)
+                             (.equals2D v b tolerance)
+                             (.equals2D v c tolerance)
+                             (< radius (.distance center v))))
+                       vertices)))))
+
+  ([^Geometry triangles ^double tolerance]
+   (let [vertices (unique-coordinates triangles tolerance)
+         triangles (iterator-seq (geometry-iterator triangles))]
+     (every? #(delaunay? % vertices tolerance) triangles))))
+;;----------------------------------------------------------------
+;; TODO: tolerance vs factory PrecisionModel
 (defn ^Geometry cdt
 
   (^Geometry [^Geometry sites
               ^Geometry constraints
-              ^double tolerance]
+              ^double tolerance
+              check]
 
    (let [cdtb (ConformingDelaunayTriangulationBuilder.)]
      (.setTolerance cdtb tolerance)
@@ -209,12 +239,22 @@
      ;; TODO: let caller do cleaning, if required, for performance in already
      ;; clean cases?
      (when constraints
-       (let [constraints (clean-constraints constraints tolerance)]
-         (assert (.isSimple constraints))
-         (assert (.isValid constraints))
-         (.setConstraints cdtb constraints)))
-     (mct/seconds "triangulate"
-                  (.getTriangles cdtb (.getFactory sites)))))
+       (assert (.isSimple constraints))
+       (assert (.isValid constraints))
+       (.setConstraints cdtb constraints))
+     #_(when constraints
+         (let [constraints (clean-constraints constraints tolerance)]
+           (assert (.isSimple constraints))
+           (assert (.isValid constraints))
+           (.setConstraints cdtb constraints)))
+     (let [triangles (mct/seconds "triangulate"
+                                  (.getTriangles cdtb (.getFactory sites)))]
+       (println (class triangles))
+       (when check (assert (delaunay? triangles tolerance)))
+       triangles)))
+
+  (^Geometry [^Geometry sites ^Geometry constraints ^double tolerance]
+   (cdt sites constraints tolerance false))
 
   (^Geometry [^Geometry sites ^Geometry constraints]
    (cdt sites constraints 0.0)))

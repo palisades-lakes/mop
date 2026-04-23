@@ -5,7 +5,7 @@
 (ns mop.tinfour.tinfour
   {:doc     "Tinfour utilities: https://github.com/gwlucastrig/Tinfour"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-04-21"}
+   :version "2026-04-23"}
   (:require [clojure.java.io :as io]
             [mop.jfx.jfx :as jfx]
             [mop.jts.jts :as jts])
@@ -18,7 +18,8 @@
    [org.locationtech.jts.geom
     Coordinate Geometry GeometryCollection LineString LinearRing Point Polygon]
    [org.tinfour.common
-    GeometricOperations LinearConstraint PolygonConstraint SimpleTriangle Thresholds TriangleCount Vertex]
+    GeometricOperations LinearConstraint PolygonConstraint SimpleTriangle
+    Thresholds TriangleCount Vertex]
    [org.tinfour.standard IncrementalTin]))
 ;;---------------------------------------------------------------------
 ;; convenience functions converting JTS geometry
