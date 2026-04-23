@@ -7,7 +7,7 @@
   {:doc     "Use JavaFX to display a conformal delaunay triangles of
          natural earth boundaries."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-04-20"}
+   :version "2026-04-21"}
 
   (:require
    [mop.cmplx.complex :as cmplx]
@@ -35,8 +35,7 @@
 ;;----------------------------------------------------------------
 (defn ^TriangleMesh ll-icosahedron []
   (let [^TriangleMesh u2-mesh ((comp
-                                cmplx/midpoint-subdivide-4
-                                cmplx/midpoint-subdivide-4)
+                                #_cmplx/midpoint-subdivide-4)
                                (icosahedron/u2-cut-icosahedron))
         embedding (into {} (map (fn [[k v]] [k (jts/coordinate (s2/to-ll v))])
                                 (.embedding u2-mesh)))]
@@ -52,10 +51,10 @@
         ;;_ (assert (.isSimple meshland))
         ;;_ (assert (.isValid meshland))
         ;;land (gt/wgs84-to-stereographic land)
-        mesh-group (jts/jfx mesh "#22009944" "#0000FFFF")
-        land-group (jts/jfx land "#22990044" "#00FF00FF")
-        triangles (tinfour/cdt meshland meshland 1.0e-6)
-        triangles-group (tinfour/jfx-group triangles "#99220000" "#88888888")
+        mesh-group (jts/jfx mesh "#00000000" "#0000FF88")
+        land-group (jts/jfx land "#22990044" "#00FF0088")
+        triangles (tinfour/cdt meshland meshland 1.0e-2 true)
+        triangles-group (tinfour/jfx-group triangles "#00000000" "#FF000088")
         ;; 'children' binding with type hint seems necessary to avoid
         ;; reflection warnings; inline type hint gives warning?
         ^Collection children [mesh-group land-group triangles-group]

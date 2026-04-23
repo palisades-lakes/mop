@@ -1,5 +1,5 @@
 (set! *warn-on-reflection* true)
-(set! *unchecked-math* true)                                ;; for c.math.combinatorics
+(set! *unchecked-math* true)  ;; for c.math.combinatorics
 ;;------------------------------------------------------------------------------
 
 (ns ^{:author "palisades dot lakes at gmail dot com"

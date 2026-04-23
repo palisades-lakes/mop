@@ -35,7 +35,7 @@
         ;polygons-group (jts/jfx polygons "#FFFFFF00" "#FF0000FF")
         edges (jts/mesh-linestrings mesh factory)
         edges-group (jts/jfx edges "#FFFFFF00" "#FF0000FF")
-        points (jts/mesh-points mesh factory)
+        ;;points (jts/mesh-points mesh factory)
         ;;points (jts/centroids polygons)
         ;; midpoint produces invalid geometry
         ;; triangles (jts/midpoint-cdt points edges 5.0e-1)

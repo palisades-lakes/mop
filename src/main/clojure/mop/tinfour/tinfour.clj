@@ -5,19 +5,20 @@
 (ns mop.tinfour.tinfour
   {:doc     "Tinfour utilities: https://github.com/gwlucastrig/Tinfour"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-04-20"}
+   :version "2026-04-21"}
   (:require [clojure.java.io :as io]
-            [mop.jfx.jfx :as jfx])
+            [mop.jfx.jfx :as jfx]
+            [mop.jts.jts :as jts])
   (:import
    [java.io IOException]
    [java.util Arrays List]
    [javafx.scene Group]
    [javafx.scene.shape StrokeType]
-   [mop.java.jts GeometryCollectionIterator PolygonRingIterator]
+   [mop.java.jts PolygonRingIterator]
    [org.locationtech.jts.geom
     Coordinate Geometry GeometryCollection LineString LinearRing Point Polygon]
    [org.tinfour.common
-    LinearConstraint PolygonConstraint SimpleTriangle TriangleCount Vertex]
+    GeometricOperations LinearConstraint PolygonConstraint SimpleTriangle Thresholds TriangleCount Vertex]
    [org.tinfour.standard IncrementalTin]))
 ;;---------------------------------------------------------------------
 ;; convenience functions converting JTS geometry
@@ -56,7 +57,7 @@
    (mapv constraints (iterator-seq (PolygonRingIterator/make g)))))
 
 (defmethod constraints GeometryCollection [^GeometryCollection g]
-  (let [i (GeometryCollectionIterator/make g)
+  (let [i (jts/geometry-iterator g)
         gs (iterator-seq i)]
     (flatten (mapv constraints gs))))
 ;;---------------------------------------------------------------------
@@ -66,21 +67,67 @@
                                     ^List c
                                     ^double estimatedPointSpacing]
   (assert (not-empty s))
-
   (let [^IncrementalTin tin (IncrementalTin. estimatedPointSpacing)]
     ;; possible performance improvement:
-    ;;(.sort (HilbertSort.) sites)
+    ;;(.sort (HilbertSort.) s)
     (.add tin s nil)
     (when (not-empty c) (.addConstraints tin c true))
     tin))
 ;;---------------------------------------------------------------------
-(defn ^Iterable cdt [^Geometry points
-                     ^Geometry edges
-                     ^double estimatedPointSpacing]
-  (let [s (sites points)
-        c (constraints edges)
-        tin (conformingDT s c estimatedPointSpacing)]
-    (.triangles tin)))
+(defn delaunay?
+
+  ([^Vertex a ^Vertex b ^Vertex c ^Vertex v ^GeometricOperations go]
+   (or (= v a) (= v b) (= v c)
+       (let [x (.inCircle go a b c v)]
+         (when (< 0.0 x) (println "inCircle " x))
+         (>= 0.0 x))))
+
+  ([^SimpleTriangle t vertices ^GeometricOperations go]
+   (let [^Vertex a (.getVertexA t)
+         ^Vertex b (.getVertexB t)
+         ^Vertex c (.getVertexC t)]
+     (every? #(let [d (delaunay? a b c % go)]
+                (when-not d
+                  (println "Failed: " (.toString t))
+                  (println (.toString a))
+                  (println (.toString b))
+                  (println (.toString c))
+                  (println "vertex:" (.toString ^Vertex %)))
+                d)
+             vertices)))
+
+  ([^IncrementalTin tin ^double estimatedPointSpacing]
+   (let [^GeometricOperations
+         go (GeometricOperations. (Thresholds. estimatedPointSpacing))
+         vertices (.getVertices tin)
+         triangles (.triangles tin)]
+     (every? #(delaunay? % vertices go) triangles))))
+;;---------------------------------------------------------------------
+(defn ^Iterable cdt
+  ([^Geometry points
+    ^Geometry edges
+    ^double estimatedPointSpacing
+    check]
+   ;; Dedupe points
+   ;; split edges at intersections
+   (let [points (jts/unique-points points estimatedPointSpacing)
+         _ (assert (.isSimple points))
+         _ (assert (.isValid points))
+         edges (jts/clean-constraints edges estimatedPointSpacing)
+         _ (assert (.isSimple edges))
+         _ (assert (.isValid edges))
+         s (sites points)
+         c (constraints edges)
+         tin (conformingDT s c estimatedPointSpacing)
+         ^TriangleCount stats (.countTriangles tin)]
+     (println "n triangles: " (.getCount stats))
+     (println "areas: [" (.getAreaMin stats) ", " (.getAreaMax stats) "]")
+     (when check (assert (delaunay? tin estimatedPointSpacing)))
+     (.triangles tin)))
+  ([^Geometry points
+    ^Geometry edges
+    ^double estimatedPointSpacing]
+   (cdt points edges estimatedPointSpacing false)))
 ;;---------------------------------------------------------------------
 #_(defn ^IncrementalTin checkCdt [^String name
                                   sites
@@ -102,7 +149,7 @@
         ;; else
         (println "expected != nTriangles: " expectedTriangles " != " nTriangles))
       (println "areas: [" (.getAreaMin stats) ", " (.getAreaMax stats) "]")
-      (when (0.0 >= (.getAreaMin stats))
+      (when (>= 0.0 (.getAreaMin stats))
         (println "Singular!")
         (for [^SimpleTriangle triangle (seq (.triangles tin))]
           (when (<= 0.0 (.getArea triangle)) (println "Singular:" triangle))))

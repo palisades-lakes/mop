@@ -5,7 +5,7 @@
 (ns mop.jts.jts
   {:doc     "JTS utilities: https://github.com/locationtech/jts"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-04-18"}
+   :version "2026-04-22"}
 
   (:require
    [clojure.java.io :as io]
@@ -14,25 +14,26 @@
    [mop.jfx.jfx :as jfx])
   (:import
    [clojure.lang IFn]
-   [java.util Arrays]
+   [java.util ArrayList Arrays]
    [javafx.scene Group]
    [javafx.scene.paint Color]
    [mop.cmplx.complex VertexPair]
    [mop.java.cmplx TwoSimplex]
    [mop.java.geom.mesh TriangleMesh]
-   [mop.java.jts MopConformingDelaunayTriangulationBuilder]
+   [mop.java.jts GeometryCollectionIterator]
    [org.apache.commons.geometry.euclidean.twod Vector2D]
    [org.locationtech.jts.geom
-    Coordinate CoordinateXY Geometry GeometryCollection GeometryCollectionIterator GeometryFactory
-    LineString MultiPoint MultiPolygon Point Polygon Triangle]
+    Coordinate CoordinateXY Geometry GeometryCollection
+    GeometryFactory LineString MultiPoint MultiPolygon Point Polygon Triangle]
    [org.locationtech.jts.geom.util
-    GeometryFixer]
+    GeometryFixer LinearComponentExtracter]
    [org.locationtech.jts.io
     WKTReader WKTWriter]
+   [org.locationtech.jts.operation.overlayng OverlayNGRobust]
    [org.locationtech.jts.operation.valid
     IsSimpleOp IsValidOp]
    [org.locationtech.jts.triangulate
-    ConstraintSplitPointFinder NonEncroachingSplitPointFinder]))
+    ConformingDelaunayTriangulationBuilder]))
 ;;----------------------------------------------------------------
 ;; JTS utility functions
 ;;----------------------------------------------------------------
@@ -52,13 +53,75 @@
               (str (.getNonSimpleLocations op) "\n" (.getUserData g))))
     g)
 ;;----------------------------------------------------------------
-;; https://stackoverflow.com/questions/10289752/aspect-ratio-of-a-triangle-of-a-meshed-surface
-;; TODO: is this the most accurate formula?
+;; WKT
+;;----------------------------------------------------------------
+(defn ^Geometry read-wkt-string [^GeometryFactory f ^String src]
+  (.read (WKTReader. f) src))
+;;----------------------------------------------------------------
+(defn ^Geometry read-wkt [^GeometryFactory f src]
+  (with-open [r (io/reader src)]
+    (.read (WKTReader. f) r)))
+;;----------------------------------------------------------------
+(defn ^String wkt-string [^Geometry g] (.writeFormatted (WKTWriter.) g))
+;;----------------------------------------------------------------
+(defn write-wkt [^Geometry g dest]
+  (let [f (io/file dest)]
+    (io/make-parents f)
+    (with-open [w (io/writer dest)]
+      (.writeFormatted (WKTWriter.) g w))))
+;;----------------------------------------------------------------
+;; utilities
+;;----------------------------------------------------------------
+;; return a top-level component iterator, rather than the tree
+;; walker which is
+(defn geometry-iterator [^GeometryCollection gc]
+  (GeometryCollectionIterator/make gc))
+;;----------------------------------------------------------------
+(defn ^LineString edge [^GeometryFactory factory
+                        ^CoordinateXY p0
+                        ^CoordinateXY p1]
+  (let [^CoordinateXY/1
+        coordinates (into-array CoordinateXY (sort [p0 p1]))]
+    (assert-valid (.createLineString factory coordinates))))
+;;----------------------------------------------------------------
+#_(defn ^MultiPoint centroids [^GeometryCollection g]
+    (let [n (.getNumGeometries g)
+          ^Point/1 points (make-array Point n)]
+      (dotimes [i n] (aset points i (.getCentroid (.getGeometryN g i))))
+      (.createMultiPoint (.getFactory g) points)))
+;;----------------------------------------------------------------
+;; triangles
+;;----------------------------------------------------------------
+(defn ^Polygon triangle
+
+  ([^GeometryFactory factory
+    ^CoordinateXY p0
+    ^CoordinateXY p1
+    ^CoordinateXY p2]
+   (let [^CoordinateXY/1
+         coordinates (into-array CoordinateXY [p0 p1 p2 p0])]
+     (assert-valid (.createPolygon factory coordinates))))
+
+  ([^GeometryFactory factory
+    ^TwoSimplex face
+    ^IFn embedding]
+   (let [^Polygon t (triangle
+                     factory
+                     (embedding (.z0 face))
+                     (embedding (.z1 face))
+                     (embedding (.z2 face)))]
+     (.setUserData t (.toString face))
+     t)))
+;;----------------------------------------------------------------
 
 (defn assert-triangle [^Polygon polygon]
   (assert (zero? (.getNumInteriorRing polygon)))
   ;; TODO: check zeroth and last coordinates are the same?
   (assert (= 4 (.getNumPoints polygon))))
+
+;;----------------------------------------------------------------
+;; https://stackoverflow.com/questions/10289752/aspect-ratio-of-a-triangle-of-a-meshed-surface
+;; TODO: is this the most accurate formula?
 
 (defn ^double aspect-ratio
 
@@ -98,79 +161,65 @@
 
         (println (Arrays/toString (.getCoordinates triangle)))))))
 ;;----------------------------------------------------------------
-(defn geometry-iterator [^GeometryCollection gc]
-  (GeometryCollectionIterator. gc))
+;; triangulation
 ;;----------------------------------------------------------------
-(defn ^LineString edge [^GeometryFactory factory
-                        ^CoordinateXY p0
-                        ^CoordinateXY p1]
-  (let [^CoordinateXY/1
-        coordinates (into-array CoordinateXY (sort [p0 p1]))]
-    (assert-valid (.createLineString factory coordinates))))
+(defn ^MultiPoint unique-points [^Geometry g ^double tolerance]
+  "Extract the points in <code>g</code>, sort, and remove  "
+  (let [^Coordinate/1 in (.getCoordinates g)
+        ;; _ (println (Arrays/toString in))
+        _ (Arrays/sort in)
+        n (alength in)
+        out (ArrayList. n)
+        c0 (aget in 0)]
+    (.add out c0)
+    (loop [i 1
+           ^Coordinate c0 c0]
+      (when (< i n)
+        (let [c1 (aget in i)]
+          (if (.equals2D c0 c1 tolerance)
+            (recur (inc i) c0)
+            ;; else
+            (do (.add out c1)
+                (recur (inc i) c1))))))
+    (.createMultiPointFromCoords
+     (.getFactory g)
+     (.toArray out ^Coordinate/1 (make-array Coordinate 0)))))
 ;;----------------------------------------------------------------
-(defn ^Polygon triangle
-
-  ([^GeometryFactory factory
-    ^CoordinateXY p0
-    ^CoordinateXY p1
-    ^CoordinateXY p2]
-   (let [^CoordinateXY/1
-         coordinates (into-array CoordinateXY [p0 p1 p2 p0])]
-     (assert-valid (.createPolygon factory coordinates))))
-
-  ([^GeometryFactory factory
-    ^TwoSimplex face
-    ^IFn embedding]
-   (let [^Polygon t (triangle
-                     factory
-                     (embedding (.z0 face))
-                     (embedding (.z1 face))
-                     (embedding (.z2 face)))]
-     (.setUserData t (.toString face))
-     t)))
+;; noded unions of constraint geometries
 ;;----------------------------------------------------------------
-(defn ^MultiPoint centroids [^GeometryCollection g]
-  (let [n (.getNumGeometries g)
-        ^Point/1 points (make-array Point n)]
-    (dotimes [i n] (aset points i (.getCentroid (.getGeometryN g i))))
-    (.createMultiPoint (.getFactory g) points)))
-;;----------------------------------------------------------------
-(defn ^Geometry parse-wkt-string [^GeometryFactory f ^String src]
-  (.read (WKTReader. f) src))
-;;----------------------------------------------------------------
-(defn ^Geometry read-wkt [^GeometryFactory f dest]
-  (with-open [r (io/reader dest)]
-    (.read (WKTReader. f) r)))
-;;----------------------------------------------------------------
-(defn write-wkt [^Geometry g dest]
-  (let [f (io/file dest)]
-    (io/make-parents f)
-    (with-open [w (io/writer dest)]
-      (.writeFormatted (WKTWriter.) g w))))
-;;----------------------------------------------------------------
-;; allow custom split point finder
+(defn ^Geometry clean-constraints [^Geometry constraints ^double tolerance]
+  (let [lines (LinearComponentExtracter/getGeometry constraints true)]
+    #_(GeometryFixer/fix lines)
+    (OverlayNGRobust/union lines)))
 ;;----------------------------------------------------------------
 (defn ^Geometry cdt
 
   (^Geometry [^Geometry sites
               ^Geometry constraints
-              ^double tolerance
-              ^ConstraintSplitPointFinder cspf]
-   (let [cdtb (MopConformingDelaunayTriangulationBuilder. cspf)]
+              ^double tolerance]
+
+   (let [cdtb (ConformingDelaunayTriangulationBuilder.)]
      (.setTolerance cdtb tolerance)
-     (.setSites cdtb sites)
-     (when constraints (.setConstraints cdtb constraints))
+     ;; JTS code extracts coordinates, sorts and de-dupes them.
+     ;; But snapping/non-exact de-duping/ might help robustness?
+     (.setSites cdtb (unique-points sites tolerance))
+     ;; uses LinearComponentExtractor to get (Multi)LineStrings
+     ;; from the constraint Geometry.
+     ;; Doesn't seem to do any de-duping or handle intersections.
+     ;; TODO: let caller do cleaning, if required, for performance in already
+     ;; clean cases?
+     (when constraints
+       (let [constraints (clean-constraints constraints tolerance)]
+         (assert (.isSimple constraints))
+         (assert (.isValid constraints))
+         (.setConstraints cdtb constraints)))
      (mct/seconds "triangulate"
                   (.getTriangles cdtb (.getFactory sites)))))
 
-  (^Geometry [^Geometry sites
-              ^Geometry constraints
-              ^double tolerance]
-   (cdt sites constraints tolerance (NonEncroachingSplitPointFinder.)))
-
-  (^Geometry [^Geometry sites
-              ^Geometry constraints]
-   (cdt sites constraints 0.0 (NonEncroachingSplitPointFinder.))))
+  (^Geometry [^Geometry sites ^Geometry constraints]
+   (cdt sites constraints 0.0)))
+;;----------------------------------------------------------------
+;; inter library conversions
 ;;----------------------------------------------------------------
 ;; commons geometry to JTS
 ;;----------------------------------------------------------------
