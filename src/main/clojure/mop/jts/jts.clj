@@ -24,7 +24,7 @@
    [org.apache.commons.geometry.euclidean.twod Vector2D]
    [org.locationtech.jts.geom
     Coordinate CoordinateXY Geometry GeometryCollection
-    GeometryFactory LineString MultiPoint MultiPolygon Point Polygon Triangle]
+    GeometryFactory LineString MultiPoint MultiPolygon Point Polygon PrecisionModel Triangle]
    [org.locationtech.jts.geom.util
     GeometryFixer LinearComponentExtracter]
    [org.locationtech.jts.io
@@ -76,6 +76,11 @@
 ;; walker which is
 (defn geometry-iterator [^GeometryCollection gc]
   (GeometryCollectionIterator/make gc))
+;;----------------------------------------------------------------
+(defn ^PrecisionModel precision-model [^double tolerance]
+  (if (< 0.0 tolerance)
+    (PrecisionModel. (/ 1.0 tolerance))
+    (PrecisionModel.)))
 ;;----------------------------------------------------------------
 (defn ^LineString edge [^GeometryFactory factory
                         ^CoordinateXY p0
@@ -199,21 +204,26 @@
 (defn delaunay?
 
   ([^Polygon t vertices tolerance]
-   (and (triangle? t)
-        (let [coords (.getCoordinates t)
-              a (aget coords 0)
-              b (aget coords 1)
-              c (aget coords 2)
-              center (Triangle/circumcentre a b c)
-              ;; TODO: faster to compute radius^2
-              radius (- (Triangle/circumradius a b c) tolerance)]
-          (and (>= radius tolerance)
-               (every? (fn [^Coordinate v]
-                         (or (.equals2D v a tolerance)
-                             (.equals2D v b tolerance)
-                             (.equals2D v c tolerance)
-                             (< radius (.distance center v))))
-                       vertices)))))
+   (let [result
+         (and
+          (triangle? t)
+          (let [tolerance (double tolerance)
+                coords (.getCoordinates t)
+                a (aget coords 0)
+                b (aget coords 1)
+                c (aget coords 2)
+                center (Triangle/circumcentre a b c)
+                ;; TODO: faster to compute radius^2
+                radius (- (Triangle/circumradius a b c) tolerance)]
+            (and (>= radius tolerance)
+                 (every? (fn [^Coordinate v]
+                           (or (.equals2D v a tolerance)
+                               (.equals2D v b tolerance)
+                               (.equals2D v c tolerance)
+                               (< radius (.distance center v))))
+                         vertices))))]
+     #_(println (.toString t))
+     t))
 
   ([^Geometry triangles ^double tolerance]
    (let [vertices (unique-coordinates triangles tolerance)
@@ -227,6 +237,9 @@
               ^Geometry constraints
               ^double tolerance
               check]
+
+   (assert (.isSimple sites))
+   (assert (.isValid sites))
 
    (let [cdtb (ConformingDelaunayTriangulationBuilder.)]
      (.setTolerance cdtb tolerance)

@@ -35,22 +35,21 @@
 ;;----------------------------------------------------------------
 (defn ^TriangleMesh ll-icosahedron []
   (let [^TriangleMesh u2-mesh ((comp
-                                #_cmplx/midpoint-subdivide-4)
+                                #_cmplx/midpoint-subdivide-4
+                                cmplx/midpoint-subdivide-4
+                                cmplx/midpoint-subdivide-4)
                                (icosahedron/u2-cut-icosahedron))
         embedding (into {} (map (fn [[k v]] [k (jts/coordinate (s2/to-ll v))])
                                 (.embedding u2-mesh)))]
     (mesh/triangle-mesh (.cmplx u2-mesh) embedding)))
 ;;----------------------------------------------------------------
 (defn make-world []
-  (let [tolerance 1.0e-3
-        pm (PrecisionModel. (double (/ 1.0 tolerance)))
+  (let [tolerance 5.0e-5
+        ^PrecisionModel pm (jts/precision-model tolerance)
         factory (GeometryFactory. pm)
         mesh (jts/mesh-polygons (ll-icosahedron) factory)
         land (land-polygons factory)
         meshland (GeometryCombiner/combine mesh land)
-        meshland (OverlayNGRobust/union meshland)
-        _ (assert (.isSimple meshland))
-        _ (assert (.isValid meshland))
         points (jts/unique-points meshland tolerance)
         lines (LinearComponentExtracter/getGeometry meshland true)
         lines (OverlayNGRobust/union lines)
