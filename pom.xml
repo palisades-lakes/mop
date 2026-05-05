@@ -15,11 +15,6 @@
     <artifactId>palisades-lakes-parent</artifactId>
     <version>0.0.11</version>
   </parent>
-  <properties>
-    <maven.compiler.release>25</maven.compiler.release>
-    <gt.version>34.3</gt.version>
-    <maven.deploy.skip>true</maven.deploy.skip>
-  </properties>
   <build>
     <plugins>
       <plugin>
@@ -88,7 +83,7 @@
       <dependency>
         <groupId>org.geotools</groupId>
         <artifactId>gt-bom</artifactId>
-        <version>${gt.version}</version>
+        <version>${geotools-version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
