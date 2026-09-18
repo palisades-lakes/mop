@@ -30,7 +30,7 @@
   (let [polygons (gt/read-jts-geometries
                   #_"data/natural-earth/10m_physical/ne_10m_land.shp"
                   #_"data/natural-earth/50m_physical/ne_50m_land.shp"
-                  "data/natural-earth/ne_110m_land.shp"
+                  "data/natural-earth/110m_physical/ne_110m_land.shp"
                   gfactory)
         fill (Color/web "#22990044")
         stroke (Color/web "#a6611aFF")

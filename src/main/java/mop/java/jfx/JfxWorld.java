@@ -59,7 +59,7 @@ public final class JfxWorld extends Application {
                                         final double h) {
     final Group world = makeWorld();
     // parent Pane handles events
-      // TODO: is this necessary or useful?
+    // TODO: is this necessary or useful?
     world.setFocusTraversable(false);
     world.setMouseTransparent(true);
     final Pane pane = WorldPane.make(world);
