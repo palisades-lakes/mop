@@ -1,19 +1,18 @@
 package mop.java.cmplx;
 
-import org.jspecify.annotations.NonNull;
-
 import java.util.List;
+import java.util.Objects;
 
-/**
- * Abstract quadrilateral cell.
+/** Abstract quadrilateral cell.
  * Not a simplex, so maybe should be elsewhere.
  * An oriented (ordered up to circular permutation) quadruple
  * of zero simplexes.
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2026-02-18
+ * @version 2026-10-10
  */
-public final class Quad implements Cell {
+public final class Quad
+  implements Cell, Comparable<Quad> {
 
   //--------------------------------------------------------------------
   // TODO: reuse array?
@@ -38,9 +37,6 @@ public final class Quad implements Cell {
 
   //--------------------------------------------------------------------
 
-  private final int _count;
-  private final int count () { return _count; }
-
   private final ZeroSimplex _z0;
   public final ZeroSimplex z0 () { return _z0; }
   private final ZeroSimplex _z1;
@@ -49,6 +45,24 @@ public final class Quad implements Cell {
   public final ZeroSimplex z2 () { return _z2; }
   private final ZeroSimplex _z3;
   public final ZeroSimplex z3 () { return _z3; }
+
+  //--------------------------------------------------------------------
+  // Comparable
+  //--------------------------------------------------------------------
+  /** Lexicographic ordering via vertices.
+   */
+
+  @Override
+  public final int compareTo (final Quad that) {
+    final int c0 = z0().compareTo(that.z0());
+    if (0==c0) {
+      final int c1 = z1().compareTo(that.z1());
+      if (0==c1) {
+        final int c2 = z2().compareTo(that.z2());
+        if (0==c2) { return z3().compareTo(that.z3()); }
+        return c2; }
+      return c1; }
+    return c0; }
 
   //--------------------------------------------------------------------
   // Object
@@ -60,25 +74,13 @@ public final class Quad implements Cell {
       "Q[" + z0() + "," + z1() + z2() + "," + z3() + "]"; }
 
   @Override
-  public final int hashCode () { return _count; }
+  public final int hashCode () {
+    return Objects.hash(z0(),z1(),z2(),z3()); }
 
-//  @Override
-//  public final boolean equals (final Object that) {
-//    assert that instanceof Quad;
-//    return (this == that); }
-
-  //--------------------------------------------------------------------
-  // Comparable
-  //--------------------------------------------------------------------
-
-  /** Ordering will be match order of creation within a thread. will be
-   * used to identify which point goes with which zero simplex in
-   * embeddings.
-   * TODO: lexicographic ordering via vertices?
-   */
   @Override
-  public final int compareTo (final @NonNull Object that) {
-    return _count - ((Quad) that).count(); }
+  public final boolean equals (final Object that) {
+    assert that instanceof Quad;
+    return equivalent((Quad) that); }
 
   //--------------------------------------------------------------------
   // Cell
@@ -114,7 +116,6 @@ public final class Quad implements Cell {
     assert z1 != z2;
     assert z1 != z3;
     assert z2 != z3;
-    _count = Cell.counter();
     final ZeroSimplex[] z = minimalCircularPermutation(z0, z1, z2, z3);
     _z0 = z[0]; _z1 = z[1]; _z2 = z[2]; _z3 = z[3]; }
 
