@@ -37,7 +37,7 @@
   ([msg & exprs]
    (let [expr `(do ~@exprs)]
      `(let [
-            ^DateTimeFormatter fmt#
+            ^java.time.format.DateTimeFormatter fmt#
             (DateTimeFormatter/ofPattern "yyyy-MM-dd HH:mm:ss")]
         (println ~msg (.format fmt# (LocalDateTime/now)))
         (let [start# (System/nanoTime)

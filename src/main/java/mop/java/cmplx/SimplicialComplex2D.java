@@ -22,6 +22,16 @@ public final class SimplicialComplex2D implements CellComplex {
   public final List<TwoSimplex> faces () { return _faces; }
 
   //--------------------------------------------------------------------
+  // Object
+  //--------------------------------------------------------------------
+
+  @Override
+  public final String toString () {
+    return
+      "vertices:\n" + vertices().toString()
+        + "\nfaces:\n" + faces().toString(); }
+
+  //--------------------------------------------------------------------
   // construction
   //--------------------------------------------------------------------
   /** Accumulate the sorted vertices from the provided faces.
