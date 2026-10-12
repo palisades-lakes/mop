@@ -10,11 +10,11 @@ import java.util.TreeSet;
  * Minimal representation: vertices and faces only.
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2026-02-18
+ * @version 2026-10-12
  */
 public final class SimplicialComplex2D implements CellComplex {
 
-  // TODO: ordered set
+  // TODO: ordered sets
   private final List<ZeroSimplex> _vertices;
   public final List<ZeroSimplex> vertices () { return _vertices; }
 
@@ -40,8 +40,8 @@ public final class SimplicialComplex2D implements CellComplex {
    * Do not retain a reference to <code>faces</code>.
    * Use unmodifiable lists internally.
    */
-  public static final SimplicialComplex2D make (
-    final Collection<TwoSimplex> faces) {
+  public static final SimplicialComplex2D make
+    (final Collection<TwoSimplex> faces) {
     return new SimplicialComplex2D(faces); }
 
   //--------------------------------------------------------------------
