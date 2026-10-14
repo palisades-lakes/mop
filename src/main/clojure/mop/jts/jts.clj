@@ -5,7 +5,7 @@
 (ns mop.jts.jts
   {:doc     "JTS utilities: https://github.com/locationtech/jts"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-04-22"}
+   :version "2026-10-14"}
 
   (:require
    [clojure.java.io :as io]
@@ -223,6 +223,7 @@
                                (< radius (.distance center v))))
                          vertices))))]
      #_(println (.toString t))
+     (println result)
      t))
 
   ([^Geometry triangles ^double tolerance]
@@ -283,9 +284,9 @@
 ;;----------------------------------------------------------------
 (defn ^GeometryCollection mesh-polygons [^TriangleMesh mesh
                                          ^GeometryFactory factory]
-  (let [faces (.faces (.cmplx mesh))
+  (let [faces (.faces mesh)
         _ (println "n mesh faces: " (.size faces))
-        _ (println "n mesh vertices: " (.size (.vertices (.cmplx mesh))))
+        _ (println "n mesh vertices: " (.size (.vertices mesh)))
         embedding (.embedding mesh)
         triangles (into-array
                    Polygon (mapv #(triangle factory % embedding) faces))
@@ -296,7 +297,7 @@
 ;;----------------------------------------------------------------
 (defn ^GeometryCollection mesh-linestrings [^TriangleMesh mesh
                                             ^GeometryFactory factory]
-  (let [pairs (cmplx/vertex-pairs (.cmplx mesh))
+  (let [pairs (cmplx/vertex-pairs mesh)
         embedding (.embedding mesh)
         ^LineString/1
         edges (into-array
@@ -315,7 +316,7 @@
 ;;----------------------------------------------------------------
 (defn ^GeometryCollection mesh-points [^TriangleMesh mesh
                                        ^GeometryFactory factory]
-  (let [vertices (cmplx/vertices (.cmplx mesh))
+  (let [vertices (cmplx/vertices mesh)
         embedding (.embedding mesh)
         ^Point/1
         points (into-array

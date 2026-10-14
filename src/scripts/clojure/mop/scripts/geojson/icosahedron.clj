@@ -6,7 +6,7 @@
 (ns mop.scripts.geojson.icosahedron
   {:doc "(Uncut) icosahedron in geojson (geoedn) format."
    :author "palisades dot lakes at gmail dot com"
-   :version "2026-03-04"}
+   :version "2026-10-14"}
 
   (:require
    [clojure.java.io :as io]
@@ -29,10 +29,10 @@
                           )
                          initial)
       edn (geojson/geo-edn icosahedron)]
-  (debug/echo (count (.vertices (.cmplx initial))))
-  (debug/echo (count (.faces (.cmplx initial))))
-  (debug/echo (count (.vertices (.cmplx icosahedron))))
-  (debug/echo (count (.faces (.cmplx icosahedron))))
+  (debug/echo (count (.vertices initial)))
+  (debug/echo (count (.faces initial)))
+  (debug/echo (count (.vertices icosahedron)))
+  (debug/echo (count (.faces icosahedron)))
   (json/write-json edn "out/geojson/icosahedron.json")
   (pp/pprint edn (io/writer "out/geojson/icosahedron.edn"))
   )

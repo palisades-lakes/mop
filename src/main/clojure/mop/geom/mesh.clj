@@ -4,7 +4,7 @@
 (ns mop.geom.mesh
   {:doc     "Embedded cell complexes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-03-06"}
+   :version "2026-10-14"}
 
   (:require
    [mop.cmplx.complex :as cmplx]
@@ -28,7 +28,7 @@
 
 (defn cmplx ^CellComplex [^Mesh mesh] (.cmplx mesh))
 (defn embedding ^IFn [^Mesh mesh] (.embedding mesh))
-(defn faces [^Mesh mesh] (.faces (.cmplx mesh)))
+(defn faces [^Mesh mesh] (.faces mesh))
 
 ;;---------------------------------------------------------------
 

@@ -1,24 +1,21 @@
 package mop.java.cmplx;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * Abstract 2d quadrilateral cell complex.
  * Minimal representation: vertices and faces only.
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2026-03-10
+ * @version 2026-10-14
  */
 public final class QuadComplex implements CellComplex {
 
-  private final List<ZeroSimplex> _vertices;
-  public final List<ZeroSimplex> vertices () { return _vertices; }
+  private final SortedSet<ZeroSimplex> _vertices;
+  public final SortedSet<ZeroSimplex> vertices () { return _vertices; }
 
-  private final List<Quad> _faces;
-  public final List<Quad> faces () { return _faces; }
+  private final SortedSet<Quad> _faces;
+  public final SortedSet<Quad> faces () { return _faces; }
 
   //--------------------------------------------------------------------
   // construction
@@ -33,8 +30,8 @@ public final class QuadComplex implements CellComplex {
       vertices.add(f.z1());
       vertices.add(f.z2());
       vertices.add(f.z3()); }
-    _vertices = List.copyOf(vertices);
-    _faces = List.copyOf(faces); }
+    _vertices = Collections.unmodifiableSortedSet(vertices);
+    _faces = Collections.unmodifiableSortedSet(new TreeSet<>(faces)); }
 
   /** Accumulate the sorted vertices from the provided faces.
    * Do not retain a reference to <code>faces</code>.

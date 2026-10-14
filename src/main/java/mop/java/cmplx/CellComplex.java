@@ -1,22 +1,25 @@
 package mop.java.cmplx;
 
-import java.util.List;
+import java.util.SortedSet;
 
 /**
  * Simplicial and other (eg quadrilateral) cell complexes.
  * <p>
- * Immutable.
+ * Immutable .
  * <p>
  * Identity equality.
- * <p>
+ * </p>
+ *
+ * @author palisades dot lakes at gmail dot com
+ * @version 2026-10-14
  */
 
 public interface CellComplex {
 
-  /** Return an unmodifiable list. */
-  public List vertices ();
+  /** Return an unmodifiable set. */
+  public SortedSet<ZeroSimplex> vertices ();
 
-  /** Return an unmodifiable list. */
-  public List faces ();
+  /** Return an unmodifiable set. */
+  public SortedSet<? extends Cell> faces ();
 
 }
