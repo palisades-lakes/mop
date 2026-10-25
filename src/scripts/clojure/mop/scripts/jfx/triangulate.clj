@@ -5,7 +5,7 @@
   {:doc     "Use JavaFX to display a conformal delaunay triangulation of
   natural earth boundaries."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-04-11"}
+   :version "2026-10-25"}
 
   (:require
    [mop.cmplx.complex :as cmplx]
@@ -18,8 +18,7 @@
    [java.util Collection]
    [javafx.scene Group]
    [javafx.scene.paint Color Paint]
-   [mop.cmplx.complex VertexPair]
-   [mop.java.cmplx TwoSimplex ZeroSimplex]
+    [mop.java.cmplx TwoSimplex UndirectedOneSimplex ZeroSimplex]
    [mop.java.geom.mesh TriangleMesh]
    [mop.java.jfx JfxWorld]
    [org.apache.commons.geometry.euclidean.twod Vector2D]
@@ -100,7 +99,7 @@
         embedding (.embedding mesh)
         edges (into-array
                Geometry
-               (mapv (fn [^VertexPair pair]
+               (mapv (fn [^UndirectedOneSimplex pair]
                        (jts-edge factory
                                  (s2/to-ll (embedding (.z0 pair)))
                                  (s2/to-ll (embedding (.z1 pair)))))

@@ -8,20 +8,20 @@
   Start with spherical quad mesh, subdivide, and transform to R^3.
   Started with https://clojurecivitas.github.io/opengl_visualization/main.html"
    :author "palisades dot lakes at gmail dot com"
-   :version "2026-02-14"}
+   :version "2026-10-25"}
 
   (:require
-   [mop.commons.string :as mcs]
-   [mop.cmplx.complex :as cmplx]
-   [mop.geom.quads :as quads]
+    [mop.cmplx.complex :as cmplx]
+    [mop.commons.string :as mcs]
+    [mop.geom.quads :as quads]
    [mop.geom.rn :as rn]
    [mop.geom.s2 :as s2]
    [mop.image.util :as image]
    [mop.lwjgl.glfw.util :as glfw])
 
   (:import
-   [mop.cmplx.complex VertexPair]
-   [org.apache.commons.geometry.spherical.twod Point2S]))
+    [mop.java.cmplx UndirectedOneSimplex]
+    [org.apache.commons.geometry.spherical.twod Point2S]))
 
 ;;-------------------------------------------------------------
 
@@ -45,7 +45,7 @@
       dual (update-vals s2 s2/s2-to-r3)
       pairs (sort(cmplx/vertex-pairs (.cmplx s2-mesh)))
       ]
-  (doseq [^VertexPair e pairs]
+  (doseq [^UndirectedOneSimplex e pairs]
     (let [a (s2 (.z0 e))
           b (s2 (.z1 e))
           i (s2/dateline-crossing a b)]

@@ -6,7 +6,7 @@
 (ns mop.scripts.debug.cut
   {:doc     "cut mesh at 'dateline'"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-02-16"}
+   :version "2026-10-25"}
 
   (:require
    [mop.cmplx.complex :as cmplx]
@@ -14,9 +14,8 @@
    [mop.geom.s2 :as s2]
    [mop.geom.tetrahedron :as tetrahedron])
   (:import
-   [mop.java.cmplx ZeroSimplex SimplicialComplex2D]
-   [mop.cmplx.complex VertexPair]
-   [mop.java.geom.mesh Mesh]))
+    [mop.java.cmplx SimplicialComplex2D  UndirectedOneSimplex ZeroSimplex]
+    [mop.java.geom.mesh Mesh]))
 
 ;;-------------------------------------------------------------
 
@@ -25,7 +24,7 @@
       ;faces (mesh/faces mesh)
       pairs (cmplx/vertex-pairs cmplx)
       s2 (.embedding mesh)]
-  (doseq [^VertexPair pair pairs]
+  (doseq [^UndirectedOneSimplex pair pairs]
     (let [^ZeroSimplex a (.z0 pair)
           ^ZeroSimplex b (.z1 pair)]
       (println pair)

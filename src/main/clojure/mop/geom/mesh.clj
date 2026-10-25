@@ -4,7 +4,7 @@
 (ns mop.geom.mesh
   {:doc     "Embedded cell complexes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-10-14"}
+   :version "2026-10-25"}
 
   (:require
    [mop.cmplx.complex :as cmplx]
@@ -15,14 +15,13 @@
   (:import
    [clojure.lang IFn]
    [java.util List]
-   [org.apache.commons.geometry.spherical.twod
-    GreatArc Point2S]
-   [mop.cmplx.complex VertexPair]
-   [mop.java.cmplx
-    Cell CellComplex SimplicialComplex2D
-    ZeroSimplex OneSimplex TwoSimplex]
-   [mop.java.geom Point2U]
-   [mop.java.geom.mesh Mesh TriangleMesh]))
+    [mop.java.cmplx
+     Cell CellComplex DirectedOneSimplex
+     SimplicialComplex2D  TwoSimplex  UndirectedOneSimplex ZeroSimplex]
+    [mop.java.geom Point2U]
+    [mop.java.geom.mesh Mesh TriangleMesh]
+    [org.apache.commons.geometry.spherical.twod
+     GreatArc Point2S]))
 
 ;;---------------------------------------------------------------
 
@@ -100,11 +99,11 @@ most likely R^3 or S^2."
 (defmethod points ZeroSimplex [^IFn embedding ^ZeroSimplex x]
   [(embedding x)])
 
-(defmethod points OneSimplex [^IFn embedding ^OneSimplex x]
+(defmethod points DirectedOneSimplex [^IFn embedding ^DirectedOneSimplex x]
   [(embedding (.z0 x))
    (embedding (.z1 x))])
 
-(defmethod points VertexPair [^IFn embedding ^VertexPair x]
+(defmethod points UndirectedOneSimplex [^IFn embedding ^UndirectedOneSimplex x]
   [(embedding (.z0 x))
    (embedding (.z1 x))])
 
@@ -143,7 +142,7 @@ most likely R^3 or S^2."
 #_(defn ^GreatArc arc
     ([^IFn s2 ^ZeroSimplex a ^ZeroSimplex b]
      (s2/arc ^Point2S (s2 a) ^Point2S (s2 b)))
-    ([s2 ^OneSimplex ab] (arc s2 (.z0 ab) (.z1 ab))))
+    ([s2 ^DirectedOneSimplex ab] (arc s2 (.z0 ab) (.z1 ab))))
 
 ;;---------------------------------------------------------------
 ;; TODO: generalize to other cutting rules.

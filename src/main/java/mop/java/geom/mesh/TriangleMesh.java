@@ -4,11 +4,11 @@ import clojure.lang.IFn;
 import mop.java.cmplx.CellComplex;
 import mop.java.cmplx.SimplicialComplex2D;
 
-/** Embedded two dimensional simplicial complex.
+/** Embedded two-dimensional simplicial complex.
  * Minimal representation: vertices and faces only.
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2026-10-12
+ * @version 2026-10-25
  */
 public final class TriangleMesh implements Mesh {
 

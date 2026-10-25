@@ -4,22 +4,22 @@
 (ns mop.cmplx.complex
   {:doc     "(Abstract) simplicial and cell complexes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-04-11"}
+   :version "2026-10-25"}
   (:require
    [clojure.set :as set]
    [mop.commons.string :as mcs])
   (:import
-   [mop.java.cmplx
-    Cell CellComplex
-    OneSimplex SimplicialComplex2D TwoSimplex ZeroSimplex]))
+    [mop.java.cmplx
+     Cell CellComplex
+     DirectedOneSimplex SimplicialComplex2D TwoSimplex UndirectedOneSimplex ZeroSimplex]))
 
 ;;---------------------------------------------------------------
 
 (defn simplex
   (^ZeroSimplex [^String name]
    (ZeroSimplex/make name))
-  (^OneSimplex [^ZeroSimplex z0 ^ZeroSimplex z1]
-   (OneSimplex/make z0 z1))
+  (^DirectedOneSimplex [^ZeroSimplex z0 ^ZeroSimplex z1]
+   (DirectedOneSimplex/make z0 z1))
   (^TwoSimplex [^ZeroSimplex z0 ^ZeroSimplex z1 ^ZeroSimplex z2]
    (TwoSimplex/make z0 z1 z2)))
 
@@ -52,45 +52,45 @@
 ;; Used as a key in temp maps during subdivision and other
 ;; micro-topological operations on a complex.
 
-(deftype VertexPair
-  ;; require (.compareTo z0 z1) < 0
-  [^ZeroSimplex z0
-   ^ZeroSimplex z1]
+;(deftype UndirectedOneSimplex
+;  ;; require (.compareTo z0 z1) < 0
+;  [^ZeroSimplex z0
+;   ^ZeroSimplex z1]
+;
+;  ;; TODO: Implement ISeq or something like that?
+;
+;  Comparable
+;  (compareTo [_ that]
+;    (assert (instance? UndirectedOneSimplex that))
+;    (let [that ^UndirectedOneSimplex that
+;          c (.compareTo z0 (.z0 that))]
+;      (if (zero? c)
+;        (.compareTo z1 (.z1 that))
+;        c)))
+;
+;  Object
+;  (equals [this that]
+;    (cond
+;      (identical? this that) true
+;      (not (instance? UndirectedOneSimplex that)) false
+;      :else (let [that ^UndirectedOneSimplex that]
+;              (and (identical? (.z0 this) (.z0 that))
+;                   (identical? (.z1 this) (.z1 that))))))
+;  (hashCode [_]
+;    (let [h (int 17)
+;          h (unchecked-multiply-int h (int 31))
+;          h (unchecked-add-int h (.hashCode z0))
+;          h (unchecked-multiply-int h (int 31))
+;          h (unchecked-add-int h (.hashCode z1))]
+;      h))
+;  (toString [_] (str z0 "->" z1)))
 
-  ;; TODO: Implement ISeq or something like that?
 
-  Comparable
-  (compareTo [_ that]
-    (assert (instance? VertexPair that))
-    (let [that ^VertexPair that
-          c (.compareTo z0 (.z0 that))]
-      (if (zero? c)
-        (.compareTo z1 (.z1 that))
-        c)))
-
-  Object
-  (equals [this that]
-    (cond
-      (identical? this that) true
-      (not (instance? VertexPair that)) false
-      :else (let [that ^VertexPair that]
-              (and (identical? (.z0 this) (.z0 that))
-                   (identical? (.z1 this) (.z1 that))))))
-  (hashCode [_]
-    (let [h (int 17)
-          h (unchecked-multiply-int h (int 31))
-          h (unchecked-add-int h (.hashCode z0))
-          h (unchecked-multiply-int h (int 31))
-          h (unchecked-add-int h (.hashCode z1))]
-      h))
-  (toString [_] (str z0 "->" z1)))
-
-
-(defn ^VertexPair vertex-pair [^ZeroSimplex z0 ^ZeroSimplex z1]
+(defn ^UndirectedOneSimplex vertex-pair [^ZeroSimplex z0 ^ZeroSimplex z1]
   (assert (not (.equals z0 z1)))
   (if (< (.compareTo z0 z1) 0)
-    (VertexPair. z0 z1)
-    (VertexPair. z1 z0)))
+    (UndirectedOneSimplex. z0 z1)
+    (UndirectedOneSimplex. z1 z0)))
 
 ;;---------------------------------------------------------------
 

@@ -5,7 +5,7 @@
 (ns mop.jts.jts
   {:doc     "JTS utilities: https://github.com/locationtech/jts"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-10-14"}
+   :version "2026-10-25"}
 
   (:require
    [clojure.java.io :as io]
@@ -17,8 +17,7 @@
    [java.util ArrayList Arrays]
    [javafx.scene Group]
    [javafx.scene.paint Color]
-   [mop.cmplx.complex VertexPair]
-   [mop.java.cmplx TwoSimplex]
+    [mop.java.cmplx TwoSimplex UndirectedOneSimplex]
    [mop.java.geom.mesh TriangleMesh]
    [mop.java.jts GeometryCollectionIterator]
    [org.apache.commons.geometry.euclidean.twod Vector2D]
@@ -196,7 +195,7 @@
 ;;----------------------------------------------------------------
 ;; noded unions of constraint geometries
 ;;----------------------------------------------------------------
-(defn ^Geometry clean-constraints [^Geometry constraints ^double tolerance]
+(defn ^Geometry clean-constraints [^Geometry constraints ^double _tolerance]
   (let [lines (LinearComponentExtracter/getGeometry constraints true)]
     #_(GeometryFixer/fix lines)
     (OverlayNGRobust/union lines)))
@@ -302,7 +301,7 @@
         ^LineString/1
         edges (into-array
                LineString
-               (mapv (fn [^VertexPair pair]
+               (mapv (fn [^UndirectedOneSimplex pair]
                        (edge factory
                              (embedding (.z0 pair))
                              (embedding (.z1 pair))))
