@@ -9,15 +9,15 @@ import java.util.concurrent.atomic.AtomicInteger;
  * dangerous with multiple meshes that may share vertices, edges, etc.
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2026-10-10
+ * @version 2026-10-25
  */
 public final class ZeroSimplex
   implements Cell, Comparable<ZeroSimplex> {
 
   //--------------------------------------------------------------------
 
-  static final AtomicInteger _counter = new AtomicInteger(-1);
-  static int counter () { return _counter.getAndIncrement(); }
+private static final AtomicInteger _counter = new AtomicInteger(-1);
+  private static int counter () { return _counter.getAndIncrement(); }
 
   private final int _count;
   private final int count () { return _count; }
@@ -62,12 +62,6 @@ public final class ZeroSimplex
 
   @Override
   public final int hashCode () { return _count; }
-
-  @Override
-  public final boolean equals (final Object that) {
-    assert that instanceof ZeroSimplex :
-      that.getClass().getSimpleName() + ": " +that.toString();
-    return (this == that); }
 
   //--------------------------------------------------------------------
   // construction
