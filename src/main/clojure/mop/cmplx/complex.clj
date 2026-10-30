@@ -4,14 +4,15 @@
 (ns mop.cmplx.complex
   {:doc     "(Abstract) simplicial and cell complexes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-10-25"}
+   :version "2026-10-30"}
   (:require
    [clojure.set :as set]
    [mop.commons.string :as mcs])
   (:import
     [mop.java.cmplx
      Cell CellComplex
-     DirectedOneSimplex SimplicialComplex2D TwoSimplex UndirectedOneSimplex ZeroSimplex]))
+     DirectedOneSimplex SimplicialComplex2D TwoSimplex UndirectedOneSimplex
+     ZeroSimplex]))
 
 ;;---------------------------------------------------------------
 
@@ -88,9 +89,8 @@
 
 (defn ^UndirectedOneSimplex vertex-pair [^ZeroSimplex z0 ^ZeroSimplex z1]
   (assert (not (.equals z0 z1)))
-  (if (< (.compareTo z0 z1) 0)
-    (UndirectedOneSimplex. z0 z1)
-    (UndirectedOneSimplex. z1 z0)))
+  ;; constructor enforces unordered pair equality
+  (UndirectedOneSimplex. z0 z1) )
 
 ;;---------------------------------------------------------------
 
