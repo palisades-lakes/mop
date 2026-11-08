@@ -78,9 +78,9 @@
     (filter predicate (cmplx/faces (.cmplx mesh))))
    (.embedding mesh)))
 (defn not-containing-vertex-by-name [^TwoSimplex face name]
-  (not (or (= name (.name (.z0 face)))
-           (= name (.name (.z1 face)))
-           (= name (.name (.z2 face))))))
+  (not (or (= name (.prefix (.z0 face)))
+           (= name (.prefix (.z1 face)))
+           (= name (.prefix (.z2 face))))))
 (defn ^TriangleMesh remove-faces-w-vtx [^TriangleMesh mesh z]
   (filter-mesh #(not-containing-vertex-by-name % z) mesh))
 ;;---------------------------------------------------------------

@@ -22,13 +22,10 @@ public final record DirectedOneSimplex (ZeroSimplex z0,
   public final List vertices () { return List.of(z0(), z1()); }
 
   @Override
-  public final boolean isOriented () { return true; }
-
-  @Override
   public final boolean equivalent (final Cell that) {
     if (this == that) { return true; }
-    if (that instanceof DirectedOneSimplex(ZeroSimplex z2,
-                                           ZeroSimplex z3)) {
+    if (that instanceof DirectedOneSimplex(final ZeroSimplex z2,
+                                           final ZeroSimplex z3)) {
       return (z0() == z2) && (z1() == z3); }
     return false; }
 

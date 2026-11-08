@@ -35,10 +35,6 @@ public interface Cell {
    */
   public List vertices ();
 
-  /** In general, 2 cells are equivalent is they have the same vertices.
-   */
-  public boolean isOriented ();
-
   /** Do the 2 cells have the same sub-cells and same orientation
    * (when oriented).
    */

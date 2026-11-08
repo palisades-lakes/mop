@@ -91,9 +91,6 @@ public final class Quad
     return List.of(z0(), z1(), z2(), z3()); }
 
   @Override
-  public final boolean isOriented () { return true; }
-
-  @Override
   public final boolean equivalent (final Cell that) {
     if (this == that)  { return true; }
     if (! (that instanceof mop.java.cmplx.Quad)) { return false; }

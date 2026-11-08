@@ -9,22 +9,22 @@ import java.util.concurrent.atomic.AtomicInteger;
  * dangerous with multiple meshes that may share vertices, edges, etc.
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2026-10-25
+ * @version 2026-11-07
  */
 public final class ZeroSimplex
   implements Cell, Comparable<ZeroSimplex> {
 
   //--------------------------------------------------------------------
 
-private static final AtomicInteger _counter = new AtomicInteger(-1);
+private static final AtomicInteger _counter = new AtomicInteger(0);
   private static int counter () { return _counter.getAndIncrement(); }
 
   private final int _count;
   private final int count () { return _count; }
 
-  private final String _name;
+  private final String _prefix;
 
-  public final String name () { return _name; }
+  public final String prefix () { return _prefix; }
 
   //--------------------------------------------------------------------
   // Cell
@@ -33,9 +33,6 @@ private static final AtomicInteger _counter = new AtomicInteger(-1);
    */
   @Override
   public final List vertices () { return List.of(this); }
-
-  @Override
-  public final boolean isOriented () { return true; }
 
   @Override
   public final boolean equivalent (final Cell that) {
@@ -58,21 +55,29 @@ private static final AtomicInteger _counter = new AtomicInteger(-1);
   //--------------------------------------------------------------------
 
   @Override
-  public final String toString () { return _name; }
+  public final String toString () { return prefix() + count(); }
 
   @Override
-  public final int hashCode () { return _count; }
+  public final int hashCode () { return count(); }
+
+  @Override
+  public final boolean equals (final Object that) {
+    assert that instanceof ZeroSimplex;
+    return count() == ((ZeroSimplex) that).count(); }
 
   //--------------------------------------------------------------------
   // construction
   //--------------------------------------------------------------------
 
-  private ZeroSimplex (final String name) {
-    _count = counter(); _name = name; }
+  private ZeroSimplex (final String prefix) {
+    _count = counter(); _prefix = prefix; }
 
-  public static final ZeroSimplex make (final String name) {
-    return new ZeroSimplex(name);
-  }
+  public static final ZeroSimplex make (final String prefix) {
+    return new ZeroSimplex(prefix); }
+
+  public static final ZeroSimplex make () {
+    return make("z"); }
+
   //--------------------------------------------------------------------
 } // end class
 //--------------------------------------------------------------------

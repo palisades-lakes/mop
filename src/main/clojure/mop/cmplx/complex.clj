@@ -17,8 +17,8 @@
 ;;---------------------------------------------------------------
 
 (defn simplex
-  (^ZeroSimplex [^String name]
-   (ZeroSimplex/make name))
+  (^ZeroSimplex [^String prefix]
+   (ZeroSimplex/make prefix))
   (^DirectedOneSimplex [^ZeroSimplex z0 ^ZeroSimplex z1]
    (DirectedOneSimplex/make z0 z1))
   (^TwoSimplex [^ZeroSimplex z0 ^ZeroSimplex z1 ^ZeroSimplex z2]

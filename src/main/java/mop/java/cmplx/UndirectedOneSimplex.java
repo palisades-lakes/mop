@@ -24,9 +24,6 @@ public final record UndirectedOneSimplex (ZeroSimplex z0,
   public final List vertices () { return List.of(z0(), z1()); }
 
   @Override
-  public final boolean isOriented () { return false; }
-
-  @Override
   public final boolean equivalent (final Cell that) {
     if (this == that) { return true; }
     if (that instanceof UndirectedOneSimplex(final ZeroSimplex z2,

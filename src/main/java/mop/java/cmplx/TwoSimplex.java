@@ -46,9 +46,6 @@ public final class TwoSimplex
     return List.of(z0(), z1(), z2()); }
 
   @Override
-  public final boolean isOriented () { return true; }
-
-  @Override
   public final boolean equivalent (final Cell that) {
     // assuming vertices are constrained to same circular permutation
     if (this == that)  { return true; }
