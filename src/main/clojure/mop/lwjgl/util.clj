@@ -5,7 +5,7 @@
 
   {:doc     "LWJGL utilities"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-02-18"}
+   :version "2026-11-19"}
 
   (:require [clojure.math :as math]
             [clojure.pprint :as pp]

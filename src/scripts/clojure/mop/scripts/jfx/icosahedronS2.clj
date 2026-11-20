@@ -5,7 +5,7 @@
   {:doc     "Use JavaFX to display cut icosahedron and natural earth boundaries
   in planar lon,lat coordinates."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-04-20"}
+   :version "2026-11-19"}
 
   (:require
    [mop.cmplx.complex :as cmplx]

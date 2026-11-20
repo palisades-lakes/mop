@@ -1,7 +1,7 @@
 (ns mop.geom.quads
   {:doc     "Quadrilateral meshes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-03-06"}
+   :version "2026-11-19"}
   (:require
    [clojure.set :as set]
    [mop.cmplx.complex :as cmplx]
@@ -62,33 +62,33 @@
     (if (empty? faces)
       {:child  (quad-complex child-faces)
        :parent (set/map-invert children)}
-      ;; else
+       ;; else
       (let [^Quad face (first faces)
             ^ZeroSimplex z0 (.z0 face)
             ^ZeroSimplex z1 (.z1 face)
             ^ZeroSimplex z2 (.z2 face)
             ^ZeroSimplex z3 (.z3 face)
             ;; TODO: what about multiple edges connecting same vertices?
-            e01 (sort [z0 z1])
-            e12 (sort [z1 z2])
-            e23 (sort [z2 z3])
-            e30 (sort [z3 z0])
+            e01 (cmplx/vertex-pair z0 z1)
+            e12 (cmplx/vertex-pair z1 z2)
+            e23 (cmplx/vertex-pair z2 z3)
+            e30 (cmplx/vertex-pair z3 z0)
             ^ZeroSimplex z01 (or (children e01) (cmplx/simplex "ab"))
             ^ZeroSimplex z12 (or (children e12) (cmplx/simplex "bc"))
             ^ZeroSimplex z23 (or (children e23) (cmplx/simplex "cd"))
             ^ZeroSimplex z30 (or (children e30) (cmplx/simplex "da"))
             ^ZeroSimplex z0123 (cmplx/simplex "abcd")]
         (recur
-         (rest faces)
-         (concat child-faces
-                 [(quad z30 z0 z01 z0123)
-                  (quad z01 z1 z12 z0123)
-                  (quad z12 z2 z23 z0123)
-                  (quad z23 z3 z30 z0123)])
-         (merge children
-                {z0   z0 z1 z1 z2 z2 z3 z3
-                 e01  z01 e12 z12 e23 z23 e30 z30
-                 face z0123}))))))
+          (rest faces)
+          (conj child-faces
+            (quad z30 z0 z01 z0123)
+            (quad z01 z1 z12 z0123)
+            (quad z12 z2 z23 z0123)
+            (quad z23 z3 z30 z0123))
+          (merge children
+                 {z0 z0,  z1 z1,  z2 z2,  z3 z3,
+                  e01 z01,  e12 z12,  e23 z23,  e30 z30,
+                  face z0123}))))))
 
 ;;---------------------------------------------------------------
 ;; TODO: how to ensure that embeddings don't turn the cube inside out?
@@ -126,8 +126,8 @@
 (defn- quad-mesh ^QuadMesh [^QuadComplex cmplx
                             ^IFn embedding]
   (dorun
-   (map #(assert (not (nil? (embedding %))))
-        (.vertices cmplx)))
+    (map #(assert (not (nil? (embedding %))))
+         (.vertexList cmplx)))
   (QuadMesh/make cmplx embedding))
 
 ;;---------------------------------------------------------------
@@ -144,14 +144,14 @@
    (embedding (.z3 ^Quad x))])
 
 (defmethod mesh/points QuadComplex [^IFn embedding ^QuadComplex x]
-  (mesh/points embedding (.vertices ^QuadComplex x)))
+  (mesh/points embedding (.vertexList ^QuadComplex x)))
 
 ;;---------------------------------------------------------------
 
 (defmethod rn/transform [Object QuadMesh] [^Object f ^QuadMesh x]
   (quad-mesh
-   (.cmplx x)
-   (update-vals (.embedding x) #(rn/transform f %))))
+    (.cmplx x)
+    (update-vals (.embedding x) #(rn/transform f %))))
 
 ;;---------------------------------------------------------------
 ;; TODO: ensure that embedded cube has the desired orientation,
@@ -164,17 +164,17 @@
         ;; TODO: how do we know these are in the right order?
         ;; This isn't feasible for larger complexes!
         ;; Should be some way to walk the complex and get them in the right order.
-        [z0 z1 z2 z3 z4 z5 z6 z7] (.vertices cmplx)]
+        [z0 z1 z2 z3 z4 z5 z6 z7] (.vertexList cmplx)]
     (mesh/mesh
-     cmplx
-     {z0 (rn/vector -1 -1 -1)
-      z1 (rn/vector 1 -1 -1)
-      z2 (rn/vector 1 1 -1)
-      z3 (rn/vector -1 1 -1)
-      z4 (rn/vector -1 -1 1)
-      z5 (rn/vector 1 -1 1)
-      z6 (rn/vector 1 1 1)
-      z7 (rn/vector -1 1 1)})))
+      cmplx
+      {z0 (rn/vector -1 -1 -1)
+       z1 (rn/vector 1 -1 -1)
+       z2 (rn/vector 1 1 -1)
+       z3 (rn/vector -1 1 -1)
+       z4 (rn/vector -1 -1 1)
+       z5 (rn/vector 1 -1 1)
+       z6 (rn/vector 1 1 1)
+       z7 (rn/vector -1 1 1)})))
 
 ;;---------------------------------------------------------------
 ;; TODO: ensure that embedded cube has the desired orientation,
@@ -189,39 +189,39 @@
         ;; This isn't feasible for larger complexes!
         ;; Should be some way to walk the complex and get them in the right order.
         #_qr #_(QuaternionRotation/createVectorRotation
-                (rn/vector -1 -1 -1)
-                (rn/vector 0 0 -1))]
+                 (rn/vector -1 -1 -1)
+                 (rn/vector 0 0 -1))]
     (quad-mesh
-     cmplx
-     (doall
-      (into
-       {}
-       (map (fn [v p]
-              ;;[v (s2/point (rn/transform qr p))])
-              [v (s2/point p)])
-            (.vertices cmplx)
-            [(rn/vector -1 -1 -1)
-             (rn/vector 1 -1 -1)
-             (rn/vector 1 1 -1)
-             (rn/vector -1 1 -1)
-             (rn/vector -1 -1 1)
-             (rn/vector 1 -1 1)
-             (rn/vector 1 1 1)
-             (rn/vector -1 1 1)]))))))
+      cmplx
+      (doall
+        (into
+          {}
+          (map (fn [v p]
+                 ;;[v (s2/point (rn/transform qr p))])
+                 [v (s2/point p)])
+               (.vertexList cmplx)
+               [(rn/vector -1 -1 -1)
+                (rn/vector 1 -1 -1)
+                (rn/vector 1 1 -1)
+                (rn/vector -1 1 -1)
+                (rn/vector -1 -1 1)
+                (rn/vector 1 -1 1)
+                (rn/vector 1 1 1)
+                (rn/vector -1 1 1)]))))))
 
 ;;---------------------------------------------------------------
 
 (defmethod cmplx/midpoint-subdivide-4 QuadMesh [^QuadMesh qm]
-  (let [{^CellComplex child :child
-         parent             :parent} (cmplx/midpoint-subdivide-4 (.cmplx qm))
+  (let [{^CellComplex child :child  parent :parent}
+        (cmplx/midpoint-subdivide-4 (.cmplx qm))
         embedding (.embedding qm)]
     (mesh/mesh
-     child
-     (into
-      {}
-      (map
-       (fn [v]
-         [v (apply space/midpoint (mesh/points embedding (parent v)))])
-       (.vertices child))))))
+      child
+      (into
+        {}
+        (map
+          (fn [v]
+            [v (apply space/midpoint (mesh/points embedding (parent v)))])
+          (.vertexList child))))))
 
 ;;---------------------------------------------------------------

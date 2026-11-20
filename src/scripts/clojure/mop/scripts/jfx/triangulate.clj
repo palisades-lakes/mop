@@ -1,11 +1,13 @@
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
+;; mvn -q install & cljfx src\scripts\clojure\mop\scripts\jfx\triangulate.clj
+;;----------------------------------------------------------------
 (ns mop.scripts.jfx.triangulate
   {:doc     "Use JavaFX to display a conformal delaunay triangulation of
   natural earth boundaries."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-10-25"}
+   :version "2026-11-19"}
 
   (:require
    [mop.cmplx.complex :as cmplx]
@@ -28,8 +30,6 @@
    [org.locationtech.jts.operation.valid IsValidOp]
    [org.locationtech.jts.triangulate
     ConformingDelaunayTriangulationBuilder]))
-;;----------------------------------------------------------------
-;; mvn -q install & cljfx src\scripts\clojure\mop\scripts\jfx\triangulate.clj
 ;;----------------------------------------------------------------
 ;; TODO: move to JTS namespace and defmethod
 (defn ^CoordinateXY jts-coordinate [^Vector2D xy]
@@ -118,7 +118,7 @@
                              #_cmplx/midpoint-subdivide-4
                              #_cmplx/midpoint-subdivide-4)
                             (icosahedron/u2-cut-icosahedron))
-        vertices (cmplx/vertices (.cmplx mesh))
+        vertices (.vertexList (.cmplx mesh))
         embedding (.embedding mesh)
         points (into-array
                Geometry

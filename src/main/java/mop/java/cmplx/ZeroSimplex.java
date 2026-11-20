@@ -9,11 +9,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * dangerous with multiple meshes that may share vertices, edges, etc.
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2026-11-07
+ * @version 2026-11-19
  */
 public final class ZeroSimplex
   implements Cell, Comparable<ZeroSimplex> {
-
   //--------------------------------------------------------------------
 
 private static final AtomicInteger _counter = new AtomicInteger(0);
@@ -36,7 +35,9 @@ private static final AtomicInteger _counter = new AtomicInteger(0);
 
   @Override
   public final boolean equivalent (final Cell that) {
-    return this == that; }
+    if (this == that)  { return true; }
+    if (! (that instanceof ZeroSimplex)) { return false; }
+    return count() == ((ZeroSimplex) that).count(); }
 
   //--------------------------------------------------------------------
   // Comparable
@@ -62,8 +63,8 @@ private static final AtomicInteger _counter = new AtomicInteger(0);
 
   @Override
   public final boolean equals (final Object that) {
-    assert that instanceof ZeroSimplex;
-    return count() == ((ZeroSimplex) that).count(); }
+    assert that instanceof Cell;
+    return equivalent((Cell) that); }
 
   //--------------------------------------------------------------------
   // construction

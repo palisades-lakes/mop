@@ -8,11 +8,11 @@ import java.util.Objects;
  * triple of zero simplexes.
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2026-10-10
+ * @version 2026-11-19
  */
 public final class TwoSimplex
   implements Cell, Comparable<TwoSimplex> {
-
+  // TODO: make record class
   //--------------------------------------------------------------------
 
   private static final ZeroSimplex[]
@@ -82,8 +82,8 @@ public final class TwoSimplex
 
   @Override
   public final boolean equals (final Object that) {
-    assert that instanceof TwoSimplex;
-    return equivalent((TwoSimplex) that); }
+    assert that instanceof Cell;
+    return equivalent((Cell) that); }
 
   //--------------------------------------------------------------------
   // construction

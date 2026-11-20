@@ -8,7 +8,7 @@
   Start with spherical quad mesh, subdivide, and transform to R^3.
   Started with https://clojurecivitas.github.io/opengl_visualization/main.html"
    :author "palisades dot lakes at gmail dot com"
-   :version "2026-10-25"}
+   :version "2026-11-19"}
 
   (:require
     [mop.cmplx.complex :as cmplx]
@@ -31,10 +31,6 @@
       s2-mesh
       ((comp
         cmplx/midpoint-subdivide-4
-        ;;cmplx/subdivide-4
-        ;;cmplx/subdivide-4
-        ;;cmplx/subdivide-4
-        ;;cmplx/subdivide-4
         )
        (quads/standard-quad-sphere))
       s2 (.embedding s2-mesh)

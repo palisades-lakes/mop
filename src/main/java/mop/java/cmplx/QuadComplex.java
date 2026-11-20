@@ -1,13 +1,16 @@
 package mop.java.cmplx;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * Abstract 2d quadrilateral cell complex.
  * Minimal representation: vertices and faces only.
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2026-10-14
+ * @version 2026-11-19
  */
 public final class QuadComplex implements CellComplex {
 

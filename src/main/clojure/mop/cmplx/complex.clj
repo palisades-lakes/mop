@@ -4,15 +4,16 @@
 (ns mop.cmplx.complex
   {:doc     "(Abstract) simplicial and cell complexes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-10-30"}
+   :version "2026-11-19"}
   (:require
    [clojure.set :as set]
    [mop.commons.string :as mcs])
   (:import
-    [mop.java.cmplx
-     Cell CellComplex
-     DirectedOneSimplex SimplicialComplex2D TwoSimplex UndirectedOneSimplex
-     ZeroSimplex]))
+   [java.util Collection]
+   [mop.java.cmplx
+    Cell CellComplex
+    DirectedOneSimplex SimplicialComplex2D TwoSimplex UndirectedOneSimplex
+    ZeroSimplex]))
 
 ;;---------------------------------------------------------------
 
@@ -30,8 +31,8 @@
   "Do the 2 cells have the same vertices in the same order?"
   (.equivalent c0 c1))
 
-(defn vertices [^CellComplex complex] (.vertices complex))
-(defn faces [^CellComplex complex] (.faces complex))
+(defn vertices ^Collection [^CellComplex complex] (.vertices complex))
+(defn faces ^Collection [^CellComplex complex] (.faces complex))
 
 ;;---------------------------------------------------------------
 
@@ -46,7 +47,7 @@
 ;; TODO: enforce orientedness?
 
 (defn simplicial-complex-2d [faces]
-    (SimplicialComplex2D/make faces))
+  (SimplicialComplex2D/make faces))
 
 ;;---------------------------------------------------------------
 ;; Not a simplex. No independent identity.
@@ -138,7 +139,7 @@
     (if (empty? faces)
       {:child  (simplicial-complex-2d child-faces)
        :parent (set/map-invert children)}
-      ;; else
+       ;; else
       (let [^TwoSimplex face (first faces)
             ^ZeroSimplex a (.z0 face)
             ^ZeroSimplex b (.z1 face)
@@ -156,13 +157,13 @@
                                 (simplex (str (.toString (.z0 eca))
                                               (.toString (.z1 eca)))))]
         (recur
-         (rest faces)
-         ;; overflow with concat instead of conj
-         (conj child-faces
-               (simplex a ab ca)
-               (simplex b bc ab)
-               (simplex c ca bc)
-               (simplex ab bc ca))
-         (merge children {a a, b b, c c, eab ab, ebc bc, eca ca}))))))
+          (rest faces)
+          ;; overflow with concat instead of conj
+          (conj child-faces
+                (simplex a ab ca)
+                (simplex b bc ab)
+                (simplex c ca bc)
+                (simplex ab bc ca))
+          (merge children {a a, b b, c c, eab ab, ebc bc, eca ca}))))))
 
 ;;---------------------------------------------------------------

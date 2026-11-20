@@ -9,7 +9,7 @@ import java.util.Objects;
  * <code>z0 < z1</code>.
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2026-10-25
+ * @version 2026-11-19
  */
 public final record UndirectedOneSimplex (ZeroSimplex z0,
                                          ZeroSimplex z1)
@@ -58,11 +58,8 @@ public final record UndirectedOneSimplex (ZeroSimplex z0,
 
   @Override
   public final boolean equals (final Object that) {
-    if (this == that) { return true; }
-    if (! (that instanceof UndirectedOneSimplex)) { return false; }
-    final UndirectedOneSimplex e = (UndirectedOneSimplex) that;
-    // oriented aka directed edges
-    return (z0() == e.z0()) && (z1() == e.z1()); }
+    assert that instanceof Cell;
+    return equivalent((Cell) that); }
 
   //--------------------------------------------------------------------
   // construction

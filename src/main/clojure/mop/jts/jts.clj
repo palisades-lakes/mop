@@ -5,7 +5,7 @@
 (ns mop.jts.jts
   {:doc     "JTS utilities: https://github.com/locationtech/jts"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-10-25"}
+   :version "2026-11-19"}
 
   (:require
    [clojure.java.io :as io]
@@ -315,7 +315,7 @@
 ;;----------------------------------------------------------------
 (defn ^GeometryCollection mesh-points [^TriangleMesh mesh
                                        ^GeometryFactory factory]
-  (let [vertices (cmplx/vertices mesh)
+  (let [vertices (.vertexList (.cmplx mesh))
         embedding (.embedding mesh)
         ^Point/1
         points (into-array

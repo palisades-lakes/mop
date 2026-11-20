@@ -1,6 +1,6 @@
 @echo off
 :: palisades dot lakes at gmail dot com
-:: 206-04-05
+:: 2026-11-19
 
 
 set TRACE=
@@ -17,12 +17,14 @@ set OPENS=--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.desktop/j
 set CP=-cp ./src/scripts/clojure;lib/*
 ::set CP=-cp lib/*
 
-set MODULE_PATH=--module-path lib\javafx-base-25-win.jar;lib\javafx-base-25.jar;lib\javafx-controls-25-win.jar;lib\javafx-controls-25.jar;lib\javafx-graphics-25-win.jar;lib\javafx-graphics-25.jar;lib\javafx-media-25-win.jar;lib\javafx-media-25.jar;lib\javafx-web-25-win.jar;lib\javafx-web-25.jar
-set MODULES=--add-modules javafx.base,javafx.controls,javafx.graphics,javafx.media,javafx.web
+set JFX_VERSION=27.0.1.1
+set MODULE_PATH=--module-path lib\javafx-base-%JFX_VERSION%-win.jar;lib\javafx-base-%JFX_VERSION%.jar;lib\javafx-controls-%JFX_VERSION%-win.jar;lib\javafx-controls-%JFX_VERSION%.jar;lib\javafx-graphics-%JFX_VERSION%-win.jar;lib\javafx-graphics-%JFX_VERSION%.jar;lib\javafx-media-%JFX_VERSION%-win.jar;lib\javafx-media-%JFX_VERSION%.jar;lib\javafx-web-%JFX_VERSION%-win.jar;lib\javafx-web-%JFX_VERSION%.jar
+set MODULES=--add-modules javafx.controls,javafx.media,javafx.web
 set JAVA="%JAVA_HOME%\bin\java"
 
 set CLJOPTS=-Dclojure.main.report=stderr
 set CMD=%JAVA% %UNWARN% -ea %GC% %XMX% %TRACE% %OPENS% %CP% --sun-misc-unsafe-memory-access=allow --enable-native-access=javafx.graphics %MODULE_PATH% %MODULES% %CLJOPTS% clojure.main %*
+::set CMD=%JAVA% %UNWARN% -ea %GC% %XMX% %TRACE% %OPENS% %CP% %MODULE_PATH% %MODULES% %CLJOPTS% clojure.main %*
 ::echo %CMD%
 %CMD%
 

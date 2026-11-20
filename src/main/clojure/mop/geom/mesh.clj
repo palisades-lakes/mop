@@ -4,7 +4,7 @@
 (ns mop.geom.mesh
   {:doc     "Embedded cell complexes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-10-25"}
+   :version "2026-11-19"}
 
   (:require
    [mop.cmplx.complex :as cmplx]
@@ -36,7 +36,7 @@
   (dorun
    (map #(assert (not (nil? (embedding %)))
                  (println %))
-        (.vertices cmplx)))
+        (.vertexList cmplx)))
   (TriangleMesh/make cmplx embedding))
 
 ;;---------------------------------------------------------------
@@ -113,7 +113,7 @@ most likely R^3 or S^2."
    (embedding (.z2 x))])
 
 (defmethod points SimplicialComplex2D [^IFn embedding ^SimplicialComplex2D x]
-  (points embedding (.vertices ^SimplicialComplex2D x)))
+  (points embedding (.vertexList ^SimplicialComplex2D x)))
 
 ;;---------------------------------------------------------------
 ;; TODO: Incorporate alternate subdivision rules,
@@ -135,7 +135,7 @@ most likely R^3 or S^2."
       {}
       (map
        (fn [v] [v (apply space/midpoint (points embedding (parent v)))])
-       (.vertices child))))))
+       (.vertexList child))))))
 
 ;;---------------------------------------------------------------
 
@@ -316,7 +316,7 @@ most likely R^3 or S^2."
   "Return a float array and an int array suitable for passing to GLSL.
   Don't rely on any ordering of cells and vertices."
   (let [faces (.faces cmplx)
-        zeros (sort (.vertices cmplx))
+        zeros (sort (.vertexList cmplx))
         zindex (into {} (map (fn [z i] [z i])
                              zeros (range (count zeros))))
         indices (flatten (map (fn [^Cell face]

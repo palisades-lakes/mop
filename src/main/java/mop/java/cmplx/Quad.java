@@ -9,11 +9,11 @@ import java.util.Objects;
  * of zero simplexes.
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2026-10-10
+ * @version 2026-11-19
  */
 public final class Quad
   implements Cell, Comparable<Quad> {
-
+  // TODO: make record class
   //--------------------------------------------------------------------
   // TODO: reuse array?
 
@@ -45,6 +45,28 @@ public final class Quad
   public final ZeroSimplex z2 () { return _z2; }
   private final ZeroSimplex _z3;
   public final ZeroSimplex z3 () { return _z3; }
+
+  //--------------------------------------------------------------------
+  // Cell
+  //--------------------------------------------------------------------
+  /** Note: returns immutable list. */
+  @Override
+  public final List vertices () {
+    return List.of(z0(), z1(), z2(), z3()); }
+
+  @Override
+  public final boolean equivalent (final Cell that) {
+    if (this == that)  { return true; }
+    if (that instanceof Quad) {
+      final var x = (Quad) that;
+      return
+        ((z0() == x.z0())
+          && (z1() == x.z1())
+          && (z2() == x.z2())
+          && (z3() == x.z3()));
+    }
+    else { return false; }
+  }
 
   //--------------------------------------------------------------------
   // Comparable
@@ -79,25 +101,8 @@ public final class Quad
 
   @Override
   public final boolean equals (final Object that) {
-    assert that instanceof Quad;
-    return equivalent((Quad) that); }
-
-  //--------------------------------------------------------------------
-  // Cell
-  //--------------------------------------------------------------------
-  /** Note: returns immutable list. */
-  @Override
-  public final List vertices () {
-    return List.of(z0(), z1(), z2(), z3()); }
-
-  @Override
-  public final boolean equivalent (final Cell that) {
-    if (this == that)  { return true; }
-    if (! (that instanceof mop.java.cmplx.Quad)) { return false; }
-    final Quad x = (Quad) that;
-    return
-      ((z0() == x.z0()) && (z1() == x.z1()) &&
-        (z2() == x.z2()) && (z3() == x.z3())); }
+    assert that instanceof Cell;
+    return equivalent((Cell) that); }
 
   //--------------------------------------------------------------------
   // construction
