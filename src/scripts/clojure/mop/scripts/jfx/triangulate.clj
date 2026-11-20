@@ -57,7 +57,7 @@
         c1 (jts-coordinate p1)
         c2 (jts-coordinate p2)
         ^CoordinateXY/1
-        coordinates (into-array CoordinateXY [c0 c1 c2 #_c0])
+        coordinates (into-array CoordinateXY [c0 c1 c2 c0])
         polygon (.createPolygon factory coordinates)
         is-valid (IsValidOp. polygon)]
     (assert (.isValid is-valid) (str (.getValidationError is-valid)))
@@ -137,7 +137,7 @@
   (let [geometries (gt/read-jts-geometries
                     #_"data/natural-earth/10m_physical/ne_10m_land.shp"
                     #_"data/natural-earth/50m_physical/ne_50m_land.shp"
-                    "data/natural-earth/ne_110m_land.shp"
+                    "data/natural-earth/110m_physical/ne_110m_land.shp"
                     factory)
         ;is-valid (IsValidOp. geometries)
         ;geometries (if (.isValid is-valid)

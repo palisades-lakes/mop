@@ -62,8 +62,11 @@
 (defn ^GeometryCollection read-jts-geometries
   ([shp ^GeometryFactory factory]
    (let [^DataStore store (FileDataStoreFinder/getDataStore (io/file shp))
+         _ (println store)
          ;; TODO: handle multiple type names
-         ^String name (first (into [] (.getTypeNames store)))
+         names (into [] (.getTypeNames store))
+         _ (println "names: "  names)
+         ^String name (first names)
          ^SimpleFeatureSource featureSource (.getFeatureSource store name)
          ^SimpleFeatureCollection featureCollection (.getFeatures featureSource)
          ^Polygon/1

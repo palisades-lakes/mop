@@ -13,7 +13,8 @@
    [mop.java.cmplx
     Cell CellComplex
     DirectedOneSimplex SimplicialComplex2D TwoSimplex UndirectedOneSimplex
-    ZeroSimplex]))
+    ZeroSimplex]
+   [mop.java.geom.mesh TriangleMesh]))
 
 ;;---------------------------------------------------------------
 
@@ -103,6 +104,9 @@
 
 (defmethod vertex-pairs CellComplex [^CellComplex sc]
   (reduce set/union (map vertex-pairs (.faces sc))))
+
+(defmethod vertex-pairs TriangleMesh [^TriangleMesh mesh]
+  (vertex-pairs (.cmplx mesh)))
 
 ;;---------------------------------------------------------------
 ;; TODO: Incorporate alternate subdivision rules,
