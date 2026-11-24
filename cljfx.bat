@@ -1,6 +1,6 @@
 @echo off
 :: palisades dot lakes at gmail dot com
-:: 2026-11-22
+:: 2026-11-23
 
 
 ::set THRUPUT=-d64 -server -XX:+AggressiveOpts
@@ -26,6 +26,7 @@ set JFX_VERSION=25.0.5.1
 
 set MODULE_PATH=--module-path lib\javafx-base-%JFX_VERSION%-win.jar;lib\javafx-base-%JFX_VERSION%.jar;lib\javafx-controls-%JFX_VERSION%-win.jar;lib\javafx-controls-%JFX_VERSION%.jar;lib\javafx-graphics-%JFX_VERSION%-win.jar;lib\javafx-graphics-%JFX_VERSION%.jar;lib\javafx-media-%JFX_VERSION%-win.jar;lib\javafx-media-%JFX_VERSION%.jar;lib\javafx-web-%JFX_VERSION%-win.jar;lib\javafx-web-%JFX_VERSION%.jar
 set MODULES=--add-modules javafx.controls,javafx.media,javafx.web
+
 set UPGRADE_PATH=--upgrade-module-path lib\jdk-jsobject-27.0.1.1.jar;lib\jdk-jsobject-27.0.1.1-win.jar
 
 set JAVA="%JAVA_HOME%\bin\java"
