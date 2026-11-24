@@ -1,7 +1,7 @@
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-;; clj src\scripts\clojure\mop\debug\s2.clj
+;; clj src\scripts\clojure\mop\scripts\debug\s2.clj
 ;;----------------------------------------------------------------
 
 (ns mop.scripts.debug.s2

@@ -7,7 +7,7 @@
   {:doc
    "Prepare to Resize images."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-12-14"}
+   :version "2026-11-23"}
 
   (:require
    [clojure.java.io :as io]
@@ -70,7 +70,7 @@
         (examine (.createCompatibleDestRaster subsample raster))))))
 ;;---------------------------------------------------------------------
 (doseq [input
-        (image/image-file-seq (io/file "images/imageio-ext"))
+        (image/image-file-seq (io/file "images"))
         #_[
          "images/lroc/lroc_color_poles_2k.tif"
          "images/lroc/lroc_color_poles_2k-gtx.tif"

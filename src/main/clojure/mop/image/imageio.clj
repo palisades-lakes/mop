@@ -7,7 +7,7 @@
   NOTE: these functions fail on some images, which ones depending on whether
   compiled with an imageio-ext-tiff dependency."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-12-15"}
+   :version "2026-11-23"}
   (:refer-clojure :exclude [read reduce])
   (:require [clojure.java.io :as io]
             [clojure.pprint :as pp]
@@ -16,6 +16,7 @@
    [com.sun.imageio.plugins.tiff TIFFImageMetadata]
    [java.awt Graphics2D RenderingHints]
    [java.awt.image BufferedImage RenderedImage]
+   [java.io File]
    [javax.imageio IIOImage ImageIO ImageReader ImageTypeSpecifier]
    [javax.imageio.plugins.tiff BaselineTIFFTagSet TIFFField]
    [mop.java.imageio MaxDimensionOp]))
@@ -32,14 +33,14 @@
       (== code BaselineTIFFTagSet/PREDICTOR_FLOATING_POINT) "FLOATING_POINT"
       :else
       (throw (IllegalArgumentException.
-              (str "Unrecognized predictor code: " code)))))
+               (str "Unrecognized predictor code: " code)))))
 
 #_(defn tiff-predictor ^long [^TIFFImageMetadata metadata]
-  (let [root (.getRootIFD metadata)
-        field (.getTIFFField root BaselineTIFFTagSet/TAG_PREDICTOR)]
-    (if field
-      (.getAsLong field 0)
-      BaselineTIFFTagSet/PREDICTOR_NONE)))
+    (let [root (.getRootIFD metadata)
+          field (.getTIFFField root BaselineTIFFTagSet/TAG_PREDICTOR)]
+      (if field
+        (.getAsLong field 0)
+        BaselineTIFFTagSet/PREDICTOR_NONE)))
 
 (defn set-tiff-predictor [^TIFFImageMetadata metadata ^long predictor]
   (let [base (BaselineTIFFTagSet/getInstance)
@@ -62,7 +63,7 @@
       (== code BaselineTIFFTagSet/COMPRESSION_DEFLATE)"DEFLATE"
       :else
       (throw (IllegalArgumentException.
-              (str "Unrecognized compression code: " code)))))
+               (str "Unrecognized compression code: " code)))))
 
 (defn tiff-compression ^long [^TIFFImageMetadata metadata]
   (let [root (.getRootIFD metadata)
@@ -83,11 +84,13 @@
 ;; TODO: custom ImageReadParams?
 ;; TODO: can we .close the input stream if the reader is returned?
 (defn ^[ImageReader IIOImage] read [input]
-  (with-open [iis (ImageIO/createImageInputStream (io/file input))]
-    (let [^ImageReader reader (first (iterator-seq (ImageIO/getImageReaders iis)))
-          params (.getDefaultReadParam reader)]
-      (.setInput reader iis)
-      [reader (.readAll reader 0 params)])))
+  (let [^File f (io/file input)]
+    (assert (.canRead f) (str "can't read:" f))
+    (with-open [iis (ImageIO/createImageInputStream f)]
+      (let [^ImageReader reader (first (iterator-seq (ImageIO/getImageReaders iis)))
+            params (.getDefaultReadParam reader)]
+        (.setInput reader iis)
+        [reader (.readAll reader 0 params)]))))
 ;;----------------------------------------------------------------------
 ;; TODO: do we need to return writer, write-param?
 ;; TODO: dispose of writer, other cleanup...
@@ -96,11 +99,11 @@
         writer (ImageIO/getImageWriter reader)
         write-param (.getDefaultWriteParam writer);
         metadata (.getMetadata image)]
-    ;; As of 2025-12-10, imageio-ext 2.0.1 can't write ZLIB compression?
-    ;; use LZW as a work-around
-    ;; seems to force PREDICTOR_NONE with LZW, creating approx 2x larger files than ZLIB input
-    ;; TODO: more experiments to find better compression
-    ;; TODO: keep checking whether imageio-ext is really necessary
+        ;; As of 2025-12-10, imageio-ext 2.0.1 can't write ZLIB compression?
+        ;; use LZW as a work-around
+        ;; seems to force PREDICTOR_NONE with LZW, creating approx 2x larger files than ZLIB input
+        ;; TODO: more experiments to find better compression
+        ;; TODO: keep checking whether imageio-ext is really necessary
     (when (instance? TIFFImageMetadata metadata)
       ;; imageio/imageio-ext can't write zlib
       (when (= BaselineTIFFTagSet/COMPRESSION_ZLIB (tiff-compression metadata))
@@ -128,49 +131,49 @@
 
 #_(defn ^RenderedImage resize-rendered-image
 
-  ([^RenderedImage image ^long w ^long h ^Object hint]
-   (let [type-specifier (ImageTypeSpecifier/createFromRenderedImage image)
-         ^BufferedImage resized (.createBufferedImage type-specifier w h)
-         ^Graphics2D g2 (.createGraphics resized)]
-     (pp/pprint g2)
-     (pp/pprint type-specifier)
-     (pp/pprint (.getColorModel type-specifier))
-     (pp/pprint (.getSampleModel type-specifier))
-     (println (.getTransferType (.getColorModel type-specifier)))
-     (.setRenderingHint g2 RenderingHints/KEY_INTERPOLATION hint)
-     (.drawImage g2 image 0 0 w h nil)
-     #_(.dispose g2)
-     resized))
+    ([^RenderedImage image ^long w ^long h ^Object hint]
+     (let [type-specifier (ImageTypeSpecifier/createFromRenderedImage image)
+           ^BufferedImage resized (.createBufferedImage type-specifier w h)
+           ^Graphics2D g2 (.createGraphics resized)]
+       (pp/pprint g2)
+       (pp/pprint type-specifier)
+       (pp/pprint (.getColorModel type-specifier))
+       (pp/pprint (.getSampleModel type-specifier))
+       (println (.getTransferType (.getColorModel type-specifier)))
+       (.setRenderingHint g2 RenderingHints/KEY_INTERPOLATION hint)
+       (.drawImage g2 image 0 0 w h nil)
+       #_(.dispose g2)
+       resized))
 
-  ([^RenderedImage image ^long w ^long h]
-   (resize-rendered-image image w h RenderingHints/VALUE_INTERPOLATION_BILINEAR)))
+    ([^RenderedImage image ^long w ^long h]
+     (resize-rendered-image image w h RenderingHints/VALUE_INTERPOLATION_BILINEAR)))
 ;;----------------------------------------------------------------------
 #_(defn ^RenderedImage reduce-rendered-image
 
-  "Return an image that has no dimension larger that max-dimension.
-  If small enough, return the input."
+    "Return an image that has no dimension larger that max-dimension.
+    If small enough, return the input."
 
-  ([^RenderedImage image ^long max-dimension ^Object hint]
-   (let [w (.getWidth image)
-         h (.getHeight image)
-         s (/ (double max-dimension) (Math/max w h))
-         sw (long (* s w))
-         sh (long (* s h))]
-     (if (or (< sw w) (< sh h))
-       (resize-rendered-image image sw sh hint)
-       image)))
+    ([^RenderedImage image ^long max-dimension ^Object hint]
+     (let [w (.getWidth image)
+           h (.getHeight image)
+           s (/ (double max-dimension) (Math/max w h))
+           sw (long (* s w))
+           sh (long (* s h))]
+       (if (or (< sw w) (< sh h))
+         (resize-rendered-image image sw sh hint)
+         image)))
 
-  ([^RenderedImage image ^long max-dimension]
-   (reduce-rendered-image image max-dimension RenderingHints/VALUE_INTERPOLATION_BILINEAR)))
+    ([^RenderedImage image ^long max-dimension]
+     (reduce-rendered-image image max-dimension RenderingHints/VALUE_INTERPOLATION_BILINEAR)))
 ;;----------------------------------------------------------------------
 #_(defn ^IIOImage resize-iioimage
 
-  ([^IIOImage image ^long w ^long h ^Object hint]
-   (IIOImage. (resize-rendered-image (.getRenderedImage image) w h hint)
-              (.getThumbnails image) (.getMetadata image)))
+    ([^IIOImage image ^long w ^long h ^Object hint]
+     (IIOImage. (resize-rendered-image (.getRenderedImage image) w h hint)
+                (.getThumbnails image) (.getMetadata image)))
 
-  ([^IIOImage image ^long w ^long h]
-   (resize-iioimage image w h RenderingHints/VALUE_INTERPOLATION_BILINEAR)))
+    ([^IIOImage image ^long w ^long h]
+     (resize-iioimage image w h RenderingHints/VALUE_INTERPOLATION_BILINEAR)))
 ;;----------------------------------------------------------------------
 ;; TODO: methods for RenderedImage and Rasters
 (defmulti subsample
@@ -179,5 +182,5 @@
           (fn [image ^long _max-dimension] (class image)))
 
 (defmethod ^IIOImage subsample IIOImage [image ^long max-dimension]
-   (.filter (MaxDimensionOp/make max-dimension) image))
+  (.filter (MaxDimensionOp/make max-dimension) image))
 ;;----------------------------------------------------------------------

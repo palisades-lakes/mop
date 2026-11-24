@@ -7,7 +7,7 @@
   {:doc
    "Resize images."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-12-13"}
+   :version "2026-11-22"}
 
   (:require
    [clojure.java.io :as io]
@@ -39,18 +39,6 @@
 ;;---------------------------------------------------------------------
 (doseq [input
         (image/image-file-seq (io/file "images/moon"))
-        #_[
-         "images/imageio/eo_base_2020_clean_geo.tif"
-         "images/imageio/gebco_08_rev_elev_21600x10800.png"
-         "images/imageio/world.topo.bathy.200412.3x5400x2700.png"
-
-         "images/imageio/USGS_13_n38w077_dir5.tiff"
-
-         "images/imageio/ETOPO_2022_v1_60s_PNW_bed.tiff"
-         "images/imageio/ETOPO_2022_v1_60s_N90W180_bed.tif"
-         "images/imageio/ldem_4.tif"
-         "images/imageio/ETOPO_2022_v1_60s_N90W180_bed-lzw.tif"
-         ]
         ]
   (resize input))
 ;;---------------------------------------------------------------------

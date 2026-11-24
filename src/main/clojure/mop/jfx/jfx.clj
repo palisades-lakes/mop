@@ -22,6 +22,8 @@
 ;; TODO: or java compile/run-time dispatch based on type of input
 
 (defmulti ^javafx.scene.Node node
+          "(jfx/node jts-object ^Color fill ^Color stroke)
+           method lookup on 1st arg only."
           (fn [g _ _] (class g)))
 
 (defn- ^doubles jts-coords-to-doubles [^Coordinate/1 coords]

@@ -4,7 +4,7 @@
 (ns mop.geom.mesh
   {:doc     "Embedded cell complexes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-11-19"}
+   :version "2026-11-22"}
 
   (:require
    [mop.cmplx.complex :as cmplx]
@@ -81,7 +81,7 @@
   (not (or (= name (.prefix (.z0 face)))
            (= name (.prefix (.z1 face)))
            (= name (.prefix (.z2 face))))))
-(defn ^TriangleMesh remove-faces-w-vtx [^TriangleMesh mesh z]
+#_(defn ^TriangleMesh remove-faces-w-vtx [^TriangleMesh mesh z]
   (filter-mesh #(not-containing-vertex-by-name % z) mesh))
 ;;---------------------------------------------------------------
 ;; TODO: force embedding to return points of some kind.

@@ -1,4 +1,6 @@
-;; mvn -q -DskipTests -Dmaven.test.skip=true install & cljfx src\scripts\clojure\mop\scripts\jts\cdt.clj
+;; mvn -q install & cljfx src\scripts\clojure\mop\scripts\jts\cdt.clj
+;; 2026-11-23: fails because constraints are not valid or simple geometries
+;; Ring Self-intersection at or near point (-132.7100078844312, 54.04000931542345)
 ;;----------------------------------------------------------------
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
@@ -22,22 +24,25 @@
    [javafx.scene Group]
    [mop.java.geom.mesh TriangleMesh]
    [mop.java.jfx JfxWorld]
-   [org.locationtech.jts.geom Geometry GeometryCollection GeometryFactory]))
+   [org.locationtech.jts.geom Geometry GeometryCollection GeometryFactory]
+   [org.locationtech.jts.geom.util GeometryFixer]
+   [org.locationtech.jts.operation.valid IsValidOp]))
 ;;----------------------------------------------------------------
 (defn ^GeometryCollection land-polygons [^GeometryFactory factory]
-  (let [geometries (gt/read-jts-geometries
+  (let [^GeometryCollection
+        geometries (gt/read-jts-geometries
                     #_"data/natural-earth/10m_physical/ne_10m_land.shp"
                     #_"data/natural-earth/50m_physical/ne_50m_land.shp"
                     "data/natural-earth/110m_physical/ne_110m_land.shp"
                     factory)
-        ;is-valid (IsValidOp. geometries)
-        ;geometries (if (.isValid is-valid)
-        ;               geometries
-        ;               (GeometryFixer/fix geometries))
+        is-valid (IsValidOp. geometries)
+        geometries (if (.isValid is-valid)
+                       geometries
+                       (GeometryFixer/fix geometries))
         ;is-valid (IsValidOp. geometries)
         ]
-    ;(assert (.isSimple geometries))
-    ;(assert (.isValid is-valid) (str (.getValidationError is-valid)))
+    (assert (.isSimple geometries))
+    (assert (.isValid is-valid) (str (.getValidationError is-valid)))
     geometries))
 ;;----------------------------------------------------------------
 (defn ^TriangleMesh ll-icosahedron []

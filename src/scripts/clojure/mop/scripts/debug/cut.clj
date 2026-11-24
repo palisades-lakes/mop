@@ -1,7 +1,7 @@
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-;; clj src\scripts\clojure\mop\debug\cut.clj
+;; clj src\scripts\clojure\mop\scripts\debug\cut.clj
 ;;----------------------------------------------------------------
 (ns mop.scripts.debug.cut
   {:doc     "cut mesh at 'dateline'"

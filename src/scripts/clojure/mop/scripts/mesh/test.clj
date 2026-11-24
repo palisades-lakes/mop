@@ -1,5 +1,5 @@
 ;;----------------------------------------------------------------
-;; clj src\scripts\clojure\mop\mesh\test.clj
+;; clj src\scripts\clojure\mop\scripts\mesh\test.clj
 ;;----------------------------------------------------------------
 (ns mop.scripts.mesh.test
   (:require

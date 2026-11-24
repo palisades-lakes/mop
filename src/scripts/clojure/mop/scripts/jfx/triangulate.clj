@@ -2,12 +2,13 @@
 (set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
 ;; mvn -q install & cljfx src\scripts\clojure\mop\scripts\jfx\triangulate.clj
+;; 2026-11-23: fails with "Too many splitting iterations while enforcing constraints..."
 ;;----------------------------------------------------------------
 (ns mop.scripts.jfx.triangulate
   {:doc     "Use JavaFX to display a conformal delaunay triangulation of
   natural earth boundaries."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-11-19"}
+   :version "2026-11-23"}
 
   (:require
    [mop.cmplx.complex :as cmplx]
@@ -20,7 +21,7 @@
    [java.util Collection]
    [javafx.scene Group]
    [javafx.scene.paint Color Paint]
-    [mop.java.cmplx TwoSimplex UndirectedOneSimplex ZeroSimplex]
+   [mop.java.cmplx TwoSimplex UndirectedOneSimplex ZeroSimplex]
    [mop.java.geom.mesh TriangleMesh]
    [mop.java.jfx JfxWorld]
    [org.apache.commons.geometry.euclidean.twod Vector2D]
@@ -30,8 +31,8 @@
    [org.locationtech.jts.operation.valid IsValidOp]
    [org.locationtech.jts.triangulate
     ConformingDelaunayTriangulationBuilder]))
-;;----------------------------------------------------------------
-;; TODO: move to JTS namespace and defmethod
+    ;;----------------------------------------------------------------
+    ;; TODO: move to JTS namespace and defmethod
 (defn ^CoordinateXY jts-coordinate [^Vector2D xy]
   (CoordinateXY. (.getX xy) (.getY xy)))
 ;;----------------------------------------------------------------
@@ -65,22 +66,22 @@
 ;;----------------------------------------------------------------
 (defn ^GeometryCollection icosahedron-polygons [^GeometryFactory factory]
   (let [^TriangleMesh mesh ((comp
-                             #_cmplx/midpoint-subdivide-4
-                             #_cmplx/midpoint-subdivide-4)
+                              #_cmplx/midpoint-subdivide-4
+                              #_cmplx/midpoint-subdivide-4)
                             (icosahedron/u2-cut-icosahedron))
         faces (.faces (.cmplx mesh))
         _ (println "n mesh faces: " (.size faces))
         _ (println "n mesh vertices: " (.size (.vertices (.cmplx mesh))))
         embedding (.embedding mesh)
         triangles (into-array
-                   Geometry
-                   (mapv (fn [^TwoSimplex face]
-                           (jts-triangle
-                            factory
-                            (s2/to-ll (embedding (.z0 face)))
-                            (s2/to-ll (embedding (.z1 face)))
-                            (s2/to-ll (embedding (.z2 face)))))
-                         faces))
+                    Geometry
+                    (mapv (fn [^TwoSimplex face]
+                            (jts-triangle
+                              factory
+                              (s2/to-ll (embedding (.z0 face)))
+                              (s2/to-ll (embedding (.z1 face)))
+                              (s2/to-ll (embedding (.z2 face)))))
+                          faces))
         geometries (.createGeometryCollection factory triangles)
         ;geometries (if (.isValid geometries)
         ;               geometries
@@ -92,18 +93,19 @@
 ;;----------------------------------------------------------------
 (defn ^GeometryCollection icosahedron-edges [^GeometryFactory factory]
   (let [^TriangleMesh mesh ((comp
-                             #_cmplx/midpoint-subdivide-4
-                             #_cmplx/midpoint-subdivide-4)
+                              #_cmplx/midpoint-subdivide-4
+                              #_cmplx/midpoint-subdivide-4)
                             (icosahedron/u2-cut-icosahedron))
         pairs (cmplx/vertex-pairs (.cmplx mesh))
         embedding (.embedding mesh)
+        ^Geometry/1
         edges (into-array
-               Geometry
-               (mapv (fn [^UndirectedOneSimplex pair]
-                       (jts-edge factory
-                                 (s2/to-ll (embedding (.z0 pair)))
-                                 (s2/to-ll (embedding (.z1 pair)))))
-                     pairs))
+                Geometry
+                (mapv (fn [^UndirectedOneSimplex pair]
+                        (jts-edge factory
+                                  (s2/to-ll (embedding (.z0 pair)))
+                                  (s2/to-ll (embedding (.z1 pair)))))
+                      pairs))
         geometries (.createGeometryCollection factory edges)
         is-valid (IsValidOp. geometries)
         ]
@@ -115,16 +117,17 @@
 ;;----------------------------------------------------------------
 (defn ^GeometryCollection icosahedron-points [^GeometryFactory factory]
   (let [^TriangleMesh mesh ((comp
-                             #_cmplx/midpoint-subdivide-4
-                             #_cmplx/midpoint-subdivide-4)
+                              #_cmplx/midpoint-subdivide-4
+                              #_cmplx/midpoint-subdivide-4)
                             (icosahedron/u2-cut-icosahedron))
         vertices (.vertexList (.cmplx mesh))
         embedding (.embedding mesh)
+        ^Geometry/1
         points (into-array
-               Geometry
-               (mapv (fn [^ZeroSimplex z]
-                       (jts-point factory (s2/to-ll (embedding z))))
-                     vertices))
+                 Geometry
+                 (mapv (fn [^ZeroSimplex z]
+                         (jts-point factory (s2/to-ll (embedding z))))
+                       vertices))
         geometries (.createGeometryCollection factory points)
         is-valid (IsValidOp. geometries)]
     (println (alength points))
@@ -135,18 +138,18 @@
 ;;----------------------------------------------------------------
 (defn ^GeometryCollection land-polygons [^GeometryFactory factory]
   (let [geometries (gt/read-jts-geometries
-                    #_"data/natural-earth/10m_physical/ne_10m_land.shp"
-                    #_"data/natural-earth/50m_physical/ne_50m_land.shp"
-                    "data/natural-earth/110m_physical/ne_110m_land.shp"
-                    factory)
+                     #_"data/natural-earth/10m_physical/ne_10m_land.shp"
+                     #_"data/natural-earth/50m_physical/ne_50m_land.shp"
+                     "data/natural-earth/110m_physical/ne_110m_land.shp"
+                     factory)
         ;is-valid (IsValidOp. geometries)
         ;geometries (if (.isValid is-valid)
         ;               geometries
         ;               (GeometryFixer/fix geometries))
         ;is-valid (IsValidOp. geometries)
         ]
-    ;(assert (.isSimple geometries))
-    ;(assert (.isValid is-valid) (str (.getValidationError is-valid)))
+        ;(assert (.isSimple geometries))
+        ;(assert (.isValid is-valid) (str (.getValidationError is-valid)))
     geometries))
 ;;----------------------------------------------------------------
 (defn ^GeometryCollection triangulate [^GeometryCollection geometries
@@ -192,8 +195,8 @@
                                     (Color/web "#FFFFFF00")
                                     (Color/web "#000088FF")
                                     "cdt")
-        ;; 'children' binding with type hint seems necessary to avoid
-        ;; reflection warnings; inline type hint gives warning?
+                                    ;; 'children' binding with type hint seems necessary to avoid
+                                    ;; reflection warnings; inline type hint gives warning?
         ^Collection children [#_combined-group triangulation-group]
         world (Group. children)]
     (.setId world "world")

@@ -119,7 +119,7 @@
             (doseq [tree trees] (pp/pprint (to-clj tree)))))))))
 ;;---------------------------------------------------------------------
 (doseq [input
-        (image/image-file-seq (io/file "images/imageio-ext"))
+        (image/image-file-seq (io/file "images"))
         #_[
          "images/lroc/lroc_color_poles_2k.tif"
          "images/lroc/lroc_color_poles_2k-gtx.tif"

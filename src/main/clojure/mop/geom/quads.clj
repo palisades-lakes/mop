@@ -1,7 +1,7 @@
 (ns mop.geom.quads
   {:doc     "Quadrilateral meshes."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-11-19"}
+   :version "2026-11-22"}
   (:require
    [clojure.set :as set]
    [mop.cmplx.complex :as cmplx]
@@ -123,7 +123,7 @@
 
 ;;---------------------------------------------------------------
 
-(defn- quad-mesh ^QuadMesh [^QuadComplex cmplx
+(defn quad-mesh ^QuadMesh [^QuadComplex cmplx
                             ^IFn embedding]
   (dorun
     (map #(assert (not (nil? (embedding %))))

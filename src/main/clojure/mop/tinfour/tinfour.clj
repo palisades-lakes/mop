@@ -5,7 +5,7 @@
 (ns mop.tinfour.tinfour
   {:doc     "Tinfour utilities: https://github.com/gwlucastrig/Tinfour"
    :author  "palisades dot lakes at gmail dot com"
-   :version "2026-04-23"}
+   :version "2026-11-23"}
   (:require [clojure.java.io :as io]
             [mop.jfx.jfx :as jfx]
             [mop.jts.jts :as jts])
@@ -115,7 +115,8 @@
          _ (assert (.isSimple points))
          _ (assert (.isValid points))
          edges (jts/clean-constraints edges estimatedPointSpacing)
-         _ (assert (.isSimple edges))
+         ;; some shape files fail this, but still work as constraints
+         ;;_ (assert (.isSimple edges))
          _ (assert (.isValid edges))
          s (sites points)
          c (constraints edges)

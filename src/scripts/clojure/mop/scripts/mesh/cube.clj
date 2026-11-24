@@ -1,16 +1,18 @@
 ;;----------------------------------------------------------------
-;; clj src\scripts\clojure\mop\mesh\cube.clj
+;; clj src\scripts\clojure\mop\scripts\mesh\cube.clj
 ;;----------------------------------------------------------------
 (ns mop.scripts.mesh.cube
   {:author "palisades dot lakes at gmail dot com"
-   :version "2025-11-15"}
+   :version "2026-11-22"}
   (:require
    [mop.commons.debug :as debug]
    [mop.geom.quads :as quads]
    [mop.geom.rn :as rn]
    [mop.cmplx.complex :as cmplx]
    [mop.geom.mesh :as mesh]
-   ))
+   [mop.geom.s2 :as s2])
+  (:import
+   [mop.java.geom.mesh Mesh]))
 
 (let [z0 (cmplx/simplex"a")
       z1 (cmplx/simplex"b")
@@ -27,7 +29,7 @@
       q2376 (quads/quad z2 z3 z7 z6)
       q0154 (quads/quad z0 z1 z5 z4)
       qcmplx (quads/quad-complex
-              [q0321 q4567 q0473 q5126 q2376 q0154])
+               [q0321 q4567 q0473 q5126 q2376 q0154])
       p0 (rn/vector -1.0 -1.0 -1.0)
       p1 (rn/vector 1.0 -1.0 -1.0)
       p2 (rn/vector 1.0 1.0 -1.0)
@@ -44,15 +46,21 @@
                  z5 p5
                  z6 p6
                  z7 p7}
-      mesh (quads/quad-mesh qcmplx embedding)
+      ^Mesh mesh (quads/quad-mesh qcmplx embedding)
+      xyz (.embedding mesh)
+      s2 (update-vals xyz s2/r3-to-s2)
+      txt (update-vals s2 s2/s2-to-txt)
+      rgba (update-vals s2 s2/s2-to-rgba)
+      ;; unit vectors pointing out
+      dual (update-vals s2 s2/s2-to-r3)
+      options  {:cmplx         (.cmplx mesh)
+                :txt-embedding  txt
+                :s2-embedding   s2
+                :xyz-embedding  xyz
+                :dual-embedding  dual
+                :rgba-embedding  rgba }
+
       ]
   (debug/echo
-   ;;z0 z1 (identical? z0 z1)
-   ;;q0321
-   ;;embedding
-   ;;
-   ;; qcmplx
-   mesh)
-  (mesh/coordinates-and-elements mesh)
-  )
-
+    mesh
+    (mesh/coordinates-and-elements options)))

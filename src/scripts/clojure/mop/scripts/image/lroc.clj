@@ -7,7 +7,7 @@
   {:doc
    "Work out idempotent image read-write-read roundtrips."
    :author  "palisades dot lakes at gmail dot com"
-   :version "2025-12-18"}
+   :version "2026-11-23"}
  (:require
    [clojure.java.io :as io]
    [mop.commons.io :as mci]
@@ -37,7 +37,7 @@
 (doseq [input
         [
          ;"images/lroc/eo_base_2020_clean_geo.tif"
-         "images/lroc/lroc_color_poles_2k.tif"
+         "images/lroc_color_poles_2k.tif"
          ]
         ]
   (roundtrip input))

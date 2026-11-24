@@ -1,7 +1,8 @@
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-;; clj src\scripts\clojure\mop\scripts\image\zlib2lzw.clj
+;; fails 2026-11-23
+;; clj src/scripts/clojure/mop/scripts/image/zlib2lzw.clj
 ;;----------------------------------------------------------------
 (ns mop.scripts.image.zlib2lzw
   {:doc
@@ -25,7 +26,7 @@
     (imageio/write reader-in image-in output)))
 ;;---------------------------------------------------------------------
 (doseq [input [
-               "images/imageio/ETOPO_2022_v1_60s_N90W180_bed.tif"
+               "images/earth/ETOPO/ETOPO_2022_v1_60s_N90W180_bed.tif"
                ]]
   (roundtrip input))
 ;;---------------------------------------------------------------------

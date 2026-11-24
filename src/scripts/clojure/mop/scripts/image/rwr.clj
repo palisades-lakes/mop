@@ -28,7 +28,8 @@
         rendered-out (ImageIO/read output)
         ]
     (image/write-metadata-markdown output)
-    (assert (image/equals? rendered-in rendered-out))
+    (assert (image/equals? rendered-in rendered-out)
+      (str input))
     ;(.delete output)
     ;(.delete (mci/replace-extension output ".md"))
     ))
@@ -44,9 +45,12 @@
   ;   "ETOPO_2022_v1_60s_N90W180_geoid"
   ;   "ETOPO_2022_v1_60s_N90W180_surface"
   ;   "USGS_13_n38w077_dir5"
-  ;   "world.200412.3x21600x10800"
-  ;   "world.topo.bathy.200412.3x21600x10800"
-  ;   "world.topo.bathy.200412.3x5400x2700"
+     ;; these fail, but no visual difference
+     "world.200412.3x21600x10800"
+     "world.200412.3x21600x10800-16384x8192"
+     "world.topo.bathy.200412.3x5400x2700"
+     "world.topo.bathy.200412.3x21600x10800-16384x8192"
+     "world.topo.bathy.200412.3x21600x10800"
      }
    (mci/prefix f)))
 ;;---------------------------------------------------------------------

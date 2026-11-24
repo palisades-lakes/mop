@@ -1,7 +1,7 @@
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-;; clj src\scripts\clojure\mop\debug\geom.clj
+;; clj src\scripts\clojure\mop\scripts\debug\geom.clj
 ;;----------------------------------------------------------------
 (ns mop.scripts.debug.geom
   {:doc     "check subdivision"

@@ -1,13 +1,13 @@
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-;; clj src\scripts\clojure\mop\image\metaMarkdown.clj
+;;  clj src\scripts\clojure\mop\scripts\image\metaMarkdown.clj
 ;;----------------------------------------------------------------
 (ns mop.scripts.image.metaMarkdown
   {:doc
    "Extract image metadata."
    :author "palisades dot lakes at gmail dot com"
-   :version "2025-111-05"}
+   :version "2026-11-23"}
 
   (:require
    [clojure.java.io :as io]

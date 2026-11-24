@@ -206,7 +206,7 @@
           (metadata-lookup metadata))))))
 ;;---------------------------------------------------------------------
 (doseq [input
-        (image/image-file-seq (io/file "images/imageio-ext"))
+        (image/image-file-seq (io/file "images"))
         #_[
          "images/lroc/lroc_color_poles_2k.tif"
          "images/lroc/lroc_color_poles_2k-gtx.tif"

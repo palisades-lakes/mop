@@ -1,7 +1,7 @@
 (set! *warn-on-reflection* true)
 ;;(set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-;; clj src\scripts\clojure\mop\debug\arcball.clj
+;; clj src\scripts\clojure\mop\scripts\debug\arcball.clj
 ;;----------------------------------------------------------------
 (ns mop.scripts.debug.arcball
   {:doc     "check arcball calculations"
